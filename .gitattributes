@@ -1,0 +1,5 @@
+# Deno / deno fmt normalizes to LF — keep the repo LF everywhere so formatted
+# files don't churn on Windows checkouts.
+* text=auto eol=lf
+*.png binary
+*.ico binary
