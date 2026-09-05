@@ -124,8 +124,10 @@ Writes should be idempotent enough to support the offline sync-queue replaying t
 ## 11. Open questions / assumptions to confirm before or during build
 
 - **Auth**: assumed a single shared passphrase/token (simplest for a personal, self-hosted single-user tool). If this will ever be reachable outside your home network, this needs to be more than a plaintext token check — worth confirming how exposed this will be.
+  - _Resolved for v1 (2026-09-05, during M1):_ shipping the plaintext shared token — `Authorization: Bearer <AUTH_TOKEN>`, length-constant compare, `src/auth.ts`. Assumption: this stays on the home network behind Caddy/TLS (§8). Revisit before any wider exposure; tracked in `ISSUES.md`.
 - **Conflict resolution UI**: sketched a simple "keep mine / keep server's" prompt in §7 — worth a quick pass of its own once the editor is further along, since this is the part most likely to feel bad if done hastily.
 - **Existing notes migration**: if you already have markdown notes elsewhere you want to point this at, the frontmatter schema in §4 should be checked against what you already have (or the server should tolerate missing/partial frontmatter and backfill it on first write).
+  - _Partly handled (2026-09-05, during M1):_ the Frontmatter Parser (`src/frontmatter.ts`) tolerates missing / partial / malformed frontmatter — it backfills `title` from the filename and `created`/`updated` from the current time on read, and normalizes `tags` to a string array. A read does not rewrite the file; the backfilled values are persisted on the next `PUT`. Still open: sanity-check against a real existing vault before M7.
 - **Client framework**: defaulted to plain JS/Web Components per your past PWA work; flagged Preact as a fallback if the editor + sync-queue state gets hard to manage by hand.
 
 ## 12. Design system — Material 3 Expressive

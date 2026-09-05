@@ -41,6 +41,21 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 |---|---|
 | **`NOTES_DIR`** | The actual source of truth — one `.md` file per note. Everything server-side exists to read, write, and index this directory; nothing else stores note content. |
 
+### Server module map (as built, M1)
+
+| File | Components it holds |
+|---|---|
+| `main.ts` | Boot sequence: `loadConfig` → `createApp` → `Deno.serve` |
+| `src/config.ts` | Config Loader (`loadConfig`, `ConfigError`) |
+| `src/router.ts` | HTTP Router + the `createApp(config)` wiring that runs Auth then dispatch and maps `ApiError` → JSON |
+| `src/auth.ts` | Auth Middleware (`isAuthorized`) |
+| `src/handlers.ts` | Notes API Handlers, one per endpoint, plus request/response helpers |
+| `src/frontmatter.ts` | Frontmatter Parser (`parseNote`, `normalizeFrontmatter`, `serializeNote`) |
+| `src/file-store.ts` | File Store (list/read/write/delete, `slugify`, `resolveNewFilename`, `parseFilename`) |
+| `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `Config`, `ApiError` |
+
+In-Memory Index, Markdown/Wikilink Parser, and Search Module are not built yet — they arrive in M3–M4.
+
 ## 2. Dependency map
 
 ```
