@@ -1,0 +1,21 @@
+{
+  "tasks": {
+    "dev": "deno run --watch --env-file --allow-read --allow-write --allow-net --allow-env main.ts",
+    "start": "deno run --allow-read=$NOTES_DIR --allow-write=$NOTES_DIR --allow-net --allow-env main.ts",
+    "test": "deno test --allow-read --allow-write --allow-net --allow-env"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.13",
+    "@std/front-matter": "jsr:@std/front-matter@^1.0.9",
+    "@std/yaml": "jsr:@std/yaml@^1.0.9",
+    "@std/path": "jsr:@std/path@^1.1.0",
+    "@std/fs": "jsr:@std/fs@^1.0.19"
+  },
+  "lock": true
+}

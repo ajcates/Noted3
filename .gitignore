@@ -1,0 +1,13 @@
+# Deno cache (only local when DENO_DIR is set into the project)
+.deno/
+
+# Environment / secrets
+.env
+.env.local
+
+# Local dev vault — notes are personal, never committed (see roadmap.md M0)
+/vault/
+
+# OS cruft
+.DS_Store
+Thumbs.db

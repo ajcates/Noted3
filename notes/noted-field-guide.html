@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noted Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    color-scheme: light;
+    /* five seeds, the AJ way: one hue anchor per role */
+    --seed-ink:   oklch(52% 0.19 275);   /* primary   — ink / links / cursor  */
+    --seed-moss:  oklch(58% 0.08 175);   /* secondary — backlinks / quiet ui  */
+    --seed-ember: oklch(68% 0.15 55);    /* tertiary  — tags / accents        */
+    --seed-alert: oklch(55% 0.20 25);    /* error                              */
+    --n-hue: 275;                         /* neutral hue, tinted toward ink   */
+
+    /* surfaces — tonal, no shadows */
+    --surface-dim:            oklch(89% 0.006 var(--n-hue));
+    --surface:                oklch(98% 0.004 var(--n-hue));
+    --surface-bright:         oklch(99.2% 0.003 var(--n-hue));
+    --surface-container-lowest: oklch(100% 0 var(--n-hue));
+    --surface-container-low:  oklch(96.2% 0.005 var(--n-hue));
+    --surface-container:      oklch(94.3% 0.006 var(--n-hue));
+    --surface-container-high: oklch(91.5% 0.007 var(--n-hue));
+    --surface-container-highest: oklch(88.5% 0.009 var(--n-hue));
+    --on-surface:             oklch(21% 0.012 var(--n-hue));
+    --on-surface-variant:     oklch(40% 0.018 var(--n-hue));
+    --outline:                oklch(58% 0.014 var(--n-hue));
+    --outline-variant:        oklch(84% 0.010 var(--n-hue));
+
+    --primary:              var(--seed-ink);
+    --on-primary:           oklch(99% 0.004 275);
+    --primary-container:    oklch(89% 0.045 275);
+    --on-primary-container: oklch(24% 0.10 275);
+
+    --secondary:              var(--seed-moss);
+    --on-secondary:           oklch(99% 0.004 175);
+    --secondary-container:    oklch(90% 0.035 175);
+    --on-secondary-container: oklch(25% 0.055 175);
+
+    --tertiary:              var(--seed-ember);
+    --on-tertiary:           oklch(21% 0.02 55);
+    --tertiary-container:    oklch(90% 0.06 55);
+    --on-tertiary-container: oklch(29% 0.09 55);
+
+    --error:              var(--seed-alert);
+    --on-error:           oklch(99% 0.004 25);
+    --error-container:    oklch(91% 0.05 25);
+    --on-error-container: oklch(27% 0.12 25);
+
+    --bg: var(--surface);
+    --text: var(--on-surface);
+    --card-shadow: none;
+
+    --radius-none: 0px;
+    --radius-xs: 0.25rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.75rem;
+    --radius-full: 999px;
+
+    --font-display: "Fraunces", "Iowan Old Style", ui-serif, Georgia, serif;
+    --font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --font-source: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --surface-dim:            oklch(12% 0.01 var(--n-hue));
+      --surface:                oklch(16% 0.012 var(--n-hue));
+      --surface-bright:         oklch(24% 0.014 var(--n-hue));
+      --surface-container-lowest: oklch(11% 0.008 var(--n-hue));
+      --surface-container-low:  oklch(19% 0.013 var(--n-hue));
+      --surface-container:      oklch(22% 0.014 var(--n-hue));
+      --surface-container-high: oklch(27% 0.016 var(--n-hue));
+      --surface-container-highest: oklch(32% 0.018 var(--n-hue));
+      --on-surface:             oklch(93% 0.008 var(--n-hue));
+      --on-surface-variant:     oklch(78% 0.014 var(--n-hue));
+      --outline:                oklch(58% 0.014 var(--n-hue));
+      --outline-variant:        oklch(34% 0.012 var(--n-hue));
+
+      --primary:              oklch(80% 0.13 275);
+      --on-primary:           oklch(22% 0.09 275);
+      --primary-container:    oklch(32% 0.11 275);
+      --on-primary-container: oklch(90% 0.05 275);
+
+      --secondary:              oklch(78% 0.07 175);
+      --on-secondary:           oklch(24% 0.04 175);
+      --secondary-container:    oklch(30% 0.045 175);
+      --on-secondary-container: oklch(90% 0.03 175);
+
+      --tertiary:              oklch(80% 0.12 55);
+      --on-tertiary:           oklch(26% 0.06 55);
+      --tertiary-container:    oklch(34% 0.08 55);
+      --on-tertiary-container: oklch(91% 0.05 55);
+
+      --error:              oklch(78% 0.16 25);
+      --on-error:           oklch(24% 0.08 25);
+      --error-container:    oklch(33% 0.10 25);
+      --on-error-container: oklch(90% 0.05 25);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --surface-dim:            oklch(12% 0.01 var(--n-hue));
+    --surface:                oklch(16% 0.012 var(--n-hue));
+    --surface-bright:         oklch(24% 0.014 var(--n-hue));
+    --surface-container-lowest: oklch(11% 0.008 var(--n-hue));
+    --surface-container-low:  oklch(19% 0.013 var(--n-hue));
+    --surface-container:      oklch(22% 0.014 var(--n-hue));
+    --surface-container-high: oklch(27% 0.016 var(--n-hue));
+    --surface-container-highest: oklch(32% 0.018 var(--n-hue));
+    --on-surface:             oklch(93% 0.008 var(--n-hue));
+    --on-surface-variant:     oklch(78% 0.014 var(--n-hue));
+    --outline:                oklch(58% 0.014 var(--n-hue));
+    --outline-variant:        oklch(34% 0.012 var(--n-hue));
+
+    --primary:              oklch(80% 0.13 275);
+    --on-primary:           oklch(22% 0.09 275);
+    --primary-container:    oklch(32% 0.11 275);
+    --on-primary-container: oklch(90% 0.05 275);
+
+    --secondary:              oklch(78% 0.07 175);
+    --on-secondary:           oklch(24% 0.04 175);
+    --secondary-container:    oklch(30% 0.045 175);
+    --on-secondary-container: oklch(90% 0.03 175);
+
+    --tertiary:              oklch(80% 0.12 55);
+    --on-tertiary:           oklch(26% 0.06 55);
+    --tertiary-container:    oklch(34% 0.08 55);
+    --on-tertiary-container: oklch(91% 0.05 55);
+
+    --error:              oklch(78% 0.16 25);
+    --on-error:           oklch(24% 0.08 25);
+    --error-container:    oklch(33% 0.10 25);
+    --on-error-container: oklch(90% 0.05 25);
+  }
+
+  /* ============ RESET-ISH ============ */
+  *{ box-sizing: border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family: var(--font-body);
+    font-size: 16px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family: var(--font-display); text-wrap:balance; margin:0; }
+  p{ margin:0; }
+  img{ max-width:100%; }
+  ::selection{ background:var(--primary-container); color:var(--on-primary-container); }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+
+  /* ============ SHELL / NAV ============ */
+  .shell{ display:grid; grid-template-columns: 4.5rem 1fr; min-height:100vh; }
+  .tabs{
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    display:flex; flex-direction:column; align-items:center; gap:0.35rem;
+    padding:1.25rem 0; background:var(--surface-container-lowest);
+    border-right:1px solid var(--outline-variant);
+  }
+  .tabs a{
+    writing-mode: vertical-rl; text-orientation:mixed;
+    display:flex; align-items:center; justify-content:center; gap:0.5rem;
+    padding:0.85rem 0.55rem; border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    margin-right:-1px; width:3.6rem;
+    font-family:var(--font-body); font-weight:700; font-size:0.72rem;
+    letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--on-surface-variant); text-decoration:none;
+    background:var(--surface-container-lowest);
+    border:1px solid var(--outline-variant); border-right:none;
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1), background .15s, color .15s, padding .18s;
+  }
+  .tabs a:hover{ transform:translateX(-3px); color:var(--on-surface); }
+  .tabs a.active{
+    background:var(--primary); color:var(--on-primary); border-color:var(--primary);
+    transform:translateX(-6px); padding-right:0.85rem;
+  }
+  .tabs .mark{ font-family:var(--font-display); font-style:italic; font-size:1rem; writing-mode:horizontal-tb; margin-bottom:0.5rem; color:var(--primary); }
+
+  main{ min-width:0; }
+  section{ padding: 4.5rem clamp(1.25rem, 5vw, 4.5rem); border-bottom:1px solid var(--outline-variant); scroll-margin-top:1rem; }
+  section:last-of-type{ border-bottom:none; }
+  .eyebrow{
+    font-family:var(--font-source); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--on-surface-variant); display:block; margin-bottom:0.75rem;
+  }
+  .section-head{ max-width:44rem; margin-bottom:2.75rem; }
+  .section-head h2{ font-size:clamp(1.9rem, 3vw, 2.6rem); font-weight:500; margin-bottom:0.85rem; }
+  .section-head p{ font-size:1.05rem; color:var(--on-surface-variant); max-width:38rem; }
+
+  /* ============ COVER ============ */
+  .cover{ padding: 5rem clamp(1.25rem,5vw,4.5rem) 3.5rem; }
+  .cover .kicker{ font-family:var(--font-source); font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--primary); }
+  .cover h1{ font-size:clamp(2.6rem, 6vw, 5rem); font-weight:400; font-style:italic; line-height:1.03; margin:0.9rem 0 1.5rem; max-width:20ch; }
+  .cover .lede{ font-size:1.2rem; color:var(--on-surface-variant); max-width:38rem; margin-bottom:2.5rem; }
+  .seed-row{ display:flex; gap:0.9rem; flex-wrap:wrap; }
+  .seed-chip{ display:flex; align-items:center; gap:0.55rem; padding:0.5rem 0.9rem 0.5rem 0.5rem; border-radius:var(--radius-full); background:var(--surface-container-low); border:1px solid var(--outline-variant); }
+  .seed-chip .dot{ width:1.6rem; height:1.6rem; border-radius:50%; }
+  .seed-chip span{ font-family:var(--font-source); font-size:0.8rem; color:var(--on-surface-variant); }
+
+  /* ============ GRIDS ============ */
+  .grid{ display:grid; gap:1.25rem; }
+  .g-2{ grid-template-columns: repeat(auto-fit, minmax(15rem,1fr)); }
+  .g-3{ grid-template-columns: repeat(auto-fit, minmax(11rem,1fr)); }
+
+  /* ============ COLOR ============ */
+  .ramp{ display:flex; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--outline-variant); }
+  .ramp .tone{ flex:1; min-height:3.6rem; display:flex; align-items:flex-end; padding:0.4rem 0.5rem; font-family:var(--font-source); font-size:0.65rem; }
+  .role-name{ font-weight:800; font-size:1.05rem; margin-bottom:0.2rem; }
+  .role-block{ margin-bottom:1.75rem; }
+  .role-block .desc{ color:var(--on-surface-variant); font-size:0.92rem; max-width:32rem; margin-bottom:0.75rem; }
+  .swatch-pair{ display:flex; gap:0; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--outline-variant); }
+  .swatch-pair > div{ flex:1; padding:1.1rem 1.2rem; }
+  .swatch-pair .label{ font-family:var(--font-source); font-size:0.72rem; opacity:0.85; }
+  .swatch-pair .role{ font-weight:700; margin-top:0.15rem; }
+
+  /* applied card in color section */
+  .applied-card{
+    background:var(--surface-container-low); border:1px solid var(--outline-variant);
+    border-radius:var(--radius-xl); padding:1.5rem; max-width:26rem;
+  }
+  .applied-card h3{ font-size:1.15rem; font-weight:600; font-family:var(--font-body); margin-bottom:0.5rem; }
+  .applied-card p{ color:var(--on-surface-variant); font-size:0.92rem; margin-bottom:0.9rem; }
+  .chip{ display:inline-flex; align-items:center; padding:0.3rem 0.75rem; border-radius:var(--radius-full); font-size:0.78rem; font-weight:600; margin-right:0.4rem; }
+  .chip.tertiary{ background:var(--tertiary-container); color:var(--on-tertiary-container); }
+  .chip.secondary{ background:var(--secondary-container); color:var(--on-secondary-container); }
+  .link-inline{ color:var(--primary); font-weight:600; text-decoration-thickness:2px; text-underline-offset:2px; }
+
+  /* ============ TYPE ============ */
+  .specimen{ display:flex; align-items:baseline; justify-content:space-between; gap:2rem; padding:1.1rem 0; border-bottom:1px solid var(--outline-variant); flex-wrap:wrap; }
+  .specimen:last-child{ border-bottom:none; }
+  .specimen .txt{ flex:1; min-width:14rem; }
+  .specimen .meta{ font-family:var(--font-source); font-size:0.72rem; color:var(--on-surface-variant); white-space:nowrap; text-align:right; }
+  .disp-l{ font-family:var(--font-display); font-size:3.2rem; line-height:1.05; font-weight:400; }
+  .disp-m{ font-family:var(--font-display); font-size:2.5rem; line-height:1.1; font-weight:400; }
+  .disp-s{ font-family:var(--font-display); font-size:2rem; line-height:1.15; font-weight:400; }
+  .head-l{ font-family:var(--font-display); font-size:1.75rem; line-height:1.2; font-weight:500; }
+  .head-m{ font-family:var(--font-display); font-size:1.55rem; line-height:1.25; font-weight:500; }
+  .head-s{ font-family:var(--font-display); font-size:1.3rem; line-height:1.3; font-weight:500; }
+  .title-l{ font-family:var(--font-body); font-size:1.2rem; line-height:1.3; font-weight:700; }
+  .title-m{ font-family:var(--font-body); font-size:1rem; line-height:1.4; font-weight:700; }
+  .title-s{ font-family:var(--font-body); font-size:0.85rem; line-height:1.35; font-weight:700; }
+  .body-l{ font-family:var(--font-body); font-size:1rem; line-height:1.55; font-weight:400; }
+  .body-m{ font-family:var(--font-body); font-size:0.875rem; line-height:1.5; font-weight:400; }
+  .body-s{ font-family:var(--font-body); font-size:0.75rem; line-height:1.4; font-weight:400; }
+  .label-l{ font-family:var(--font-body); font-size:0.875rem; line-height:1.3; font-weight:600; letter-spacing:0.01em; }
+  .label-m{ font-family:var(--font-body); font-size:0.75rem; line-height:1.3; font-weight:600; letter-spacing:0.02em; }
+  .label-s{ font-family:var(--font-body); font-size:0.6875rem; line-height:1.3; font-weight:600; letter-spacing:0.03em; }
+  .source-tag{ font-family:var(--font-source); font-size:0.85rem; padding:0.15rem 0.4rem; border-radius:var(--radius-xs); background:var(--surface-container-high); }
+
+  /* ============ SHAPE ============ */
+  .radius-strip{ display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end; }
+  .radius-item{ text-align:center; }
+  .radius-item .box{ width:5.5rem; height:5.5rem; background:var(--primary-container); border:1px solid var(--outline-variant); margin-bottom:0.6rem; }
+  .radius-item .cap{ font-family:var(--font-source); font-size:0.72rem; color:var(--on-surface-variant); }
+  .radius-item .val{ font-weight:700; font-size:0.85rem; }
+
+  .blob-row{ display:flex; gap:1.75rem; flex-wrap:wrap; align-items:center; }
+  .blob{ width:6.5rem; height:6.5rem; background:var(--tertiary); display:flex; align-items:center; justify-content:center; }
+  .blob-row figure{ margin:0; text-align:center; }
+  .blob-row figcaption{ font-family:var(--font-source); font-size:0.72rem; color:var(--on-surface-variant); margin-top:0.6rem; }
+
+  /* ============ MOTION ============ */
+  .motion-demo{ display:flex; gap:3rem; flex-wrap:wrap; }
+  .motion-card{ background:var(--surface-container-low); border:1px solid var(--outline-variant); border-radius:var(--radius-xl); padding:2rem; flex:1; min-width:16rem; text-align:center; }
+  .motion-card h4{ font-family:var(--font-body); font-weight:700; margin:0 0 0.3rem; }
+  .motion-card p{ color:var(--on-surface-variant); font-size:0.85rem; margin-bottom:1.5rem; }
+  .spring-btn{
+    font-family:var(--font-body); font-weight:700; font-size:0.95rem; border:none; cursor:pointer;
+    padding:0.85rem 1.8rem; border-radius:var(--radius-full); background:var(--primary); color:var(--on-primary);
+  }
+  .spring-btn.expressive{ transition: transform .55s cubic-bezier(.2,1.8,.3,1); }
+  .spring-btn.expressive:active{ transform:scale(0.86) rotate(-3deg); }
+  .spring-btn.standard{ background:var(--secondary); color:var(--on-secondary); transition: transform .18s ease; }
+  .spring-btn.standard:active{ transform:scale(0.94); }
+
+  /* ============ SURFACES ============ */
+  .stack{ display:flex; flex-direction:column; gap:0; max-width:24rem; }
+  .stack .layer{ padding:1rem 1.25rem; border:1px solid var(--outline-variant); border-top:none; display:flex; justify-content:space-between; font-family:var(--font-source); font-size:0.8rem; }
+  .stack .layer:first-child{ border-top:1px solid var(--outline-variant); border-radius:var(--radius-md) var(--radius-md) 0 0; }
+  .stack .layer:last-child{ border-radius:0 0 var(--radius-md) var(--radius-md); }
+
+  /* ============ COMPONENTS (app mockup) ============ */
+  .app-frame{
+    max-width:24rem; margin:0 auto; border-radius:1.75rem; border:1px solid var(--outline-variant);
+    background:var(--surface); overflow:hidden;
+  }
+  .app-topbar{ display:flex; align-items:center; justify-content:space-between; padding:1rem 1.1rem; background:var(--surface); }
+  .app-topbar .wordmark{ font-family:var(--font-display); font-style:italic; font-size:1.3rem; color:var(--primary); }
+  .icon-btn{ width:2.2rem; height:2.2rem; border-radius:50%; background:var(--surface-container-high); display:flex; align-items:center; justify-content:center; font-size:0.9rem; }
+  .search-field{ margin:0 1.1rem 0.9rem; padding:0.7rem 1.1rem; border-radius:var(--radius-full); background:var(--surface-container-highest); color:var(--on-surface-variant); font-size:0.85rem; }
+  .note-list{ display:flex; flex-direction:column; gap:0.75rem; padding:0 1.1rem 1.1rem; }
+  .note-card{ background:var(--surface-container-low); border-radius:var(--radius-lg); padding:1rem 1.1rem; }
+  .note-card h4{ font-family:var(--font-display); font-weight:500; font-size:1.05rem; margin-bottom:0.3rem; }
+  .note-card .snippet{ font-size:0.82rem; color:var(--on-surface-variant); margin-bottom:0.65rem; line-height:1.45; }
+  .note-card .meta-row{ display:flex; align-items:center; justify-content:space-between; }
+  .note-card .stamp{ font-family:var(--font-source); font-size:0.68rem; color:var(--on-surface-variant); }
+
+  .autocomplete{ margin:0 1.1rem; background:var(--surface-container-lowest); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); overflow:hidden; }
+  .autocomplete .row{ padding:0.65rem 0.9rem; font-size:0.85rem; border-bottom:1px solid var(--outline-variant); }
+  .autocomplete .row:last-child{ border-bottom:none; }
+  .autocomplete .row.hover{ background:var(--primary-container); color:var(--on-primary-container); font-weight:600; }
+  .autocomplete .row.create{ color:var(--primary); font-weight:700; }
+
+  .backlinks{ margin:0 1.1rem 1.1rem; }
+  .backlinks .row{ display:flex; gap:0.6rem; padding:0.6rem 0; border-bottom:1px solid var(--outline-variant); }
+  .backlinks .row:last-child{ border-bottom:none; }
+  .backlinks .dot{ width:0.4rem; height:0.4rem; border-radius:50%; background:var(--secondary); margin-top:0.5rem; flex-shrink:0; }
+  .backlinks .from{ font-weight:700; font-size:0.82rem; }
+  .backlinks .snip{ font-size:0.78rem; color:var(--on-surface-variant); }
+
+  .toolbar{
+    display:flex; align-items:center; justify-content:space-between; padding:0.9rem 1.1rem;
+    background:var(--surface-container-high);
+  }
+  .fab-new{
+    display:flex; align-items:center; gap:0.5rem; padding:0.75rem 1.1rem;
+    background:var(--tertiary-container); color:var(--on-tertiary-container);
+    font-weight:700; font-size:0.85rem; border:none; cursor:pointer;
+  }
+
+  .demo-toggle{ display:inline-flex; border:1px solid var(--outline-variant); border-radius:var(--radius-full); padding:0.2rem; margin-bottom:1.75rem; }
+  .demo-toggle button{ border:none; background:none; padding:0.4rem 1rem; border-radius:var(--radius-full); font-family:var(--font-body); font-weight:700; font-size:0.8rem; cursor:pointer; color:var(--on-surface-variant); }
+  .demo-toggle button.on{ background:var(--primary); color:var(--on-primary); }
+  .mock-dark{ background:oklch(16% 0.012 275); color-scheme: dark; }
+  .mock-dark, .mock-dark *{ }
+  .mock-dark{
+    --surface: oklch(16% 0.012 275);
+    --surface-container-low: oklch(19% 0.013 275);
+    --surface-container: oklch(22% 0.014 275);
+    --surface-container-high: oklch(27% 0.016 275);
+    --surface-container-highest: oklch(32% 0.018 275);
+    --outline-variant: oklch(34% 0.012 275);
+    --on-surface-variant: oklch(78% 0.014 275);
+    --primary: oklch(80% 0.13 275);
+    --on-primary-container: oklch(90% 0.05 275);
+    --primary-container: oklch(32% 0.11 275);
+    --secondary: oklch(78% 0.07 175);
+    --tertiary-container: oklch(34% 0.08 55);
+    --on-tertiary-container: oklch(91% 0.05 55);
+  }
+
+  /* ============ TOKENS CODE ============ */
+  pre{
+    background:var(--surface-container-lowest); border:1px solid var(--outline-variant); border-radius:var(--radius-lg);
+    padding:1.5rem; overflow-x:auto; font-family:var(--font-source); font-size:0.82rem; line-height:1.6; color:var(--on-surface);
+  }
+  .kv{ color:var(--on-surface-variant); }
+
+  footer{ padding:2.5rem clamp(1.25rem,5vw,4.5rem); font-family:var(--font-source); font-size:0.78rem; color:var(--on-surface-variant); }
+
+  @media (max-width: 720px){
+    .shell{ grid-template-columns: 1fr; }
+    .tabs{ position:sticky; top:0; height:auto; flex-direction:row; overflow-x:auto; border-right:none; border-bottom:1px solid var(--outline-variant); padding:0.75rem; }
+    .tabs .mark{ display:none; }
+    .tabs a{ writing-mode:horizontal-tb; border-radius:var(--radius-full); border:1px solid var(--outline-variant); width:auto; flex-shrink:0; padding:0.5rem 0.9rem; }
+    .tabs a.active{ transform:none; }
+    section{ padding:3rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="shell">
+  <nav class="tabs" id="tabs">
+    <span class="mark">N·</span>
+    <a href="#cover" class="active">Cover</a>
+    <a href="#color">Color</a>
+    <a href="#type">Type</a>
+    <a href="#shape">Shape</a>
+    <a href="#motion">Motion</a>
+    <a href="#surface">Surface</a>
+    <a href="#components">Components</a>
+    <a href="#tokens">Tokens</a>
+  </nav>
+
+  <main>
+    <section class="cover" id="cover">
+      <span class="kicker">Design reference — v1</span>
+      <h1>A field guide to noted, drawn in Material&nbsp;3 Expressive</h1>
+      <p class="lede">Five seed colors, a serif with some wonk in it, shapes that morph, and motion with real spring in it — assembled here specifically for a self-hosted markdown wiki, not as a generic Material poster. Every token on this page is live CSS: your system theme already changed it once.</p>
+      <div class="seed-row">
+        <div class="seed-chip"><span class="dot" style="background:var(--seed-ink)"></span><span>ink · primary</span></div>
+        <div class="seed-chip"><span class="dot" style="background:var(--seed-moss)"></span><span>moss · secondary</span></div>
+        <div class="seed-chip"><span class="dot" style="background:var(--seed-ember)"></span><span>ember · tertiary</span></div>
+        <div class="seed-chip"><span class="dot" style="background:var(--surface-container-high)"></span><span>paper · neutral</span></div>
+        <div class="seed-chip"><span class="dot" style="background:var(--seed-alert)"></span><span>alert · error</span></div>
+      </div>
+    </section>
+
+    <section id="color">
+      <div class="section-head">
+        <span class="eyebrow">01 — Color</span>
+        <h2>One seed, a full tonal ramp, and roles instead of hex codes</h2>
+        <p>Expressive still runs on M3's tonal-role system — you never write a raw color into a component, you write <code>primary</code> or <code>surface-container-high</code>. What's new is the confidence: tertiary carries real weight instead of sitting in reserve, and containers do the work shadows used to do.</p>
+      </div>
+
+      <div class="role-block">
+        <div class="role-name">Ink — primary</div>
+        <div class="desc">Wikilinks, the caret, the primary action. It's the closest thing this app has to a brand color, so it shows up in exactly one place per screen.</div>
+        <div class="ramp">
+          <div class="tone" style="background:oklch(14% 0.08 275); color:oklch(95% 0.02 275)">10</div>
+          <div class="tone" style="background:oklch(24% 0.12 275); color:oklch(95% 0.02 275)">20</div>
+          <div class="tone" style="background:oklch(34% 0.15 275); color:oklch(95% 0.02 275)">30</div>
+          <div class="tone" style="background:oklch(44% 0.17 275); color:oklch(97% 0.02 275)">40</div>
+          <div class="tone" style="background:oklch(52% 0.19 275); color:oklch(99% 0.02 275)">50</div>
+          <div class="tone" style="background:oklch(62% 0.16 275); color:oklch(15% 0.02 275)">60</div>
+          <div class="tone" style="background:oklch(72% 0.12 275); color:oklch(15% 0.02 275)">70</div>
+          <div class="tone" style="background:oklch(82% 0.08 275); color:oklch(15% 0.02 275)">80</div>
+          <div class="tone" style="background:oklch(91% 0.04 275); color:oklch(15% 0.02 275)">90</div>
+          <div class="tone" style="background:oklch(95% 0.02 275); color:oklch(15% 0.02 275)">95</div>
+          <div class="tone" style="background:oklch(99% 0.005 275); color:oklch(15% 0.02 275)">99</div>
+        </div>
+      </div>
+
+      <div class="grid g-3" style="margin-bottom:2.5rem;">
+        <div>
+          <div class="role-name" style="font-size:0.95rem;">Moss — secondary</div>
+          <div class="ramp">
+            <div class="tone" style="background:oklch(28% 0.05 175); color:oklch(96% 0.02 175)">30</div>
+            <div class="tone" style="background:oklch(48% 0.07 175); color:oklch(97% 0.02 175)">50</div>
+            <div class="tone" style="background:oklch(68% 0.06 175); color:oklch(15% 0.02 175)">70</div>
+            <div class="tone" style="background:oklch(90% 0.035 175); color:oklch(15% 0.02 175)">90</div>
+          </div>
+        </div>
+        <div>
+          <div class="role-name" style="font-size:0.95rem;">Ember — tertiary</div>
+          <div class="ramp">
+            <div class="tone" style="background:oklch(30% 0.08 55); color:oklch(96% 0.02 55)">30</div>
+            <div class="tone" style="background:oklch(50% 0.13 55); color:oklch(97% 0.02 55)">50</div>
+            <div class="tone" style="background:oklch(72% 0.14 55); color:oklch(15% 0.02 55)">70</div>
+            <div class="tone" style="background:oklch(91% 0.06 55); color:oklch(15% 0.02 55)">90</div>
+          </div>
+        </div>
+        <div>
+          <div class="role-name" style="font-size:0.95rem;">Paper — neutral</div>
+          <div class="ramp">
+            <div class="tone" style="background:oklch(24% 0.012 275); color:oklch(96% 0.008 275)">20</div>
+            <div class="tone" style="background:oklch(48% 0.014 275); color:oklch(97% 0.008 275)">50</div>
+            <div class="tone" style="background:oklch(72% 0.012 275); color:oklch(15% 0.008 275)">80</div>
+            <div class="tone" style="background:oklch(94% 0.006 275); color:oklch(15% 0.008 275)">95</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid g-2">
+        <div>
+          <div class="swatch-pair" style="margin-bottom:0.75rem;">
+            <div style="background:var(--primary); color:var(--on-primary);"><span class="label">primary / on-primary</span></div>
+            <div style="background:var(--primary-container); color:var(--on-primary-container);"><span class="label">container</span></div>
+          </div>
+          <div class="swatch-pair">
+            <div style="background:var(--tertiary); color:var(--on-tertiary);"><span class="label">tertiary / on-tertiary</span></div>
+            <div style="background:var(--tertiary-container); color:var(--on-tertiary-container);"><span class="label">container</span></div>
+          </div>
+        </div>
+
+        <div class="applied-card">
+          <h3>Applied — a note card</h3>
+          <p>Backlinks and the shape of thought — a note on why <span class="link-inline">[[wikilinks]]</span> beat folders for this vault.</p>
+          <span class="chip tertiary">#writing</span><span class="chip secondary">3 backlinks</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="type">
+      <div class="section-head">
+        <span class="eyebrow">02 — Type</span>
+        <h2>Fraunces for the page, Manrope for the interface</h2>
+        <p>Expressive's type scale is unchanged in structure — Display, Headline, Title, Body, Label, each in three sizes — but it asks for a display face with real character. Fraunces carries note titles and headings; Manrope runs the chrome, labels, and body copy where legibility at small sizes matters more than personality. A sixth, unofficial role — Source — covers raw markdown and file names.</p>
+      </div>
+
+      <div class="specimen"><div class="txt disp-l">Display / Large</div><div class="meta">57&nbsp;/&nbsp;64 · Fraunces 400</div></div>
+      <div class="specimen"><div class="txt disp-m">Display / Medium</div><div class="meta">45&nbsp;/&nbsp;52 · Fraunces 400</div></div>
+      <div class="specimen"><div class="txt disp-s">Display / Small</div><div class="meta">36&nbsp;/&nbsp;44 · Fraunces 400</div></div>
+      <div class="specimen"><div class="txt head-l">Headline — Backlinks and the shape of thought</div><div class="meta">32&nbsp;/&nbsp;40 · Fraunces 500</div></div>
+      <div class="specimen"><div class="txt head-m">Headline — On keeping a wiki, not a folder</div><div class="meta">28&nbsp;/&nbsp;36 · Fraunces 500</div></div>
+      <div class="specimen"><div class="txt head-s">Headline — Tags vs. links</div><div class="meta">24&nbsp;/&nbsp;32 · Fraunces 500</div></div>
+      <div class="specimen"><div class="txt title-l">Title — Recently edited</div><div class="meta">22&nbsp;/&nbsp;28 · Manrope 700</div></div>
+      <div class="specimen"><div class="txt title-m">Title — Unresolved links (4)</div><div class="meta">16&nbsp;/&nbsp;24 · Manrope 700</div></div>
+      <div class="specimen"><div class="txt body-l">Body Large — this is what a paragraph in the editor's rendered preview looks like at rest, sized for comfortable reading on a phone screen.</div><div class="meta">16&nbsp;/&nbsp;24 · Manrope 400</div></div>
+      <div class="specimen"><div class="txt body-m">Body Medium — note-card snippets and secondary descriptions sit here.</div><div class="meta">14&nbsp;/&nbsp;20 · Manrope 400</div></div>
+      <div class="specimen"><div class="txt label-l">SAVE · CANCEL · NEW NOTE</div><div class="meta">14&nbsp;/&nbsp;20 · Manrope 600</div></div>
+      <div class="specimen"><div class="txt"><span class="source-tag">## Heading  •  [[wikilink]]  •  2026-09-05.md</span></div><div class="meta">Source (custom) · IBM Plex Mono 400</div></div>
+    </section>
+
+    <section id="shape">
+      <div class="section-head">
+        <span class="eyebrow">03 — Shape</span>
+        <h2>A corner scale, plus a library that morphs</h2>
+        <p>The corner-radius scale still runs none through full — small controls stay close to square, large containers round off, and the FAB is the one place Expressive lets a shape get playful instead of just rounded.</p>
+      </div>
+
+      <div class="radius-strip" style="margin-bottom:3rem;">
+        <div class="radius-item"><div class="box" style="border-radius:var(--radius-none)"></div><div class="val">None</div><div class="cap">0</div></div>
+        <div class="radius-item"><div class="box" style="border-radius:var(--radius-xs)"></div><div class="val">Extra-small</div><div class="cap">4dp</div></div>
+        <div class="radius-item"><div class="box" style="border-radius:var(--radius-sm)"></div><div class="val">Small</div><div class="cap">8dp</div></div>
+        <div class="radius-item"><div class="box" style="border-radius:var(--radius-md)"></div><div class="val">Medium</div><div class="cap">12dp</div></div>
+        <div class="radius-item"><div class="box" style="border-radius:var(--radius-lg)"></div><div class="val">Large</div><div class="cap">16dp — note cards</div></div>
+        <div class="radius-item"><div class="box" style="border-radius:var(--radius-xl)"></div><div class="val">Extra-large</div><div class="cap">28dp — sheets, dialogs</div></div>
+        <div class="radius-item"><div class="box" style="border-radius:var(--radius-full)"></div><div class="val">Full</div><div class="cap">pill — tags, search</div></div>
+      </div>
+
+      <p class="body-m" style="color:var(--on-surface-variant); max-width:34rem; margin-bottom:1.25rem;">A few of the ~35 shapes from the Material Shapes library, generated here as clip-paths rather than traced by hand — this is what makes an FAB or an empty-state illustration feel Expressive instead of just rounded.</p>
+      <div class="blob-row" id="blobRow"></div>
+    </section>
+
+    <section id="motion">
+      <div class="section-head">
+        <span class="eyebrow">04 — Motion</span>
+        <h2>Springs, not durations</h2>
+        <p>Expressive replaces fixed easing curves with spring physics — objects overshoot and settle rather than ease to a stop. Press each button; the left one carries real bounce for a primary action like "new note," the right one stays composed for something quieter like "save."</p>
+      </div>
+      <div class="motion-demo">
+        <div class="motion-card">
+          <h4>Expressive spring</h4>
+          <p>High energy, visible overshoot — reserved for the one action per screen you want noticed.</p>
+          <button class="spring-btn expressive">+ New note</button>
+        </div>
+        <div class="motion-card">
+          <h4>Standard spring</h4>
+          <p>Calm, controlled, low overshoot — everything else: save, close, navigate.</p>
+          <button class="spring-btn standard">Save</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="surface">
+      <div class="section-head">
+        <span class="eyebrow">05 — Surface</span>
+        <h2>Elevation is a color now, not a shadow</h2>
+        <p>Expressive drops drop-shadows almost everywhere in favor of five container tones. A dialog doesn't float above the page — it's just a lighter (or darker) tone of the same paper.</p>
+      </div>
+      <div class="stack">
+        <div class="layer" style="background:var(--surface-dim)"><span>surface-dim</span><span class="kv">app background</span></div>
+        <div class="layer" style="background:var(--surface)"><span>surface</span><span class="kv">default ground</span></div>
+        <div class="layer" style="background:var(--surface-container-low)"><span>surface-container-low</span><span class="kv">note cards</span></div>
+        <div class="layer" style="background:var(--surface-container)"><span>surface-container</span><span class="kv">search field rest state</span></div>
+        <div class="layer" style="background:var(--surface-container-high)"><span>surface-container-high</span><span class="kv">toolbar, sheets</span></div>
+        <div class="layer" style="background:var(--surface-container-highest)"><span>surface-container-highest</span><span class="kv">active/pressed fields</span></div>
+      </div>
+    </section>
+
+    <section id="components">
+      <div class="section-head">
+        <span class="eyebrow">06 — Components</span>
+        <h2>Assembled into noted itself</h2>
+        <p>The pieces above, as the four screens you'll actually build: the note list, the wikilink autocomplete, the backlinks panel, and the docked toolbar with its Expressive new-note control.</p>
+      </div>
+
+      <div class="demo-toggle" role="group" aria-label="Preview theme">
+        <button type="button" data-mode="light" class="on">Light</button>
+        <button type="button" data-mode="dark">Dark</button>
+      </div>
+
+      <div class="app-frame" id="appFrame">
+        <div class="app-topbar">
+          <span class="wordmark">noted</span>
+          <div style="display:flex; gap:0.5rem;">
+            <div class="icon-btn">⌕</div>
+            <div class="icon-btn">⚙</div>
+          </div>
+        </div>
+        <div class="search-field">Search your notes…</div>
+        <div class="note-list">
+          <div class="note-card">
+            <h4>Backlinks and the shape of thought</h4>
+            <p class="snippet">A note on why [[wikilinks]] beat folders for this vault, and what that means for how noted indexes on boot…</p>
+            <div class="meta-row"><span class="chip tertiary">#writing</span><span class="stamp">edited 2h ago</span></div>
+          </div>
+          <div class="note-card">
+            <h4>Termux deploy notes</h4>
+            <p class="snippet">systemd-free process supervision for a Deno server running on-device, restart-on-crash via a tiny wrapper script…</p>
+            <div class="meta-row"><span class="chip secondary">4 backlinks</span><span class="stamp">edited yesterday</span></div>
+          </div>
+        </div>
+
+        <div style="padding:0 1.1rem 0.5rem;"><span class="label-m" style="color:var(--on-surface-variant)">TYPING — [[oklch color]]</span></div>
+        <div class="autocomplete">
+          <div class="row hover">OKLCH color space</div>
+          <div class="row">OKLCH relative color syntax</div>
+          <div class="row create">+ Create "oklch color"</div>
+        </div>
+
+        <div style="padding:1.1rem 1.1rem 0;"><span class="label-m" style="color:var(--on-surface-variant)">BACKLINKS · 2</span></div>
+        <div class="backlinks">
+          <div class="row"><span class="dot"></span><div><div class="from">Termux deploy notes</div><div class="snip">"…restart-on-crash, see [[backlinks and the shape of thought]] for the indexing tradeoff."</div></div></div>
+          <div class="row"><span class="dot"></span><div><div class="from">2026 reading list</div><div class="snip">"Related: [[backlinks and the shape of thought]]."</div></div></div>
+        </div>
+
+        <div class="toolbar">
+          <div style="display:flex; gap:0.9rem;">
+            <div class="icon-btn">☰</div>
+            <div class="icon-btn">#</div>
+          </div>
+          <button class="fab-new">✎ New note</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tokens">
+      <div class="section-head">
+        <span class="eyebrow">07 — Tokens</span>
+        <h2>Ready to paste into noted's stylesheet</h2>
+        <p>The exact custom properties this page runs on — five seeds, relative-color-syntax containers, and the surface stack. Drop this at the top of the app's CSS and build every component against the roles, never a raw value.</p>
+      </div>
+      <pre>:root {
+  <span class="kv">/* five seeds */</span>
+  --seed-ink:   oklch(52% 0.19 275);
+  --seed-moss:  oklch(58% 0.08 175);
+  --seed-ember: oklch(68% 0.15 55);
+  --seed-alert: oklch(55% 0.20 25);
+  --n-hue: 275;
+
+  <span class="kv">/* roles, derived — swap to Material Theme Builder output 1:1 if you ever need HCT parity */</span>
+  --primary: var(--seed-ink);
+  --primary-container: oklch(89% 0.045 275);
+  --on-primary-container: oklch(24% 0.10 275);
+
+  --surface: oklch(98% 0.004 var(--n-hue));
+  --surface-container-low: oklch(96.2% 0.005 var(--n-hue));
+  --surface-container-high: oklch(91.5% 0.007 var(--n-hue));
+
+  --radius-lg: 1rem;    <span class="kv">/* note cards */</span>
+  --radius-xl: 1.75rem; <span class="kv">/* sheets, dialogs */</span>
+  --radius-full: 999px; <span class="kv">/* tags, search, FAB */</span>
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+  --font-source: "IBM Plex Mono", ui-monospace, monospace;
+}</pre>
+    </section>
+
+    <footer>
+      Noted Field Guide — Material 3 Expressive, applied. Seeds: ink #primary · moss #secondary · ember #tertiary · paper #neutral · alert #error.
+    </footer>
+  </main>
+</div>
+
+<script>
+  // scroll-spy for the tab index
+  (function(){
+    var links = Array.from(document.querySelectorAll('.tabs a'));
+    var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+    function onScroll(){
+      var y = window.scrollY + window.innerHeight * 0.3;
+      var current = sections[0];
+      sections.forEach(function(s, i){ if(s && s.offsetTop <= y) current = s; });
+      links.forEach(function(a){ a.classList.toggle('active', sections[links.indexOf(a)] === current); });
+    }
+    document.addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
+  })();
+
+  // generate a few Material-shapes-style blobs as clip-path polygons (parametric, not traced)
+  (function(){
+    function scallop(points, r1, r2, rot){
+      var n = points * 2, pts = [];
+      for (var i = 0; i < n; i++){
+        var r = (i % 2 === 0) ? r1 : r2;
+        var a = (Math.PI * 2 * i / n) + rot;
+        var x = 50 + r * Math.cos(a), y = 50 + r * Math.sin(a);
+        pts.push(x.toFixed(1) + '% ' + y.toFixed(1) + '%');
+      }
+      return 'polygon(' + pts.join(',') + ')';
+    }
+    var specs = [
+      {n:8, r1:46, r2:36, rot:0, name:'Cookie (8)', color:'var(--tertiary)'},
+      {n:12,r1:47, r2:41, rot:0.13, name:'Sunny (12)', color:'var(--primary)'},
+      {n:5, r1:46, r2:30, rot:0.3, name:'Clover-ish (5)', color:'var(--secondary)'},
+      {n:6, r1:44, r2:33, rot:0.05, name:'Bun (6)', color:'var(--tertiary)'}
+    ];
+    var row = document.getElementById('blobRow');
+    specs.forEach(function(s){
+      var fig = document.createElement('figure');
+      var div = document.createElement('div');
+      div.className = 'blob';
+      div.style.background = s.color;
+      div.style.clipPath = scallop(s.n, s.r1, s.r2, s.rot);
+      var cap = document.createElement('figcaption');
+      cap.textContent = s.name;
+      fig.appendChild(div); fig.appendChild(cap);
+      row.appendChild(fig);
+    });
+  })();
+
+  // light/dark preview toggle scoped to the component mockup only
+  (function(){
+    var frame = document.getElementById('appFrame');
+    var btns = document.querySelectorAll('.demo-toggle button');
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        btns.forEach(function(x){ x.classList.remove('on'); });
+        b.classList.add('on');
+        frame.classList.toggle('mock-dark', b.dataset.mode === 'dark');
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
