@@ -6,33 +6,33 @@ Milestones in build order. Each one should leave you with something you can actu
 
 One naming note before you start: the `notes/` folder in the project directory is reserved for project docs (this roadmap, the spec, the field guide). Give the app's own local-dev vault directory a different name — `vault/` or `.dev-notes/` — so the two never collide.
 
-## M0 — Repo scaffolding
+## M0 — Repo scaffolding ✅ (done 2026-09-05)
 
-- [ ] `git init`, `.gitignore` (Deno cache, `.env`, local vault dir)
-- [ ] `deno.json` — tasks for `dev`/`start`/`test`, compiler options, and the import map (JSR first, `npm:` fallback — `techstack.md`)
-- [ ] Accept `deno fmt`/`deno lint` defaults, no custom config (`techstack.md`)
-- [ ] Pick and create the local dev vault path (not `notes/` — see above)
-- [ ] `main.ts` stub: reads env, starts `Deno.serve`, returns a placeholder response
+- [x] `git init`, `.gitignore` (Deno cache, `.env`, local vault dir)
+- [x] `deno.json` — tasks for `dev`/`start`/`test`, compiler options, and the import map (JSR first, `npm:` fallback — `techstack.md`)
+- [x] Accept `deno fmt`/`deno lint` defaults, no custom config (`techstack.md`) — one exception: `notes/` excluded (prose docs)
+- [x] Pick and create the local dev vault path (not `notes/` — see above) → `./vault`, gitignored
+- [x] `main.ts` stub: reads env, starts `Deno.serve`, returns a placeholder response
 
-## M1 — Server core: File Store + Notes API (no linking yet)
+## M1 — Server core: File Store + Notes API (no linking yet) ✅ (done 2026-09-05)
 
-- [ ] Config Loader — `NOTES_DIR`, `PORT`, `AUTH_TOKEN` from env; fail fast at boot if `NOTES_DIR` doesn't exist
-- [ ] File Store — `readDir`/`readTextFile`/`writeTextFile` wrappers, slugify + collision-suffix logic
-- [ ] Frontmatter Parser — parse and serialize the YAML block (spec.md §4)
-- [ ] Notes API Handlers — `GET /api/notes`, `GET /api/notes/:filename`, `POST`, `PUT`, `DELETE` (link parsing comes in M3)
-- [ ] Auth Middleware — single shared token check on every request
-- [ ] HTTP Router — raw `Deno.serve` + a hand-rolled router, no framework (`techstack.md`), wiring all of the above together
-- [ ] `deno test` covering the full CRUD cycle against a real directory of files — this is the e2e test for this milestone's goal, not a one-off manual `curl` check
+- [x] Config Loader — `NOTES_DIR`, `PORT`, `AUTH_TOKEN` from env; fail fast at boot if `NOTES_DIR` doesn't exist
+- [x] File Store — `readDir`/`readTextFile`/`writeTextFile` wrappers, slugify + collision-suffix logic (atomic writes: temp + rename)
+- [x] Frontmatter Parser — parse and serialize the YAML block (spec.md §4); tolerates missing/partial/malformed
+- [x] Notes API Handlers — `GET /api/notes`, `GET /api/notes/:filename`, `POST`, `PUT`, `DELETE` (link parsing comes in M3)
+- [x] Auth Middleware — single shared token check on every request (length-constant compare)
+- [x] HTTP Router — raw `Deno.serve` + a hand-rolled router, no framework (`techstack.md`), wiring all of the above together
+- [x] `deno test` covering the full CRUD cycle against a real directory of files — this is the e2e test for this milestone's goal, not a one-off manual `curl` check
 
-**Open decision to make here:** auth model (spec.md §11) — a plaintext shared token is fine while this stays on your home network; revisit before it's ever exposed further.
+**Open decision made here:** auth model (spec.md §11) — shipping the plaintext shared token for the home network; documented in spec.md §11, revisit before wider exposure.
 
-## M2 — Minimal client — v0 done here
+## M2 — Minimal client — v0 done here ✅ (done 2026-09-05)
 
-- [ ] Static app shell — plain TS + native Web Components, served directly as ES modules via the import map, no bundler, no framework (`techstack.md`)
-- [ ] Note List View — fetch `/api/notes`, render the list
-- [ ] Editor View — plain `<textarea>` bound to save (CodeMirror comes in M4), calls `POST`/`PUT`
-- [ ] API Client — the one fetch wrapper every view goes through
-- [ ] Playwright e2e test: create, edit, delete a note from a real browser session, confirm the file on disk matches
+- [x] Static app shell — native Web Components, served directly as ES modules, no bundler, no framework (`techstack.md`). Authored as plain `.js` + `// @ts-check` (not `.ts`) — decision in `system-overview.md`
+- [x] Note List View — fetch `/api/notes`, render the list
+- [x] Editor View — plain `<textarea>` bound to save (CodeMirror comes in M4), calls `POST`/`PUT`
+- [x] API Client — the one fetch wrapper every view goes through
+- [x] Playwright e2e test: create, edit, delete a note from a real browser session, confirm the file on disk matches
 
 **✅ v0 milestone** — the client ↔ server ↔ filesystem loop is proven end to end.
 

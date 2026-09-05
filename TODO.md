@@ -4,17 +4,45 @@ Granular task list, one level finer than `notes/roadmap.md`. Checkbox format
 matches the roadmap. Finished tasks move under a dated `## Done` heading (newest
 first) per `notes/development.md` §5 — they are not deleted.
 
-## M2 — Minimal client (next)
+## M3 — Wikilinks & backlinks (next)
 
-- [ ] Static app shell — plain TS + native Web Components, ES modules via import
-      map, no bundler
-- [ ] Note List View — fetch `/api/notes`, render the list
-- [ ] Editor View — `<textarea>` bound to save, calls `POST`/`PUT`
-- [ ] API Client — the one fetch wrapper every view goes through
-- [ ] Playwright e2e: create, edit, delete a note from a real browser; confirm
-      the file on disk matches
+- [ ] Markdown/Wikilink Parser — `markdown-it` (JSR-first) + a custom rule
+      extracting `[[links]]`; resolved vs. unresolved rendering
+- [ ] In-Memory Index — built at boot by scanning every file; backlink graph +
+      tag map; updated incrementally on write
+- [ ] `GET /api/notes/:filename/backlinks`
+- [ ] Backlinks Panel component in the client
+- [ ] Rename handling — rewrite incoming `[[links]]` when a filename changes
+- [ ] Delete handling — mark dependents' links unresolved, don't silently break
+- [ ] `deno test` + Playwright: link resolves; stays unresolved until target
+      exists; rename rewrites incoming links; delete flags dependents
 
 ## Done
+
+### 2026-09-05 — M2: Minimal client (v0 milestone)
+
+- [x] **Static app shell** — `public/index.html` + `public/app/*.js` served
+      directly as ES modules (no bundler). `src/static.ts` wraps `@std/http`'s
+      `serveDir`; the router serves `/api/*` (auth-gated) vs. everything else
+      (the public shell). Client authored as plain `.js` + `// @ts-check` +
+      JSDoc — see the decision note in `system-overview.md` / `spec.md` §11.
+- [x] **App Shell / Router** (`public/app/app-shell.js`) — `<app-shell>` custom
+      element; hash routing (`#/`, `#/new`, `#/note/<filename>`); owns the top
+      bar, the auth-token field (persisted to `localStorage`), and the status
+      line; the only component that calls the API Client
+- [x] **Note List View** (`public/app/note-list.js`) — `<note-list>`, pure
+      render from a `notes` array; emits `note-new` / `note-open` /
+      `note-delete`
+- [x] **Editor View** (`public/app/note-editor.js`) — `<note-editor>`, title
+      input + `<textarea>` (CodeMirror is M4); emits `editor-save` /
+      `editor-back` / `editor-delete`
+- [x] **API Client** (`public/app/api.js`) — the one `fetch` wrapper; attaches
+      the bearer token; `ApiError` with status; `list/get/create/update/delete`
+- [x] **Playwright e2e** (`tests/e2e/client-crud.test.ts`) — real Chrome
+      (`channel: "chrome"`, no browser download), in-process server on a temp
+      dir: create → edit → delete through the UI, asserting the `.md` file on
+      disk at each step. Green alongside the 7 M1 API tests; `check` / `lint` /
+      `fmt` clean.
 
 ### 2026-09-05 — M1: Server core (File Store + Notes API)
 

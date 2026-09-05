@@ -1,0 +1,141 @@
+/*
+ * Minimal M2 styling — legibility only. The Material 3 Expressive token set
+ * (spec.md §12) lands in M5; nothing here is meant to survive that.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font: 16px/1.5 system-ui, sans-serif;
+  color: #1a1a1a;
+  background: #fafafa;
+}
+
+app-shell {
+  display: block;
+  max-width: 45rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.shell-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.shell-header h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.shell-header input {
+  font: inherit;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.shell-status {
+  min-height: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: #b00020;
+}
+
+button {
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+button.primary {
+  background: #1a56db;
+  border-color: #1a56db;
+  color: #fff;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.note-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.note-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.note-list li .title {
+  flex: 1;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 1rem;
+}
+
+.note-list li .title:hover {
+  text-decoration: underline;
+}
+
+.note-list .tags {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.note-list .empty {
+  color: #666;
+  padding: 1rem 0;
+}
+
+.note-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.note-editor input.title {
+  font: inherit;
+  font-size: 1.1rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.note-editor textarea {
+  font: 15px/1.6 ui-monospace, monospace;
+  min-height: 20rem;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.note-editor .actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.note-editor .actions .spacer {
+  flex: 1;
+}

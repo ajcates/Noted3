@@ -129,6 +129,7 @@ Writes should be idempotent enough to support the offline sync-queue replaying t
 - **Existing notes migration**: if you already have markdown notes elsewhere you want to point this at, the frontmatter schema in §4 should be checked against what you already have (or the server should tolerate missing/partial frontmatter and backfill it on first write).
   - _Partly handled (2026-09-05, during M1):_ the Frontmatter Parser (`src/frontmatter.ts`) tolerates missing / partial / malformed frontmatter — it backfills `title` from the filename and `created`/`updated` from the current time on read, and normalizes `tags` to a string array. A read does not rewrite the file; the backfilled values are persisted on the next `PUT`. Still open: sanity-check against a real existing vault before M7.
 - **Client framework**: defaulted to plain JS/Web Components per your past PWA work; flagged Preact as a fallback if the editor + sync-queue state gets hard to manage by hand.
+  - _Resolved for M2 (2026-09-05):_ plain **`.js`** ES modules (not `.ts`) + `// @ts-check` + JSDoc, native Web Components, no bundler/transpile — the browser loads the exact file on disk. `deno check`/`lint`/`fmt` still cover it. Rationale + escalation paths (on-the-fly transpile, or Preact) in `system-overview.md` "Client module map".
 
 ## 12. Design system — Material 3 Expressive
 

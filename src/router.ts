@@ -9,6 +9,7 @@
 
 import { ApiError, type Config } from "./types.ts";
 import { isAuthorized } from "./auth.ts";
+import { serveStatic } from "./static.ts";
 import {
   createNote,
   deleteNote,
@@ -17,6 +18,14 @@ import {
   listNotes,
   updateNote,
 } from "./handlers.ts";
+
+export interface AppOptions {
+  /**
+   * Directory to serve the client app shell from. When omitted, non-API
+   * requests get a 404 — the M1 API tests run without a client.
+   */
+  readonly staticDir?: string;
+}
 
 interface Route {
   readonly method: string;
@@ -33,19 +42,31 @@ const ROUTES: readonly Route[] = [
   route("DELETE", "/api/notes/:filename", deleteNote),
 ];
 
-/** Build the request handler for `Deno.serve`. Pure given `config`. */
-export function createApp(config: Config): (req: Request) => Promise<Response> {
+/** Build the request handler for `Deno.serve`. Pure given `config` + `options`. */
+export function createApp(
+  config: Config,
+  options: AppOptions = {},
+): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
     try {
+      const { pathname } = new URL(req.url);
+
+      // Everything under /api/ is the JSON API and is auth-gated. Everything
+      // else is the (public) client app shell.
+      if (!isApiPath(pathname)) {
+        if (options.staticDir !== undefined && req.method === "GET") {
+          return await serveStatic(req, options.staticDir);
+        }
+        return errorResponse(new ApiError(404, "not found"));
+      }
+
       if (!isAuthorized(req, config.authToken)) {
         return errorResponse(
           new ApiError(401, "missing or invalid bearer token"),
         );
       }
 
-      const { pathname } = new URL(req.url);
       const parts = splitPath(pathname);
-
       let matchedPath = false;
       for (const r of ROUTES) {
         const params = matchSegments(r.segments, parts);
@@ -67,6 +88,10 @@ export function createApp(config: Config): (req: Request) => Promise<Response> {
       return errorResponse(new ApiError(500, "internal server error"));
     }
   };
+}
+
+function isApiPath(pathname: string): boolean {
+  return pathname === "/api" || pathname.startsWith("/api/");
 }
 
 function route(method: string, path: string, handler: Handler): Route {

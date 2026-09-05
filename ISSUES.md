@@ -22,6 +22,19 @@ gaps into `spec.md` §11.
 - 2026-09-05 — `PUT /api/notes/:filename` has no conflict check yet — it always
   overwrites and bumps `updated`. The client-supplied `updated` / conflict flow
   is M6 (`spec.md` §7).
+- 2026-09-05 (M2) — After creating a note the "Created." status flashes and is
+  immediately cleared by the route change to the new note. Cosmetic; fix when
+  the status/toast UI gets real attention (M5).
+- 2026-09-05 (M2) — The client edit flow has no dirty-state guard: navigating
+  away (Back, or the browser) silently drops unsaved textarea changes. Fine for
+  a textarea in M2; revisit with the CodeMirror editor in M4.
+- 2026-09-05 (M2) — Auth token is entered in a plain field and kept in
+  `localStorage`; there's no real "log in" step and no way to clear it from the
+  UI. Acceptable for a single-user home tool; reconsider alongside the auth
+  rework before wider exposure.
+- 2026-09-05 (M2) — Playwright e2e depends on a system Chrome install
+  (`channel: "chrome"`) since the version-matched browser binary isn't
+  downloaded. If Chrome isn't present, run `npx playwright install chromium`.
 
 ## Closed
 
