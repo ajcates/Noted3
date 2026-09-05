@@ -6,11 +6,15 @@ gaps into `spec.md` §11.
 
 ## Open
 
-- 2026-09-05 — Deno is not installed on the dev machine; `deno task` cannot run yet. M0 scaffolding is written but unverified until Deno is present.
-- 2026-09-05 — Auth is a plaintext shared token (`spec.md` §11). Acceptable on a home network; revisit before any wider exposure.
-- 2026-09-05 — Conflict-resolution UX (`spec.md` §7, §11) needs its own design pass before M6.
-- 2026-09-05 — Existing-notes migration: frontmatter parser must tolerate missing/partial frontmatter and backfill on first write (`spec.md` §11).
+- 2026-09-05 — Auth is a plaintext shared token (`spec.md` §11). Acceptable on a
+  home network; revisit before any wider exposure.
+- 2026-09-05 — Conflict-resolution UX (`spec.md` §7, §11) needs its own design
+  pass before M6.
+- 2026-09-05 — Existing-notes migration: frontmatter parser must tolerate
+  missing/partial frontmatter and backfill on first write (`spec.md` §11).
 
 ## Closed
 
-_(none yet)_
+- 2026-09-05 — Deno not installed on the dev machine. **Closed 2026-09-05**:
+  installed Deno 2.9.6 via the official install script to
+  `C:\Users\ajcates\.deno\bin`.
