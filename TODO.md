@@ -4,20 +4,40 @@ Granular task list, one level finer than `notes/roadmap.md`. Checkbox format
 matches the roadmap. Finished tasks move under a dated `## Done` heading (newest
 first) per `notes/development.md` §5 — they are not deleted.
 
-## M4 — Real editor (next)
+## M5 — Design system integration (next)
 
-- [ ] Swap the textarea for CodeMirror 6 + `@codemirror/lang-markdown` (ESM, no
-      bundler)
-- [ ] Inline markdown-syntax de-emphasis (spec.md §6)
-- [ ] Wikilink Autocomplete — `[[` trigger, title-filtered dropdown, "create new
-      note" action
-- [ ] Search View + `GET /api/search` + Search Module (naive substring)
-- [ ] Tag Browser — `GET /api/tags`, `GET /api/tags/:tag` (index already builds
-      the tag map)
-- [ ] Playwright e2e for the autocomplete flow (trigger, filter, select, "create
-      new")
+- [ ] Port the Material 3 Expressive token set (spec.md §12) into the real
+      stylesheet — plain CSS custom properties, no preprocessor
+- [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — no
+      hardcoded colours/radii anywhere
+- [ ] Light/dark via `prefers-color-scheme`
+- [ ] Spot-check contrast against real note content
 
 ## Done
+
+### 2026-09-06 — M4: Real editor (CodeMirror), search, tags
+
+- [x] **CodeMirror 6 editor** (`public/app/codemirror-setup.js`) — markdown
+      language + highlight style; vendored ESM under `public/vendor/codemirror/`
+      (`scripts/vendor-codemirror.ts`), loaded via the import map in
+      `index.html`; `deno.json` maps the same names to npm for `deno check`.
+- [x] **Syntax de-emphasis** (spec.md §6) — a `ViewPlugin` hides markdown
+      punctuation (`#`, `*`, `` ` ``, `>`, bullets) on every line except the
+      cursor's, where it dims. `[[wikilinks]]` get a colour accent.
+- [x] **Wikilink Autocomplete** — `[[` opens a title-filtered list (query starts
+      after `[[`); a `Create "…"` entry inserts the link and fires
+      `editor-create-link`, which the App Shell turns into a `POST /api/notes`.
+- [x] **Search** — `src/search.ts` (`searchNotes`, pure over an index snapshot),
+      `NoteIndex.search`, `GET /api/search?q=`, `<search-view>` (debounced),
+      route `#/search`.
+- [x] **Tags** — `NoteIndex.tagCounts`/`notesForTag`, `GET /api/tags`,
+      `GET /api/tags/:tag`, `<tag-browser>` (all-tags + per-tag), routes
+      `#/tags` and `#/tags/<tag>`; header nav added.
+- [x] **Tests** — `tests/e2e/search-tags.test.ts` (3 API cases) +
+      `tests/e2e/wikilink-autocomplete.test.ts` (Playwright: pick existing
+      title, "Create" path with on-disk assertion). M2/M3 browser tests updated
+      to drive CodeMirror via `tests/e2e/_support.ts`. 20/20 green;
+      `check`/`lint`/`fmt` clean.
 
 ### 2026-09-06 — M3: Wikilinks & backlinks
 

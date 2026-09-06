@@ -47,6 +47,8 @@ export class ApiError extends Error {
  * @typedef {{ target: string, resolved: boolean, filename: string | null, title: string | null }} OutgoingLink
  * @typedef {NoteSummary & { created: string, body: string, links: OutgoingLink[], html: string }} NoteDetail
  * @typedef {{ filename: string, title: string, snippet: string }} Backlink
+ * @typedef {NoteSummary & { snippet: string }} SearchResult
+ * @typedef {{ tag: string, count: number }} TagCount
  */
 
 /**
@@ -137,5 +139,30 @@ export async function deleteNote(filename) {
 export async function getBacklinks(filename) {
   return /** @type {Backlink[]} */ (
     await request(`/api/notes/${encodeURIComponent(filename)}/backlinks`)
+  );
+}
+
+/**
+ * @param {string} q
+ * @returns {Promise<SearchResult[]>}
+ */
+export async function search(q) {
+  return /** @type {SearchResult[]} */ (
+    await request(`/api/search?q=${encodeURIComponent(q)}`)
+  );
+}
+
+/** @returns {Promise<TagCount[]>} */
+export async function getTags() {
+  return /** @type {TagCount[]} */ (await request("/api/tags"));
+}
+
+/**
+ * @param {string} tag
+ * @returns {Promise<NoteSummary[]>}
+ */
+export async function getNotesByTag(tag) {
+  return /** @type {NoteSummary[]} */ (
+    await request(`/api/tags/${encodeURIComponent(tag)}`)
   );
 }

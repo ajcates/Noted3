@@ -2,20 +2,24 @@
 /**
  * App Shell / Router (system-overview.md §1).
  *
- * Owns the top bar (title + auth-token field + status line) and swaps the
- * active view based on `location.hash`:
- *   #/                     → note list
- *   #/new                  → editor for a new note
- *   #/note/<filename>      → editor for an existing note
+ * Owns the top bar (title + nav + auth-token field + status line) and swaps
+ * the active view based on `location.hash`:
+ *   #/                 → note list
+ *   #/new              → editor for a new note
+ *   #/note/<filename>  → editor for an existing note (+ backlinks panel)
+ *   #/search           → search view
+ *   #/tags             → all tags
+ *   #/tags/<tag>       → notes with that tag
  *
- * It is the only component that calls the API Client: child views emit
- * intent events, the shell performs the call and re-routes. Thin, mostly
- * delegates (system-overview.md §1).
+ * It is the only component that calls the API Client: child views emit intent
+ * events, the shell performs the call and re-routes.
  */
 
 import * as api from "./api.js";
 import { NoteList } from "./note-list.js";
 import { NoteEditor } from "./note-editor.js";
+import { SearchView } from "./search-view.js";
+import { TagBrowser } from "./tag-browser.js";
 
 export class AppShell extends HTMLElement {
   /** @type {HTMLElement} */
@@ -24,6 +28,10 @@ export class AppShell extends HTMLElement {
   #status = document.createElement("div");
   /** @type {HTMLInputElement} */
   #tokenInput = document.createElement("input");
+  /** @type {string[]} — cached note titles for `[[` autocomplete */
+  #noteTitles = [];
+  /** @type {string} — last search query, kept across navigation */
+  #searchQuery = "";
 
   connectedCallback() {
     this.#renderChrome();
@@ -48,6 +56,19 @@ export class AppShell extends HTMLElement {
       (e) => this.#setStatus(detailStr(e, "message"), true),
     );
     this.addEventListener("editor-save", (e) => this.#saveNote(e));
+    this.addEventListener(
+      "editor-create-link",
+      (e) => this.#createLinkedNote(detailStr(e, "title")),
+    );
+    this.addEventListener(
+      "search-query",
+      (e) => this.#runSearch(detailStr(e, "q")),
+    );
+    this.addEventListener(
+      "tag-open",
+      (e) => this.#go(`#/tags/${encodeURIComponent(detailStr(e, "tag"))}`),
+    );
+    this.addEventListener("tags-all", () => this.#go("#/tags"));
 
     if (location.hash === "") location.hash = "#/";
     else this.#route();
@@ -66,6 +87,19 @@ export class AppShell extends HTMLElement {
     const h1 = document.createElement("h1");
     h1.textContent = "noted";
 
+    const nav = document.createElement("nav");
+    /** @type {Array<[string, string]>} */
+    const navLinks = [["Notes", "#/"], ["Search", "#/search"], [
+      "Tags",
+      "#/tags",
+    ]];
+    for (const [label, hash] of navLinks) {
+      const a = document.createElement("a");
+      a.textContent = label;
+      a.href = hash;
+      nav.append(a);
+    }
+
     const label = document.createElement("label");
     label.textContent = "token ";
     this.#tokenInput.type = "password";
@@ -78,7 +112,7 @@ export class AppShell extends HTMLElement {
     });
     label.append(this.#tokenInput);
 
-    header.append(h1, label);
+    header.append(h1, nav, label);
     this.#status.className = "shell-status";
 
     this.replaceChildren(header, this.#status, this.#main);
@@ -96,26 +130,64 @@ export class AppShell extends HTMLElement {
 
     try {
       if (hash === "/new") {
-        this.#show(makeEditor(null));
+        await this.#refreshTitles();
+        this.#show(makeEditor(null, [], this.#noteTitles));
         return;
       }
+
       const noteMatch = /^\/note\/(.+)$/.exec(hash);
       if (noteMatch) {
         const filename = decodeURIComponent(noteMatch[1] ?? "");
-        const [note, backlinks] = await Promise.all([
+        const [note, backlinks, summaries] = await Promise.all([
           api.getNote(filename),
           api.getBacklinks(filename),
+          api.listNotes(),
         ]);
-        this.#show(makeEditor(note, backlinks));
+        this.#noteTitles = summaries.map((s) => s.title);
+        this.#show(makeEditor(note, backlinks, this.#noteTitles));
         return;
       }
-      // default: the list
+
+      if (hash === "/search") {
+        const view = new SearchView();
+        view.query = this.#searchQuery;
+        this.#show(view);
+        if (this.#searchQuery.trim() !== "") {
+          view.results = await api.search(this.#searchQuery);
+        }
+        return;
+      }
+
+      const tagMatch = /^\/tags\/(.+)$/.exec(hash);
+      if (tagMatch) {
+        const tag = decodeURIComponent(tagMatch[1] ?? "");
+        const notes = await api.getNotesByTag(tag);
+        const view = new TagBrowser();
+        view.forTag = { tag, notes };
+        this.#show(view);
+        return;
+      }
+
+      if (hash === "/tags") {
+        const view = new TagBrowser();
+        view.tags = await api.getTags();
+        this.#show(view);
+        return;
+      }
+
+      // default: the note list
+      const summaries = await api.listNotes();
+      this.#noteTitles = summaries.map((s) => s.title);
       const list = new NoteList();
-      list.notes = await api.listNotes();
+      list.notes = summaries;
       this.#show(list);
     } catch (err) {
       this.#reportError(err);
     }
+  }
+
+  async #refreshTitles() {
+    this.#noteTitles = (await api.listNotes()).map((s) => s.title);
   }
 
   /** @param {HTMLElement} view */
@@ -137,10 +209,37 @@ export class AppShell extends HTMLElement {
         this.#go(`#/note/${encodeURIComponent(created.filename)}`);
       } else {
         const updated = await api.updateNote(filename, { title, body });
-        const backlinks = await api.getBacklinks(filename);
-        this.#show(makeEditor(updated, backlinks));
+        const [backlinks, summaries] = await Promise.all([
+          api.getBacklinks(filename),
+          api.listNotes(),
+        ]);
+        this.#noteTitles = summaries.map((s) => s.title);
+        this.#show(makeEditor(updated, backlinks, this.#noteTitles));
         this.#setStatus("Saved.", false);
       }
+    } catch (err) {
+      this.#reportError(err);
+    }
+  }
+
+  /** @param {string} title */
+  async #createLinkedNote(title) {
+    try {
+      await api.createNote({ title });
+      await this.#refreshTitles();
+      this.#setStatus(`Created linked note "${title}".`, false);
+    } catch (err) {
+      this.#reportError(err);
+    }
+  }
+
+  /** @param {string} q */
+  async #runSearch(q) {
+    this.#searchQuery = q;
+    const view = this.#main.querySelector("search-view");
+    if (!(view instanceof SearchView)) return;
+    try {
+      view.results = q.trim() === "" ? [] : await api.search(q);
     } catch (err) {
       this.#reportError(err);
     }
@@ -183,11 +282,13 @@ export class AppShell extends HTMLElement {
 /**
  * @param {import("./api.js").NoteDetail | null} note
  * @param {import("./api.js").Backlink[]} [backlinks]
+ * @param {string[]} [noteTitles]
  */
-function makeEditor(note, backlinks = []) {
+function makeEditor(note, backlinks = [], noteTitles = []) {
   const editor = new NoteEditor();
   editor.note = note;
   editor.backlinks = backlinks;
+  editor.noteTitles = noteTitles;
   return editor;
 }
 

@@ -14,6 +14,7 @@ import { fromFileUrl } from "@std/path";
 import { type Browser, chromium } from "playwright";
 import { createApp } from "../../src/router.ts";
 import { NoteIndex } from "../../src/note-index.ts";
+import { fillEditor, readEditor } from "./_support.ts";
 
 const TOKEN = "test-token";
 const STATIC_DIR = fromFileUrl(new URL("../../public/", import.meta.url));
@@ -49,7 +50,7 @@ Deno.test({
       // Note A links to B; B does not exist yet.
       await page.getByRole("button", { name: "New note" }).click();
       await page.locator("input.title").fill("Alpha");
-      await page.locator("textarea").fill("See [[Beta]] for the plan.");
+      await fillEditor(page, "See [[Beta]] for the plan.");
       await page.getByRole("button", { name: "Save" }).click();
       await page.locator("button.delete").waitFor();
 
@@ -57,7 +58,7 @@ Deno.test({
       await page.getByRole("button", { name: "Back" }).click();
       await page.getByRole("button", { name: "New note" }).click();
       await page.locator("input.title").fill("Beta");
-      await page.locator("textarea").fill("The beta plan.");
+      await fillEditor(page, "The beta plan.");
       await page.getByRole("button", { name: "Save" }).click();
       await page.locator("button.delete").waitFor();
 
@@ -73,10 +74,7 @@ Deno.test({
         (await page.locator("input.title").inputValue()) === "Alpha",
         "editor should now show Alpha",
       );
-      assertStringIncludes(
-        await page.locator("textarea").inputValue(),
-        "[[Beta]]",
-      );
+      assertStringIncludes(await readEditor(page), "[[Beta]]");
     } finally {
       await browser?.close();
       await server.shutdown();

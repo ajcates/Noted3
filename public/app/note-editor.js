@@ -2,15 +2,17 @@
 /**
  * Editor View (system-overview.md §1).
  *
- * A plain title input + `<textarea>` for the body (CodeMirror replaces the
- * textarea in M4). Owns no persistence — it emits and the App Shell calls the
+ * A title `<input>` plus a CodeMirror 6 instance for the body (M4 — replaces
+ * the M2 textarea). Owns no persistence: it emits and the App Shell calls the
  * API:
  *   - `editor-back`
- *   - `editor-save`   — `detail: { filename: string | null, title, body }`
- *                       (`filename` is `null` for a new note)
- *   - `editor-delete` — `detail: { filename }`
+ *   - `editor-save`        — `detail: { filename: string | null, title, body }`
+ *   - `editor-delete`      — `detail: { filename }`
+ *   - `editor-create-link` — `detail: { title }` (autocomplete "Create …")
+ *   - `editor-error`       — `detail: { message }`
  */
 
+import { createMarkdownEditor } from "./codemirror-setup.js";
 import { BacklinksPanel } from "./backlinks-panel.js";
 
 /** @typedef {import("./api.js").NoteDetail} NoteDetail */
@@ -21,11 +23,13 @@ export class NoteEditor extends HTMLElement {
   #note = null;
   /** @type {Backlink[]} */
   #backlinks = [];
+  /** @type {string[]} — note titles offered by `[[` autocomplete */
+  #noteTitles = [];
 
   /** @type {HTMLInputElement | null} */
   #titleInput = null;
-  /** @type {HTMLTextAreaElement | null} */
-  #bodyInput = null;
+  /** @type {ReturnType<typeof createMarkdownEditor> | null} */
+  #editor = null;
   /** @type {BacklinksPanel | null} */
   #panel = null;
 
@@ -45,12 +49,25 @@ export class NoteEditor extends HTMLElement {
     if (this.#panel) this.#panel.backlinks = value;
   }
 
+  /** @param {string[]} value */
+  set noteTitles(value) {
+    this.#noteTitles = value;
+  }
+
   connectedCallback() {
     this.classList.add("note-editor");
-    this.#render();
+    // The App Shell sets `.note` before appending us, which already rendered.
+    if (this.childElementCount === 0) this.#render();
+  }
+
+  disconnectedCallback() {
+    this.#editor?.destroy();
+    this.#editor = null;
   }
 
   #render() {
+    this.#editor?.destroy();
+    this.#editor = null;
     this.replaceChildren();
     const isNew = this.#note === null;
 
@@ -61,10 +78,8 @@ export class NoteEditor extends HTMLElement {
     title.value = this.#note?.title ?? "";
     this.#titleInput = title;
 
-    const body = document.createElement("textarea");
-    body.placeholder = "Write in markdown…";
-    body.value = this.#note?.body ?? "";
-    this.#bodyInput = body;
+    const host = document.createElement("div");
+    host.className = "cm-host";
 
     const actions = document.createElement("div");
     actions.className = "actions";
@@ -95,9 +110,15 @@ export class NoteEditor extends HTMLElement {
       actions.append(spacer, del);
     }
 
-    this.append(title, body, actions);
+    this.append(title, host, actions);
 
-    // Backlinks only make sense for a note that exists.
+    this.#editor = createMarkdownEditor({
+      parent: host,
+      doc: this.#note?.body ?? "",
+      getNoteTitles: () => this.#noteTitles,
+      onCreateNote: (t) => this.#emit("editor-create-link", { title: t }),
+    });
+
     if (!isNew) {
       const panel = new BacklinksPanel();
       panel.backlinks = this.#backlinks;
@@ -110,7 +131,7 @@ export class NoteEditor extends HTMLElement {
 
   #save() {
     const title = this.#titleInput?.value.trim() ?? "";
-    const body = this.#bodyInput?.value ?? "";
+    const body = this.#editor?.getValue() ?? "";
     if (title === "") {
       this.#emit("editor-error", { message: "A note needs a title." });
       this.#titleInput?.focus();

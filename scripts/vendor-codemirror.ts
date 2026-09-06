@@ -71,6 +71,9 @@ const ENTRIES: Record<string, { pkg: string; external: string[] }> = {
 
 await Deno.mkdir(OUT_DIR, { recursive: true });
 
+/** name → resolved version, for the VENDORED.txt record. */
+const resolved: Record<string, string> = {};
+
 for (const [name, { pkg, external }] of Object.entries(ENTRIES)) {
   const params = new URLSearchParams({ bundle: "", target: TARGET });
   if (external.length) params.set("external", external.join(","));
@@ -83,14 +86,24 @@ for (const [name, { pkg, external }] of Object.entries(ENTRIES)) {
       `no inner bundle URL in esm.sh response for ${pkg}:\n${outer}`,
     );
   }
-  const code = await (await fetchOk(`https://esm.sh${innerPath}`)).text();
+  let code = await (await fetchOk(`https://esm.sh${innerPath}`)).text();
+
+  // esm.sh rewrites @lezer/lr's `process.env` debug check to an import of
+  // "/node/process.mjs"; point it at a local stub instead so nothing 404s.
+  code = code.replaceAll('"/node/process.mjs"', '"./node-process-stub.js"');
 
   await Deno.writeTextFile(new URL(`${name}.js`, OUT_DIR), code);
   const version = innerPath.match(/@([\d.]+)\//)?.[1] ?? "?";
-  console.log(
-    `${name}.js  <-  ${pkg.split("@")[0]}@${version}  (${code.length} bytes)`,
-  );
+  resolved[name] = `${pkg.replace(/@[^@/]*$/, "")}@${version}`;
+  console.log(`${name}.js  <-  ${resolved[name]}  (${code.length} bytes)`);
 }
+
+const record =
+  `# Vendored by scripts/vendor-codemirror.ts on ${
+    new Date().toISOString().slice(0, 10)
+  }\n` +
+  Object.entries(resolved).map(([n, v]) => `${n}.js\t${v}`).join("\n") + "\n";
+await Deno.writeTextFile(new URL("VENDORED.txt", OUT_DIR), record);
 
 console.log(
   `\nvendored ${

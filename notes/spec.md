@@ -80,8 +80,8 @@ REST/JSON over the Deno server. Illustrative, not final:
 - `PATCH /api/notes/:filename` `{filename: "new-name.md"}` — **rename (M3).** Moves the file; rewrites incoming `[[links]]` that referenced it *by filename* in every backlinking note (title-form links untouched); 409 if the new name is taken.
 - `DELETE /api/notes/:filename` — delete; the index drops the entry and dependents' links become `resolved: false` on their next fetch (no server push — see §2 / system-overview.md "Deleting a note")
 - `GET /api/notes/:filename/backlinks` — notes that link to this one: `[{filename, title, snippet}]`, 404 if the note isn't indexed
-- `GET /api/search?q=` — title/body search _(M4)_
-- `GET /api/tags` / `GET /api/tags/:tag` — tag list / notes with a tag _(M4; the index already maintains the tag map)_
+- `GET /api/search?q=` — naive case-insensitive title/body substring search **(M4)**; `[{filename,title,tags,updated,snippet}]`, title hits first, `[]` for a blank query
+- `GET /api/tags` **(M4)** → `[{tag,count}]`; `GET /api/tags/:tag` **(M4)** → `[NoteSummary]` (empty array if none)
 - `GET /api/manifest.webmanifest`, service worker at `/sw.js` _(M6)_
 
 **Wikilink resolution (M3), in order:** target as a filename (`name` or `name.md`) → exact case-insensitive title match → `slugify(target).md`. Duplicate titles: first by sorted filename wins (see ISSUES.md).
@@ -91,7 +91,9 @@ Writes should be idempotent enough to support the offline sync-queue replaying t
 ## 6. Editor UX
 
 - CodeMirror 6 with `@codemirror/lang-markdown`, styled so markdown syntax (`**bold**`, `# heading`, link brackets) is visually de-emphasized or hidden when the cursor isn't on that line — "WYSIWYG-ish," not a raw textarea and not a fully separate preview pane.
+  - _Built in M4 (`public/app/codemirror-setup.js`):_ a `ViewPlugin` hides `#`/`*`/`` ` ``/`>`/bullet marks on non-cursor lines and dims them on the cursor line; a highlight style makes headings bigger, bold/italic real, code monospace. `[[wikilinks]]` get a colour accent (brackets not hidden — hiding one bracket of `[[…]]` looked broken). CodeMirror ships as vendored ESM (`public/vendor/codemirror/`, `scripts/vendor-codemirror.ts`) loaded through the `index.html` import map — no bundler, no runtime CDN. `deno.json` maps the same package names to npm so `deno check` has types.
 - Typing `[[` triggers an autocomplete popup of existing note titles (filtered as you type), with an option to create a new note if nothing matches — this is the core wiki-linking interaction.
+  - _Built in M4:_ query starts after `[[`; the `Create "…"` entry inserts the link and fires `editor-create-link`, which the App Shell turns into `POST /api/notes` for an empty note so the link resolves immediately.
 - A backlinks panel (collapsible, below or beside the editor) lists notes linking to the current one, each with a short snippet of surrounding context.
 - Note browser: flat list + tag filter for v1; folders/nested structure is a possible v2 (see non-goals).
 

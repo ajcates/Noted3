@@ -25,9 +25,6 @@ gaps into `spec.md` §11.
 - 2026-09-05 (M2) — After creating a note the "Created." status flashes and is
   immediately cleared by the route change to the new note. Cosmetic; fix when
   the status/toast UI gets real attention (M5).
-- 2026-09-05 (M2) — The client edit flow has no dirty-state guard: navigating
-  away (Back, or the browser) silently drops unsaved textarea changes. Fine for
-  a textarea in M2; revisit with the CodeMirror editor in M4.
 - 2026-09-05 (M2) — Auth token is entered in a plain field and kept in
   `localStorage`; there's no real "log in" step and no way to clear it from the
   UI. Acceptable for a single-user home tool; reconsider alongside the auth
@@ -47,9 +44,23 @@ gaps into `spec.md` §11.
 - 2026-09-06 (M3) — `GET /api/notes/:filename` always renders `html` even though
   only M4's editor/preview will consume it. Cheap; revisit if it shows up in
   profiling.
-- 2026-09-06 (M3) — The client `note-editor` still shows raw `[[wikilinks]]` in
-  the textarea (no in-place link rendering / navigation from the editor). The
-  rendered `html` + de-emphasis land with CodeMirror in M4.
+- 2026-09-06 (M4) — CodeMirror is vendored from esm.sh
+  (`scripts/vendor-codemirror.ts`); re-vendoring needs network + esm.sh being
+  up. The committed bundles don't. `deno.json` carries `@codemirror/*` /
+  `@lezer/highlight` npm entries **only so `deno check` has types** — the
+  browser never uses them (import map → vendored).
+- 2026-09-06 (M4) — The `Create "…"` autocomplete entry immediately `POST`s an
+  empty note. If the user then doesn't type anything meaningful, an empty note
+  is left behind. Acceptable for now; revisit if it's annoying in daily use.
+- 2026-09-06 (M4) — Editor has no dirty-state guard still (M2 note carried
+  forward) — leaving a note with unsaved CodeMirror changes loses them silently.
+- 2026-09-06 (M4) — `[[wikilink]]` in the editor is colour-only; it isn't
+  click-to-navigate and unresolved vs. resolved isn't distinguished there. The
+  resolved/unresolved styling lives in the API `html` field (M3), not yet the
+  editor.
+- 2026-09-06 (M4) — Search reads `body` from every index entry; the index now
+  holds all note bodies in memory. Fine at personal scale; the "real full-text
+  index" in spec.md §9 is the escalation if a vault gets large.
 
 ## Closed
 

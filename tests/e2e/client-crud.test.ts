@@ -17,6 +17,7 @@ import { exists } from "@std/fs";
 import { type Browser, chromium } from "playwright";
 import { createApp } from "../../src/router.ts";
 import { NoteIndex } from "../../src/note-index.ts";
+import { fillEditor } from "./_support.ts";
 
 const TOKEN = "test-token";
 const STATIC_DIR = fromFileUrl(new URL("../../public/", import.meta.url));
@@ -57,7 +58,7 @@ Deno.test({
       // --- create ---
       await page.getByRole("button", { name: "New note" }).click();
       await page.locator("input.title").fill("Trip Plan");
-      await page.locator("textarea").fill("day 1: arrive\nday 2: hike");
+      await fillEditor(page, "day 1: arrive\nday 2: hike");
       await page.getByRole("button", { name: "Save" }).click();
 
       // after create, the shell routes to the saved note (Delete now shows)
@@ -67,9 +68,7 @@ Deno.test({
       assertStringIncludes(created, "day 2: hike");
 
       // --- edit ---
-      await page.locator("textarea").fill(
-        "day 1: arrive\nday 2: hike\nday 3: depart",
-      );
+      await fillEditor(page, "day 1: arrive\nday 2: hike\nday 3: depart");
       await page.getByRole("button", { name: "Save" }).click();
       await page.getByText("Saved.").waitFor();
       assertStringIncludes(await Deno.readTextFile(notePath), "day 3: depart");

@@ -46,14 +46,14 @@ One naming note before you start: the `notes/` folder in the project directory i
 - [x] Delete handling — dependents' links go `resolved: false`, nothing silently breaks
 - [x] `deno test` + Playwright covering: a link resolves, a link stays unresolved until its target exists, a rename rewrites incoming links, a delete flags dependents (16/16 tests green)
 
-## M4 — Real editor
+## M4 — Real editor ✅ (done 2026-09-06)
 
-- [ ] Swap the textarea for CodeMirror 6 + `@codemirror/lang-markdown`, loaded directly as an ES module (no bundler needed — CodeMirror 6 is clean ESM)
-- [ ] Inline markdown-syntax de-emphasis — the "WYSIWYG-ish" styling from spec.md §6
-- [ ] Wikilink Autocomplete — `[[` trigger, title-filtered dropdown, "create new note" action
-- [ ] Search View + `GET /api/search` + Search Module (naive substring is enough for v1)
-- [ ] Tag Browser — `GET /api/tags`, `GET /api/tags/:tag`
-- [ ] Playwright e2e test for the autocomplete flow specifically — trigger, filter, select, and the "create new" path
+- [x] Swap the textarea for CodeMirror 6 + `@codemirror/lang-markdown` — vendored ESM (`public/vendor/codemirror/`, `scripts/vendor-codemirror.ts`) via the `index.html` import map, no bundler
+- [x] Inline markdown-syntax de-emphasis — `ViewPlugin` hides marks off the cursor line, dims them on it (spec.md §6)
+- [x] Wikilink Autocomplete — `[[` trigger, title-filtered dropdown, "create new note" action (creates the note via `POST /api/notes`)
+- [x] Search View + `GET /api/search` + Search Module (`src/search.ts`, pure over an index snapshot)
+- [x] Tag Browser — `GET /api/tags`, `GET /api/tags/:tag`, `<tag-browser>`, header nav
+- [x] Playwright e2e for the autocomplete flow — trigger, filter, select existing, and the "create new" path (with on-disk assertion). 20/20 tests green.
 
 ## M5 — Design system integration
 

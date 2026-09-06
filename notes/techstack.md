@@ -17,8 +17,9 @@ The concrete technology choices for the project, in one place. `spec.md` explain
 ## Client
 
 - **Plain TypeScript + native Web Components** — no client framework. Matches the established lean vanilla-JS PWA pattern from past projects, and keeps the client dependency-free the same way the server is. If the editor/sync-queue state genuinely gets unwieldy once M4–M6 are underway, Preact stays the fallback option (`spec.md` §3) — but that's a decision to revisit with real code in front of it, not to pre-empt.
-- **No bundler — native ES modules served directly, via an import map.** True to Deno's own "no build step" philosophy. CodeMirror 6's packages are clean ESM, so this holds up without needing esbuild or Vite in the loop. Trade-off accepted: no tree-shaking or minification, which is a fine trade for a personal-scale app that isn't trying to shave kilobytes off a marketing site's load time.
+- **No bundler — native ES modules served directly, via an import map.** True to Deno's own "no build step" philosophy. Trade-off accepted: no tree-shaking or minification, which is a fine trade for a personal-scale app that isn't trying to shave kilobytes off a marketing site's load time.
 - **CodeMirror 6** (`@codemirror/lang-markdown` + friends) for the editor — see `spec.md` §6.
+  - _As built (M4):_ CM6 is many small packages, so rather than committing 20+ raw files or depending on a CDN at runtime, `scripts/vendor-codemirror.ts` fetches one pre-bundled ESM file per package from esm.sh (with `external=` so `@codemirror/state`, `@lezer/common` etc. stay shared singletons) into `public/vendor/codemirror/`. The `index.html` import map points the bare specifiers there. esm.sh bundles server-side; there is still no bundler or build step in *our* dev/serve loop, and nothing is fetched from a CDN at runtime. Bump versions by re-running the script (needs network).
 
 ## Content & parsing
 

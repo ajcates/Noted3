@@ -53,9 +53,10 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 | `src/handlers.ts` | Notes API Handlers, one per endpoint, plus request/response helpers |
 | `src/frontmatter.ts` | Frontmatter Parser (`parseNote`, `normalizeFrontmatter`, `serializeNote`) |
 | `src/markdown.ts` | Markdown/Wikilink Parser — `markdown-it` + custom `[[wikilink]]` rule; `extractWikilinkTargets`, `renderMarkdown`, `rewriteWikilinkTarget`, `firstWikilinkSnippet` |
-| `src/note-index.ts` | In-Memory Index — `NoteIndex` class; entries + derived title/backlink/tag maps; `resolve`, `list`, `backlinkFilenames`, `outgoingLinksFor`, `upsert`/`remove`/`rename` |
+| `src/note-index.ts` | In-Memory Index — `NoteIndex` class; entries (incl. body) + derived title/backlink/tag maps; `resolve`, `list`, `search`, `tagCounts`, `notesForTag`, `backlinkFilenames`, `outgoingLinksFor`, `upsert`/`remove`/`rename` |
+| `src/search.ts` | Search Module — `searchNotes(snapshot, query)`, pure; naive title+body substring, title hits ranked first, body-match snippet |
 | `src/file-store.ts` | File Store (list/read/write/delete/rename, `slugify`, `resolveNewFilename`, `parseFilename`, `noteMtime`) |
-| `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `OutgoingLink`, `Backlink`, `Config`, `ApiError` |
+| `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `OutgoingLink`, `Backlink`, `SearchResult`, `TagCount`, `Config`, `ApiError` |
 
 **M3 read-path change:** `GET /api/notes` is now served from the In-Memory
 Index with no disk I/O; `GET /api/notes/:filename` and the backlinks endpoint
@@ -73,9 +74,13 @@ Served straight from `public/` as ES modules — no bundler, no transpile step.
 | `public/app/main.js` | Registers the custom elements |
 | `public/app/app-shell.js` | App Shell / Router — `<app-shell>`, hash routing, top bar, auth-token field, status line; the only caller of the API Client |
 | `public/app/note-list.js` | Note List View — `<note-list>`, pure render, emits intent events |
-| `public/app/note-editor.js` | Editor View — `<note-editor>`, title + `<textarea>`, emits intent events; hosts the backlinks panel |
+| `public/app/note-editor.js` | Editor View — `<note-editor>`, title `<input>` + CodeMirror body (M4); emits intent events; hosts the backlinks panel |
+| `public/app/codemirror-setup.js` | `createMarkdownEditor` — CM6 markdown lang, syntax de-emphasis plugin, `[[` autocomplete |
 | `public/app/backlinks-panel.js` | Backlinks Panel — `<backlinks-panel>`, pure render, emits `note-open` |
-| `public/app/api.js` | API Client — the one `fetch` wrapper; token in `localStorage`; `getBacklinks` added in M3 |
+| `public/app/search-view.js` | Search View — `<search-view>`, debounced input, emits `search-query` |
+| `public/app/tag-browser.js` | Tag Browser — `<tag-browser>`, all-tags + per-tag modes |
+| `public/app/api.js` | API Client — the one `fetch` wrapper; token in `localStorage`; `search`/`getTags`/`getNotesByTag` added in M4 |
+| `public/vendor/codemirror/` | Vendored CM6 ESM bundles (`scripts/vendor-codemirror.ts`, from esm.sh with shared-package externals); import map in `index.html` points bare specifiers here |
 | `public/app/styles.css` | Placeholder styling; replaced by the M5 design-token set |
 
 **Decision (M2):** client code is authored as plain `.js` with `// @ts-check` +
@@ -86,7 +91,9 @@ disk. `deno check` / `lint` / `fmt` still cover it (`compilerOptions.checkJs`,
 way in M4–M6, the escalation paths already on record are an on-the-fly
 transpile step or Preact (`spec.md` §3).
 
-Search Module and the Wikilink Autocomplete are not built yet — they arrive in M4.
+All server + client components in the inventory now exist. Remaining milestones
+are polish and platform: M5 design tokens, M6 the PWA/offline layer (Service
+Worker, IndexedDB Cache, Write Queue, Sync Manager), M7 deploy.
 
 ## 2. Dependency map
 
