@@ -15,10 +15,10 @@
     "lib": ["deno.window", "dom", "dom.iterable", "dom.asynciterable"]
   },
   "fmt": {
-    "exclude": ["notes/"]
+    "exclude": ["notes/", "public/vendor/"]
   },
   "lint": {
-    "exclude": ["notes/"]
+    "exclude": ["notes/", "public/vendor/"]
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@^1.0.13",
