@@ -197,6 +197,20 @@ export const deleteNote: Handler = async ({ notesDir, index, params }) => {
   return new Response(null, { status: 204 });
 };
 
+/** `GET /api/search?q=` — naive title+body search over the index. */
+export const search: Handler = ({ index, req }) => {
+  const query = new URL(req.url).searchParams.get("q") ?? "";
+  return Promise.resolve(json(index.search(query)));
+};
+
+/** `GET /api/tags` — every tag with its note count. */
+export const listTags: Handler = (ctx) =>
+  Promise.resolve(json(ctx.index.tagCounts()));
+
+/** `GET /api/tags/:tag` — summaries of notes carrying `:tag` (empty array if none). */
+export const notesByTag: Handler = ({ index, params }) =>
+  Promise.resolve(json(index.notesForTag(params.tag ?? "")));
+
 // --- projections -----------------------------------------------------------
 
 function toDetail(

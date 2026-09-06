@@ -18,7 +18,10 @@ import {
   getNote,
   type Handler,
   listNotes,
+  listTags,
+  notesByTag,
   renameNote,
+  search,
   updateNote,
 } from "./handlers.ts";
 
@@ -47,6 +50,9 @@ const ROUTES: readonly Route[] = [
   route("PATCH", "/api/notes/:filename", renameNote),
   route("DELETE", "/api/notes/:filename", deleteNote),
   route("GET", "/api/notes/:filename/backlinks", getBacklinks),
+  route("GET", "/api/search", search),
+  route("GET", "/api/tags", listTags),
+  route("GET", "/api/tags/:tag", notesByTag),
 ];
 
 /** Build the request handler for `Deno.serve`. Pure given `config` + `options`. */

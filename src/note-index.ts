@@ -21,15 +21,20 @@ import type {
   Frontmatter,
   NoteSummary,
   OutgoingLink,
+  SearchResult,
+  TagCount,
 } from "./types.ts";
 import { filenameToTitle, listNoteFiles, slugify } from "./file-store.ts";
 import { normalizeFrontmatter, parseNote } from "./frontmatter.ts";
 import { extractWikilinkTargets } from "./markdown.ts";
+import { searchNotes } from "./search.ts";
 
 interface IndexEntry {
   readonly filename: Filename;
   readonly frontmatter: Frontmatter;
   readonly outgoingTargets: readonly string[];
+  /** Kept so search can run as a pure function over the index snapshot. */
+  readonly body: string;
   readonly mtime: number;
 }
 
@@ -66,6 +71,7 @@ export class NoteIndex {
       filename,
       frontmatter: input.frontmatter,
       outgoingTargets: extractWikilinkTargets(input.body),
+      body: input.body,
       mtime: input.mtime,
     });
     this.#rebuildDerived();
@@ -160,6 +166,33 @@ export class NoteIndex {
     return this.#backlinks.get(filename) ?? [];
   }
 
+  /** Naive title+body substring search over the current snapshot. */
+  search(query: string): SearchResult[] {
+    return searchNotes(
+      [...this.#entries.values()].map((e) => ({
+        filename: e.filename,
+        title: e.frontmatter.title,
+        tags: e.frontmatter.tags,
+        updated: e.frontmatter.updated,
+        body: e.body,
+      })),
+      query,
+    );
+  }
+
+  /** All tags with their note counts, alphabetical. */
+  tagCounts(): TagCount[] {
+    return [...this.#tags.entries()]
+      .map(([tag, filenames]) => ({ tag, count: filenames.length }))
+      .sort((a, b) => a.tag.localeCompare(b.tag));
+  }
+
+  /** Summaries of notes carrying `tag`, newest first. */
+  notesForTag(tag: string): NoteSummary[] {
+    const filenames = new Set(this.#tags.get(tag) ?? []);
+    return this.list().filter((s) => filenames.has(s.filename));
+  }
+
   #rebuildDerived(): void {
     this.#byTitleLower.clear();
     this.#backlinks.clear();
@@ -175,7 +208,7 @@ export class NoteIndex {
       if (titleKey !== "" && !this.#byTitleLower.has(titleKey)) {
         this.#byTitleLower.set(titleKey, entry.filename);
       }
-      for (const tag of entry.frontmatter.tags) {
+      for (const tag of new Set(entry.frontmatter.tags)) {
         pushInto(this.#tags, tag, entry.filename);
       }
     }
@@ -209,6 +242,7 @@ function toEntry(filename: Filename, raw: string, mtime: number): IndexEntry {
     filename,
     frontmatter,
     outgoingTargets: extractWikilinkTargets(parsed.body),
+    body: parsed.body,
     mtime,
   };
 }

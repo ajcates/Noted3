@@ -71,6 +71,17 @@ export interface Backlink {
   readonly snippet: string;
 }
 
+/** One hit from `GET /api/search?q=` — a summary plus a match-context snippet. */
+export interface SearchResult extends NoteSummary {
+  readonly snippet: string;
+}
+
+/** One row of `GET /api/tags`. */
+export interface TagCount {
+  readonly tag: string;
+  readonly count: number;
+}
+
 /** The full-note projection returned by `GET /api/notes/:filename`. */
 export interface NoteDetail extends NoteSummary {
   readonly created: string;
