@@ -67,6 +67,26 @@ gaps into `spec.md` §11.
   boot (`NoteIndex.build` re-reads disk). Left as-is; a proper transaction is a
   bigger change than v1 warrants.
 
+- 2026-09-06 (M5) — `deriveLightRole`/`deriveDarkRole` (`src/theme.ts`) are an
+  approximation of the field guide's hand-tuned per-role values, not an exact
+  reproduction — the chroma-scaling constants were picked to land close across
+  all four seed roles, not solved exactly per role. Only matters for a color
+  role given just a `seed` in `theme.yaml` (the shipped default gives every role
+  exact light/dark values, so this doesn't affect the out-of-the-box look).
+  Revisit if a from-scratch custom theme built this way looks off; fix is to
+  hand-tune that role's `light`/`dark` block directly.
+- 2026-09-06 (M5) — No automated contrast check on generated themes yet — the
+  roadmap's "spot-check contrast" was done visually (one light + one dark
+  screenshot with real note content), not measured. A custom `theme.yaml` with
+  poorly chosen seeds could produce low-contrast text with nothing flagging it.
+  Worth a small contrast-ratio assertion in `theme.test.ts` if this becomes a
+  real pain point (e.g. someone reports illegible text after reskinning).
+- 2026-09-06 (M5) — `/theme.css` is recompiled (YAML parse + CSS string build)
+  on every request rather than cached like the Notes In-Memory Index —
+  deliberate, so editing `theme.yaml` needs no restart, and the file is tiny
+  enough that this isn't a measured cost. Revisit only if it ever shows up in
+  profiling on a very low-power host (e.g. Termux).
+
 ## Closed
 
 - 2026-09-05 — Deno not installed on the dev machine. **Closed 2026-09-05**:

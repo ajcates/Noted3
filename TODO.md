@@ -4,16 +4,58 @@ Granular task list, one level finer than `notes/roadmap.md`. Checkbox format
 matches the roadmap. Finished tasks move under a dated `## Done` heading (newest
 first) per `notes/development.md` §5 — they are not deleted.
 
-## M5 — Design system integration (next)
+## M6 — PWA & offline-first (next)
 
-- [ ] Port the Material 3 Expressive token set (spec.md §12) into the real
-      stylesheet — plain CSS custom properties, no preprocessor
-- [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — no
-      hardcoded colours/radii anywhere
-- [ ] Light/dark via `prefers-color-scheme`
-- [ ] Spot-check contrast against real note content
+See `notes/roadmap.md` M6 — manifest + icons, hand-written Service Worker,
+IndexedDB cache, write queue, sync manager, conflict handling. Break into
+day-to-day tasks here once underway.
 
 ## Done
+
+### 2026-09-06 — Directory cleanup + M5: themeable design system
+
+- [x] **Cleanup** — removed two stray placeholder files
+      (`notes/Example txt file.txt`, `notes/Another example txt file.txt`)
+      accidentally committed during M0; not project docs, not referenced
+      anywhere. Verified the rest of the tree: `deno check`/`lint`/`fmt` clean,
+      all 21 pre-existing tests green.
+- [x] **M5 scope changed on request** — instead of hand-copying the field
+      guide's token set into `styles.css` once, the app is now themeable via a
+      YAML file at runtime, no rebuild/restart:
+  - `theme.yaml` (repo root, `THEME_PATH` env override) — the M3 Expressive
+    vocabulary as a schema (four seed colors + neutral hue, three font families,
+    the fixed 15-role type scale, the fixed shape scale, the two named motion
+    schemes, a small bounded set of layout placements) with no raw-CSS escape
+    hatch
+  - **Theme Compiler** (`src/theme.ts`) — `DEFAULT_THEME` (the field guide's
+    exact values), `buildTheme` (tolerant deep-merge of parsed YAML onto the
+    default — bad/unrecognized keys are dropped, not fatal),
+    `deriveLightRole`/`deriveDarkRole` (seed-only color role derivation, a
+    documented approximation of real M3 tonal palettes), `compileThemeCss`
+    (pure: `ThemeConfig` → the full CSS text)
+  - `GET /theme.css` (`src/router.ts`) — public like the static shell,
+    recompiled from disk on every request so editing `theme.yaml` and reloading
+    the browser is the whole retheme workflow
+  - `public/app/styles.css` fully rewritten against the generated custom
+    properties (every component: shell chrome, note list + FAB, editor,
+    backlinks, search, tags) — zero hardcoded colors/radii/fonts;
+    `codemirror-setup.js`'s highlight/theme colors likewise switched to
+    `var(--...)`; `app-shell.js`'s status line now toggles an `is-error` class
+    instead of setting inline hex
+  - `Config`/`loadConfig` gained `themePath` (`THEME_PATH`, default
+    `./theme.yaml`); `deno.json`'s `start` task's `--allow-read` list updated to
+    match
+  - Tests: `tests/e2e/theme.test.ts` (6 cases — seed derivation branching,
+    tolerant merge, CSS compilation, `GET /theme.css` live + falling back when
+    `THEME_PATH` doesn't exist). 27/27 tests green (24 via `deno test` directly;
+    the 3 Playwright browser tests confirmed passing via a local-only
+    `executablePath` override in this sandbox, since only plain Chromium is
+    installed here — not the `"chrome"` channel the committed tests correctly
+    target for the real dev machine; no test files changed)
+  - Visually spot-checked in a real browser (light + dark, note list + editor
+    with heading/bold/wikilink/code) via a Playwright screenshot; docs
+    (`spec.md` §12, `system-overview.md`, `techstack.md`, `roadmap.md`) updated
+    to describe the as-built system `check`/`lint`/`fmt` clean throughout.
 
 ### 2026-09-06 — Review + micro-refactor (post-M4)
 

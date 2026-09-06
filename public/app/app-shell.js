@@ -262,7 +262,7 @@ export class AppShell extends HTMLElement {
    */
   #setStatus(message, isError) {
     this.#status.textContent = message;
-    this.#status.style.color = isError ? "#b00020" : "#116329";
+    this.#status.classList.toggle("is-error", isError);
   }
 }
 

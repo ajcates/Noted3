@@ -1,10 +1,13 @@
 /**
  * Config Loader (system-overview.md §1).
  *
- * Reads `NOTES_DIR`, `PORT`, and `AUTH_TOKEN` from an environment and returns
- * a typed {@link Config}. Fails fast — the roadmap (M1) wants a boot-time
- * error if `NOTES_DIR` is missing or not a directory, so this deliberately
- * does one `stat` rather than staying purely env-in/config-out.
+ * Reads `NOTES_DIR`, `PORT`, `AUTH_TOKEN`, and `THEME_PATH` from an
+ * environment and returns a typed {@link Config}. Fails fast on the notes
+ * vault — the roadmap (M1) wants a boot-time error if `NOTES_DIR` is missing
+ * or not a directory, so this deliberately does one `stat` rather than
+ * staying purely env-in/config-out. `THEME_PATH` is not checked here: a
+ * missing theme file is fine (`src/theme.ts` falls back to the built-in
+ * default), so there's nothing to fail fast on.
  */
 
 import type { Config } from "./types.ts";
@@ -22,6 +25,7 @@ export class ConfigError extends Error {
 }
 
 const DEFAULT_PORT = 8000;
+const DEFAULT_THEME_PATH = "./theme.yaml";
 
 /**
  * Resolve runtime config from `env`, verifying that `NOTES_DIR` points at an
@@ -58,7 +62,9 @@ export async function loadConfig(env: Env): Promise<Config> {
     throw new ConfigError("AUTH_TOKEN is required");
   }
 
-  return { notesDir, port, authToken };
+  const themePath = env.get("THEME_PATH")?.trim() || DEFAULT_THEME_PATH;
+
+  return { notesDir, port, authToken, themePath };
 }
 
 function parsePort(raw: string | undefined): number {

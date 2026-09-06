@@ -31,7 +31,12 @@ Deno.test({
     const index = await NoteIndex.build(notesDir);
     const server = Deno.serve(
       { port: 0, onListen: () => {} },
-      createApp({ notesDir, port: 0, authToken: TOKEN }, {
+      createApp({
+        notesDir,
+        port: 0,
+        authToken: TOKEN,
+        themePath: "/nonexistent-theme.yaml",
+      }, {
         index,
         staticDir: STATIC_DIR,
       }),

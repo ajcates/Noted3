@@ -34,6 +34,7 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 | **File Store** | The only component that touches disk — `readDir`/`readTextFile`/`writeTextFile`, slug generation, atomic writes | Thin I/O wrapper functions around `Deno.*` |
 | **In-Memory Index** | filename → {title, tags, links, mtime}, plus the derived backlink graph and tag map; a cache, rebuildable from the File Store at any time | Stateful class — the one place mutable shared state lives on the server |
 | **Search Module** | Queries the In-Memory Index (naive substring for v1) | Pure function over the Index's current snapshot |
+| **Theme Compiler** (M5) | Reads `theme.yaml`, fills in the built-in M3 Expressive default for anything missing, compiles the result to CSS custom properties + layout rules served at `GET /theme.css` | Pure functions (`buildTheme`, `compileThemeCss`); `loadThemeFile` is the one bit of I/O |
 
 ### Filesystem
 
@@ -57,6 +58,7 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 | `src/markdown.ts` | Markdown/Wikilink Parser — `markdown-it` + custom `[[wikilink]]` rule; `extractWikilinkTargets`, `renderMarkdown`, `rewriteWikilinkTarget`, `firstWikilinkSnippet` |
 | `src/note-index.ts` | In-Memory Index — `NoteIndex` class; entries (incl. body) + derived title/backlink/tag maps; `resolve`, `list`, `search`, `tagCounts`, `notesForTag`, `backlinkFilenames`, `outgoingLinksFor`, `upsert`/`remove`/`rename` |
 | `src/search.ts` | Search Module — `searchNotes(snapshot, query)`, pure; naive title+body substring, title hits ranked first, body-match snippet |
+| `src/theme.ts` | Theme Compiler (M5) — `DEFAULT_THEME`, `buildTheme` (tolerant deep-merge of parsed YAML onto the default), `deriveLightRole`/`deriveDarkRole` (seed-only color role derivation), `compileThemeCss`, `loadThemeFile` |
 | `src/file-store.ts` | File Store — only module that touches disk: list/read/write (atomic)/delete/rename/mtime; `resolveNewFilename` |
 | `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `OutgoingLink`, `Backlink`, `SearchResult`, `TagCount`, `Config`, `ApiError` |
 
@@ -84,7 +86,7 @@ Served straight from `public/` as ES modules — no bundler, no transpile step.
 | `public/app/tag-browser.js` | Tag Browser — `<tag-browser>`, all-tags + per-tag modes |
 | `public/app/api.js` | API Client — the one `fetch` wrapper; token in `localStorage`; `search`/`getTags`/`getNotesByTag` added in M4 |
 | `public/vendor/codemirror/` | Vendored CM6 ESM bundles (`scripts/vendor-codemirror.ts`, from esm.sh with shared-package externals); import map in `index.html` points bare specifiers here |
-| `public/app/styles.css` | Placeholder styling; replaced by the M5 design-token set |
+| `public/app/styles.css` | Real M5 styling — every rule reads a custom property from the generated `/theme.css`, nothing hardcoded |
 
 **Decision (M2):** client code is authored as plain `.js` with `// @ts-check` +
 JSDoc, not `.ts`. It's the only option that is genuinely "no bundler, no build
@@ -95,8 +97,8 @@ way in M4–M6, the escalation paths already on record are an on-the-fly
 transpile step or Preact (`spec.md` §3).
 
 All server + client components in the inventory now exist. Remaining milestones
-are polish and platform: M5 design tokens, M6 the PWA/offline layer (Service
-Worker, IndexedDB Cache, Write Queue, Sync Manager), M7 deploy.
+are platform: M6 the PWA/offline layer (Service Worker, IndexedDB Cache, Write
+Queue, Sync Manager), M7 deploy.
 
 ## 2. Dependency map
 

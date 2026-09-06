@@ -90,6 +90,8 @@ export interface Config {
   readonly notesDir: string;
   readonly port: number;
   readonly authToken: string;
+  /** Path to the theme YAML file (M5); need not exist — see `src/theme.ts`. */
+  readonly themePath: string;
 }
 
 /**

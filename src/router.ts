@@ -11,6 +11,7 @@ import { ApiError, type Config } from "./types.ts";
 import { errorResponse } from "./http.ts";
 import { isAuthorized } from "./auth.ts";
 import { serveStatic } from "./static.ts";
+import { compileThemeCss, loadThemeFile } from "./theme.ts";
 import type { NoteIndex } from "./note-index.ts";
 import {
   createNote,
@@ -64,6 +65,17 @@ export function createApp(
   return async (req: Request): Promise<Response> => {
     try {
       const { pathname } = new URL(req.url);
+
+      // /theme.css is generated (M5), not a file under staticDir, and is
+      // public like the rest of the shell — the browser needs it before it
+      // has a token. Recompiled from disk on every request (src/theme.ts's
+      // header explains why) so editing theme.yaml just needs a reload.
+      if (pathname === "/theme.css" && req.method === "GET") {
+        const theme = await loadThemeFile(config.themePath);
+        return new Response(compileThemeCss(theme), {
+          headers: { "content-type": "text/css; charset=utf-8" },
+        });
+      }
 
       // Everything under /api/ is the JSON API and is auth-gated. Everything
       // else is the (public) client app shell.

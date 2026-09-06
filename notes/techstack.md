@@ -35,6 +35,7 @@ The concrete technology choices for the project, in one place. `spec.md` explain
 
 - **Material 3 Expressive tokens, OKLCH color space, relative color syntax where practical** — the full system lives in `noted-field-guide.html`; the copy-pasteable custom properties are in `spec.md` §12.
 - Plain CSS, no preprocessor and no CSS-in-JS — consistent with "no bundler" above; custom properties do the theming work a preprocessor would otherwise be for.
+- **As built (M5):** the tokens live in `theme.yaml`, not hand-copied CSS — `src/theme.ts` (server-side, `@std/yaml`, already a dependency) compiles it to `GET /theme.css` on every request. Retheming is "edit the YAML, reload the browser." Still zero client-side theming JS and zero preprocessor — the compiler emits plain CSS custom properties, same as if you'd hand-written them.
 
 ## Offline & PWA
 

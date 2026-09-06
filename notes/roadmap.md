@@ -55,12 +55,12 @@ One naming note before you start: the `notes/` folder in the project directory i
 - [x] Tag Browser — `GET /api/tags`, `GET /api/tags/:tag`, `<tag-browser>`, header nav
 - [x] Playwright e2e for the autocomplete flow — trigger, filter, select existing, and the "create new" path (with on-disk assertion). 20/20 tests green.
 
-## M5 — Design system integration
+## M5 — Design system integration ✅ (done 2026-09-06)
 
-- [ ] Port the token set from `noted-field-guide.html` into the app's real stylesheet (spec.md §12 has the exact custom properties) — plain CSS, no preprocessor, no CSS-in-JS (`techstack.md`)
-- [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — never a hardcoded color/radius
-- [ ] Light/dark via `prefers-color-scheme`, same pattern the field guide already models
-- [ ] Spot-check contrast against real note content, not just the palette swatches
+- [x] Token set from `noted-field-guide.html` expressed as data (`theme.yaml`) rather than hand-copied CSS, compiled by a new Theme Compiler (`src/theme.ts`) to `GET /theme.css` — plain CSS, no preprocessor, no CSS-in-JS (`techstack.md`); scope expanded mid-milestone from "port the tokens" to "make the app easily re-themeable" per user direction
+- [x] Tokens applied to every real component: note cards, tag chips, toolbar, FAB, backlinks, search, tags, CodeMirror — never a hardcoded color/radius
+- [x] Light/dark via `prefers-color-scheme`, same pattern the field guide models
+- [x] Spot-checked visually (light + dark, editor + list) via a real browser screenshot; no automated contrast check yet — see ISSUES.md
 
 ## M6 — PWA & offline-first — budget real time here, it's the hardest milestone
 

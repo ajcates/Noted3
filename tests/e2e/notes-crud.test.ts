@@ -31,7 +31,12 @@ async function withServer(fn: (h: Harness) => Promise<void>): Promise<void> {
   const index = await NoteIndex.build(notesDir);
   const server = Deno.serve(
     { port: 0, onListen: () => {} },
-    createApp({ notesDir, port: 0, authToken: TOKEN }, { index }),
+    createApp({
+      notesDir,
+      port: 0,
+      authToken: TOKEN,
+      themePath: "/nonexistent-theme.yaml",
+    }, { index }),
   );
   const { port } = server.addr as Deno.NetAddr;
   const base = `http://localhost:${port}`;
