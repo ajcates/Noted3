@@ -492,19 +492,21 @@ function indent(lines: readonly string[], depth = 2): string {
 function layoutCss(layout: LayoutConfig): string {
   const fabSide = layout.fabPlacement === "bottom-left" ? "left" : "right";
   const listGap = layout.density === "compact" ? "0.25rem" : "0.5rem";
+  const hideSearch = layout.showSearchNav ? "" : `
+.shell-header nav a[href="#/search"], .bottom-nav a[href="#/search"]{ display: none; }`;
+  const hideTags = layout.showTagsNav ? "" : `
+.shell-header nav a[href="#/tags"], .bottom-nav a[href="#/tags"]{ display: none; }`;
   return `.note-list > button.primary{
   position: fixed;
-  ${fabSide}: 1.5rem;
-  bottom: 1.5rem;
+  /* max()/calc() with env() degrade to the plain value on a device with no
+     notch/home-indicator — safe to always include, not just for M3's
+     compact (<600px) breakpoint, since a tablet or foldable can have insets
+     too. */
+  ${fabSide}: max(1.5rem, calc(env(safe-area-inset-${fabSide}) + 1rem));
+  bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1rem));
   z-index: 10;
 }
-.note-list li{ padding-top: ${listGap}; padding-bottom: ${listGap}; }
-.shell-header nav a[href="#/search"]{ display: ${
-    layout.showSearchNav ? "inline" : "none"
-  }; }
-.shell-header nav a[href="#/tags"]{ display: ${
-    layout.showTagsNav ? "inline" : "none"
-  }; }`;
+.note-list li{ padding-top: ${listGap}; padding-bottom: ${listGap}; }${hideSearch}${hideTags}`;
 }
 
 /**

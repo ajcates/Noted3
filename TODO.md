@@ -12,6 +12,40 @@ day-to-day tasks here once underway.
 
 ## Done
 
+### 2026-09-06 — Mobile optimization + M3 compliance pass (post-M5)
+
+- [x] **M3 compact-window Navigation Bar** — below the 600px compact breakpoint,
+      `app-shell.js`'s inline header nav (`Notes`/`Search`/`Tags`) is replaced
+      by a fixed bottom Navigation Bar (icon + label per destination, M3's
+      pill-shaped `secondary-container` active indicator). Both navs are built
+      from the same `NAV` array; `#route()` sets `data-section` on `<app-shell>`
+      so CSS alone drives which destination is highlighted in either one.
+      `theme.yaml`'s `showSearchNav`/ `showTagsNav` now hide the item in both
+      navs, not just the top one.
+- [x] **Touch targets to real M3 minimums** — 40dp buttons, 56dp extended-FAB,
+      32dp chips, 48dp+ note-list rows (`min-height` added throughout
+      `styles.css`, nothing visual changed on desktop).
+- [x] **iOS zoom-on-focus fixed** — every text input (`token`, search,
+      CodeMirror content) pinned to a 16px minimum font size; below that, mobile
+      Safari zooms the whole page in on focus.
+- [x] **Safe-area insets** (`viewport-fit=cover` in `index.html`) — the FAB
+      (`src/theme.ts`'s generated layout CSS) and the Navigation Bar both pad
+      for `env(safe-area-inset-*)`, so neither sits under a notch or a home
+      indicator.
+- [x] **Press feedback + focus ring** — `:active` scale-down on buttons/FAB/ nav
+      items (state-layer-style feedback for touch, since `:hover` never fires
+      there); `-webkit-tap-highlight-color: transparent` so that doesn't double
+      up with the OS's own tap flash; `:focus-visible` now gets an on-brand ring
+      instead of the browser's default.
+- [x] Editor's CodeMirror max-height reduced on narrow viewports so Save/Back
+      stay reachable above the on-screen keyboard.
+- [x] Visually verified at a real phone viewport (390×844, light + dark) via
+      Playwright screenshots: list, search, tags (Navigation Bar + active
+      state), and editor. `theme.test.ts` updated for the safe-area-aware FAB
+      rule. 27/27 tests green (24 direct; 3 Playwright browser tests confirmed
+      via the same local-only sandbox override as before — no test files
+      changed); `check`/`lint`/`fmt` clean. `spec.md` §12 updated.
+
 ### 2026-09-06 — Directory cleanup + M5: themeable design system
 
 - [x] **Cleanup** — removed two stray placeholder files

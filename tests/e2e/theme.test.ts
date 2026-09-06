@@ -62,7 +62,7 @@ Deno.test("compileThemeCss: emits the seed hue and the bounded layout rules", ()
     }),
   );
   assertStringIncludes(css, "--primary: oklch(52% 0.19 300)");
-  assertStringIncludes(css, "left: 1.5rem");
+  assertStringIncludes(css, "safe-area-inset-left");
   assertStringIncludes(css, 'a[href="#/tags"]{ display: none; }');
   assertStringIncludes(css, "@media (prefers-color-scheme: dark)");
 });

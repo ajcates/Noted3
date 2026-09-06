@@ -241,7 +241,9 @@ export function createMarkdownEditor(opts) {
         }),
         EditorView.theme({
           "&": {
-            fontSize: "0.95rem",
+            // 16px min — anything smaller makes iOS Safari zoom the page on
+            // focus (same guard as the form inputs in styles.css).
+            fontSize: "1rem",
           },
           ".cm-content": {
             fontFamily: "var(--font-source, ui-monospace, monospace)",

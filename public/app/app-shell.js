@@ -22,8 +22,12 @@ import { NoteEditor } from "./note-editor.js";
 import { SearchView } from "./search-view.js";
 import { TagBrowser } from "./tag-browser.js";
 
-/** @type {Array<[label: string, hash: string]>} */
-const NAV = [["Notes", "#/"], ["Search", "#/search"], ["Tags", "#/tags"]];
+/** @type {Array<[label: string, hash: string, icon: string]>} */
+const NAV = [
+  ["Notes", "#/", "🗒"],
+  ["Search", "#/search", "🔍"],
+  ["Tags", "#/tags", "🏷"],
+];
 
 export class AppShell extends HTMLElement {
   #main = el("main");
@@ -95,7 +99,24 @@ export class AppShell extends HTMLElement {
       ),
       el("label", { textContent: "token " }, this.#tokenInput),
     );
-    this.replaceChildren(header, this.#status, this.#main);
+    // M3 compact-width Navigation Bar (spec.md §12) — replaces the header's
+    // inline nav row below the 600px compact/medium breakpoint (styles.css),
+    // since a horizontal nav row crowds a phone-width top bar. Same
+    // destinations, same hash links; #route() keeps `data-section` current
+    // so CSS alone can show which one is active in either nav.
+    const bottomNav = el(
+      "nav",
+      { class: "bottom-nav" },
+      ...NAV.map(([label, hash, icon]) =>
+        el(
+          "a",
+          { class: "nav-item", href: hash },
+          el("span", { class: "nav-icon", "aria-hidden": "true" }, icon),
+          el("span", { class: "nav-label" }, label),
+        )
+      ),
+    );
+    this.replaceChildren(header, this.#status, this.#main, bottomNav);
   }
 
   /** @param {string} hash */
@@ -107,6 +128,11 @@ export class AppShell extends HTMLElement {
   async #route() {
     this.#setStatus("", false);
     const hash = location.hash.replace(/^#/, "");
+    this.dataset.section = hash.startsWith("/tags")
+      ? "tags"
+      : hash === "/search"
+      ? "search"
+      : "notes";
 
     try {
       if (hash === "/new") {

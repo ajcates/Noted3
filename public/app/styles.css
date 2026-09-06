@@ -8,6 +8,13 @@
   box-sizing: border-box;
 }
 
+button,
+a {
+  /* the custom :active/:hover states below are the tap feedback; the OS
+     default highlight box just looks like a rendering glitch on top of them */
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   font: var(--type-body-m);
@@ -22,6 +29,11 @@ body {
   color: var(--on-primary-container);
 }
 
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
@@ -34,6 +46,18 @@ app-shell {
   max-width: 45rem;
   margin: 0 auto;
   padding: 1rem;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* M3 compact window size class (<600px) — see .bottom-nav below. */
+@media (max-width: 599px) {
+  app-shell {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    /* clears the fixed Navigation Bar so list/editor content isn't hidden under it */
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
 }
 
 .shell-header {
@@ -71,9 +95,95 @@ app-shell {
   color: var(--primary);
 }
 
+/*
+ * M3 Navigation Bar — the compact window-size-class (<600px) destination
+ * nav (Material 3's own breakpoint for "compact"). Below it, the header's
+ * inline nav row is hidden and this fixed bottom bar takes over; above it,
+ * the header row (above) is what's shown. Same three destinations either
+ * way — app-shell.js builds both from the same NAV array.
+ */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 599px) {
+  .shell-header nav {
+    display: none;
+  }
+
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    background: var(--surface-container);
+    border-top: 1px solid var(--outline-variant);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .bottom-nav .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    min-height: 4rem;
+    padding: 0.5rem 0;
+    text-decoration: none;
+    color: var(--on-surface-variant);
+  }
+
+  .bottom-nav .nav-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0.15rem 0.75rem;
+    border-radius: var(--radius-full);
+    transition: background var(--motion-standard-duration)
+      var(--motion-standard-easing),
+      transform var(--motion-standard-duration) var(--motion-standard-easing);
+  }
+
+  .bottom-nav .nav-item:active .nav-icon {
+    transform: scale(0.9);
+  }
+
+  .bottom-nav .nav-label {
+    font: var(--type-label-m);
+    letter-spacing: var(--type-label-m-tracking);
+  }
+
+  /* the active destination's icon gets M3's "pill" active indicator */
+  app-shell[data-section="notes"] .bottom-nav a[href="#/"],
+  app-shell[data-section="search"] .bottom-nav a[href="#/search"],
+  app-shell[data-section="tags"] .bottom-nav a[href="#/tags"] {
+    color: var(--on-secondary-container);
+  }
+
+  app-shell[data-section="notes"] .bottom-nav a[href="#/"] .nav-icon,
+  app-shell[data-section="search"] .bottom-nav a[href="#/search"] .nav-icon,
+  app-shell[data-section="tags"] .bottom-nav a[href="#/tags"] .nav-icon {
+    background: var(--secondary-container);
+  }
+
+  /* FAB clears the fixed Navigation Bar instead of sitting under it.
+     Same specificity as the generated rule in /theme.css; this file loads
+     after it, so plain cascade order — not !important — decides it. */
+  .note-list > button.primary {
+    bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 .shell-header input {
-  font: var(--type-body-s);
-  padding: 0.35rem 0.6rem;
+  font: var(--type-body-m);
+  /* overrides the shorthand's size only — 16px min, or iOS Safari zooms the
+     page on focus (Material touch-input guidance: never shrink form text
+     below 1rem). */
+  font-size: 1rem;
+  padding: 0.5rem 0.6rem;
+  min-height: 2.5rem;
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-sm);
   background: var(--surface-container-low);
@@ -96,17 +206,23 @@ button {
   font: var(--type-label-l);
   letter-spacing: var(--type-label-l-tracking);
   padding: 0.5rem 1rem;
+  min-height: 2.5rem; /* M3 standard button height (40dp) */
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-full);
   background: var(--surface-container-low);
   color: var(--text);
   cursor: pointer;
   transition: background var(--motion-standard-duration)
-    var(--motion-standard-easing);
+    var(--motion-standard-easing),
+    transform var(--motion-standard-duration) var(--motion-standard-easing);
 }
 
 button:hover {
   background: var(--surface-container);
+}
+
+button:active {
+  transform: scale(0.96);
 }
 
 button.primary {
@@ -114,6 +230,7 @@ button.primary {
   border-color: var(--primary);
   color: var(--on-primary);
   padding: 0.85rem 1.5rem;
+  min-height: 3.5rem; /* M3 extended-FAB height (56dp) */
   box-shadow: none;
   transition: transform var(--motion-expressive-duration)
     var(--motion-expressive-easing);
@@ -122,6 +239,10 @@ button.primary {
 button.primary:hover {
   background: var(--primary);
   transform: scale(1.04);
+}
+
+button.primary:active {
+  transform: scale(0.97);
 }
 
 button:disabled {
@@ -150,6 +271,7 @@ button.delete:hover {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-height: 3rem; /* comfortable tap target for the whole row on touch */
   border-bottom: 1px solid var(--outline-variant);
 }
 
@@ -158,7 +280,8 @@ button.delete:hover {
   text-align: left;
   border: none;
   background: none;
-  padding: 0.5rem 0;
+  padding: 0.75rem 0;
+  min-height: 3rem;
   border-radius: 0;
   font: var(--type-title-m);
   color: var(--text);
@@ -219,6 +342,14 @@ button.delete:hover {
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-md);
   background: var(--surface-container-lowest);
+}
+
+@media (max-width: 599px) {
+  /* leaves more room above the on-screen keyboard than a fixed 60vh would
+     once the visual viewport shrinks to make room for it. */
+  .note-editor .cm-host .cm-editor {
+    max-height: 45vh;
+  }
 }
 
 .note-editor .actions {
@@ -283,8 +414,10 @@ button.delete:hover {
 
 .search-view input[type="search"] {
   font: var(--type-body-m);
+  font-size: 1rem; /* iOS zoom-on-focus guard, see .shell-header input */
   width: 100%;
   padding: 0.7rem 1.1rem;
+  min-height: 3rem;
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-full);
   background: var(--surface-container-highest);
@@ -333,6 +466,9 @@ button.delete:hover {
 }
 
 .tag-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem; /* M3 chip height (32dp) */
   border: none;
   border-radius: var(--radius-full);
   background: var(--tertiary-container);
