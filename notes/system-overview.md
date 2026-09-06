@@ -41,19 +41,27 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 |---|---|
 | **`NOTES_DIR`** | The actual source of truth — one `.md` file per note. Everything server-side exists to read, write, and index this directory; nothing else stores note content. |
 
-### Server module map (as built, M1–M2)
+### Server module map (as built, M1–M3)
 
 | File | Components it holds |
 |---|---|
-| `main.ts` | Boot sequence: `loadConfig` → `createApp` → `Deno.serve` |
+| `main.ts` | Boot sequence: `loadConfig` → `NoteIndex.build` → `createApp` → `Deno.serve` |
 | `src/config.ts` | Config Loader (`loadConfig`, `ConfigError`) |
-| `src/router.ts` | HTTP Router + the `createApp(config, { staticDir })` wiring: `/api/*` is auth-gated + dispatched; everything else falls through to the static shell; `ApiError` → JSON |
+| `src/router.ts` | HTTP Router + the `createApp(config, { index, staticDir })` wiring: `/api/*` is auth-gated + dispatched; everything else falls through to the static shell; `ApiError` → JSON |
 | `src/auth.ts` | Auth Middleware (`isAuthorized`) |
 | `src/static.ts` | Static file server for the client shell (thin wrapper over `@std/http` `serveDir`) — **not auth-gated**, the browser must load the shell before it has a token |
 | `src/handlers.ts` | Notes API Handlers, one per endpoint, plus request/response helpers |
 | `src/frontmatter.ts` | Frontmatter Parser (`parseNote`, `normalizeFrontmatter`, `serializeNote`) |
-| `src/file-store.ts` | File Store (list/read/write/delete, `slugify`, `resolveNewFilename`, `parseFilename`) |
-| `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `Config`, `ApiError` |
+| `src/markdown.ts` | Markdown/Wikilink Parser — `markdown-it` + custom `[[wikilink]]` rule; `extractWikilinkTargets`, `renderMarkdown`, `rewriteWikilinkTarget`, `firstWikilinkSnippet` |
+| `src/note-index.ts` | In-Memory Index — `NoteIndex` class; entries + derived title/backlink/tag maps; `resolve`, `list`, `backlinkFilenames`, `outgoingLinksFor`, `upsert`/`remove`/`rename` |
+| `src/file-store.ts` | File Store (list/read/write/delete/rename, `slugify`, `resolveNewFilename`, `parseFilename`, `noteMtime`) |
+| `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `OutgoingLink`, `Backlink`, `Config`, `ApiError` |
+
+**M3 read-path change:** `GET /api/notes` is now served from the In-Memory
+Index with no disk I/O; `GET /api/notes/:filename` and the backlinks endpoint
+still read the file for the body. Every write handler updates disk and then the
+index in the same call; the derived maps are recomputed in full each time (see
+`src/note-index.ts` header for why partial updates were rejected).
 
 ### Client module map (as built, M2)
 
@@ -65,8 +73,9 @@ Served straight from `public/` as ES modules — no bundler, no transpile step.
 | `public/app/main.js` | Registers the custom elements |
 | `public/app/app-shell.js` | App Shell / Router — `<app-shell>`, hash routing, top bar, auth-token field, status line; the only caller of the API Client |
 | `public/app/note-list.js` | Note List View — `<note-list>`, pure render, emits intent events |
-| `public/app/note-editor.js` | Editor View — `<note-editor>`, title + `<textarea>`, emits intent events |
-| `public/app/api.js` | API Client — the one `fetch` wrapper; token in `localStorage` |
+| `public/app/note-editor.js` | Editor View — `<note-editor>`, title + `<textarea>`, emits intent events; hosts the backlinks panel |
+| `public/app/backlinks-panel.js` | Backlinks Panel — `<backlinks-panel>`, pure render, emits `note-open` |
+| `public/app/api.js` | API Client — the one `fetch` wrapper; token in `localStorage`; `getBacklinks` added in M3 |
 | `public/app/styles.css` | Placeholder styling; replaced by the M5 design-token set |
 
 **Decision (M2):** client code is authored as plain `.js` with `// @ts-check` +
@@ -77,7 +86,7 @@ disk. `deno check` / `lint` / `fmt` still cover it (`compilerOptions.checkJs`,
 way in M4–M6, the escalation paths already on record are an on-the-fly
 transpile step or Preact (`spec.md` §3).
 
-In-Memory Index, Markdown/Wikilink Parser, and Search Module are not built yet — they arrive in M3–M4.
+Search Module and the Wikilink Autocomplete are not built yet — they arrive in M4.
 
 ## 2. Dependency map
 

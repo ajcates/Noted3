@@ -44,7 +44,9 @@ export class ApiError extends Error {
 
 /**
  * @typedef {{ filename: string, title: string, tags: string[], updated: string }} NoteSummary
- * @typedef {NoteSummary & { created: string, body: string }} NoteDetail
+ * @typedef {{ target: string, resolved: boolean, filename: string | null, title: string | null }} OutgoingLink
+ * @typedef {NoteSummary & { created: string, body: string, links: OutgoingLink[], html: string }} NoteDetail
+ * @typedef {{ filename: string, title: string, snippet: string }} Backlink
  */
 
 /**
@@ -126,4 +128,14 @@ export async function deleteNote(filename) {
   await request(`/api/notes/${encodeURIComponent(filename)}`, {
     method: "DELETE",
   });
+}
+
+/**
+ * @param {string} filename
+ * @returns {Promise<Backlink[]>}
+ */
+export async function getBacklinks(filename) {
+  return /** @type {Backlink[]} */ (
+    await request(`/api/notes/${encodeURIComponent(filename)}/backlinks`)
+  );
 }

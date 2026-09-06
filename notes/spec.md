@@ -74,14 +74,17 @@ Body: plain markdown, with `[[Note Title]]` or `[[filename]]` as the wikilink sy
 REST/JSON over the Deno server. Illustrative, not final:
 
 - `GET /api/notes` — list all notes (filename, title, tags, updated) for the note browser
-- `GET /api/notes/:filename` — full content (frontmatter + body) of one note
-- `POST /api/notes` — create a note ({title, body} → server picks filename/slug)
-- `PUT /api/notes/:filename` — update content; server re-parses links, bumps `updated`, updates index
-- `DELETE /api/notes/:filename` — delete; server also flags now-broken backlinks in the index
-- `GET /api/notes/:filename/backlinks` — notes that link to this one
-- `GET /api/search?q=` — title/body search
-- `GET /api/tags` / `GET /api/tags/:tag` — tag list / notes with a tag
-- `GET /api/manifest.webmanifest`, service worker at `/sw.js`
+- `GET /api/notes/:filename` — full content of one note. **As built (M3):** returns `{filename, title, tags, created, updated, body, links, html}` — `links` is the outgoing `[[wikilinks]]` de-duplicated, each `{target, resolved, filename, title}`; `html` is the rendered body with `<a class="wikilink [unresolved]">`.
+- `POST /api/notes` — create a note ({title, body} → server picks filename/slug); returns the same shape as GET, 201 + `Location`
+- `PUT /api/notes/:filename` — update content; server re-parses links, bumps `updated`, updates the index
+- `PATCH /api/notes/:filename` `{filename: "new-name.md"}` — **rename (M3).** Moves the file; rewrites incoming `[[links]]` that referenced it *by filename* in every backlinking note (title-form links untouched); 409 if the new name is taken.
+- `DELETE /api/notes/:filename` — delete; the index drops the entry and dependents' links become `resolved: false` on their next fetch (no server push — see §2 / system-overview.md "Deleting a note")
+- `GET /api/notes/:filename/backlinks` — notes that link to this one: `[{filename, title, snippet}]`, 404 if the note isn't indexed
+- `GET /api/search?q=` — title/body search _(M4)_
+- `GET /api/tags` / `GET /api/tags/:tag` — tag list / notes with a tag _(M4; the index already maintains the tag map)_
+- `GET /api/manifest.webmanifest`, service worker at `/sw.js` _(M6)_
+
+**Wikilink resolution (M3), in order:** target as a filename (`name` or `name.md`) → exact case-insensitive title match → `slugify(target).md`. Duplicate titles: first by sorted filename wins (see ISSUES.md).
 
 Writes should be idempotent enough to support the offline sync-queue replaying them (see §7) — e.g. `PUT` with a client-supplied `updated` timestamp so the server can detect and surface a conflict rather than silently overwriting.
 

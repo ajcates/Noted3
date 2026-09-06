@@ -102,8 +102,11 @@ export class AppShell extends HTMLElement {
       const noteMatch = /^\/note\/(.+)$/.exec(hash);
       if (noteMatch) {
         const filename = decodeURIComponent(noteMatch[1] ?? "");
-        const note = await api.getNote(filename);
-        this.#show(makeEditor(note));
+        const [note, backlinks] = await Promise.all([
+          api.getNote(filename),
+          api.getBacklinks(filename),
+        ]);
+        this.#show(makeEditor(note, backlinks));
         return;
       }
       // default: the list
@@ -134,7 +137,8 @@ export class AppShell extends HTMLElement {
         this.#go(`#/note/${encodeURIComponent(created.filename)}`);
       } else {
         const updated = await api.updateNote(filename, { title, body });
-        this.#show(makeEditor(updated));
+        const backlinks = await api.getBacklinks(filename);
+        this.#show(makeEditor(updated, backlinks));
         this.#setStatus("Saved.", false);
       }
     } catch (err) {
@@ -176,10 +180,14 @@ export class AppShell extends HTMLElement {
   }
 }
 
-/** @param {import("./api.js").NoteDetail | null} note */
-function makeEditor(note) {
+/**
+ * @param {import("./api.js").NoteDetail | null} note
+ * @param {import("./api.js").Backlink[]} [backlinks]
+ */
+function makeEditor(note, backlinks = []) {
   const editor = new NoteEditor();
   editor.note = note;
+  editor.backlinks = backlinks;
   return editor;
 }
 

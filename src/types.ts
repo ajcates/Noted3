@@ -51,10 +51,34 @@ export interface NoteSummary {
   readonly updated: string;
 }
 
+/** One `[[wikilink]]` found in a note body, with its resolution against the index. */
+export interface OutgoingLink {
+  /** The raw target text inside `[[…]]` (before any `|alias`), trimmed. */
+  readonly target: string;
+  /** `true` when `target` resolves to an existing note. */
+  readonly resolved: boolean;
+  /** The resolved note's filename, or `null` when unresolved. */
+  readonly filename: Filename | null;
+  /** The resolved note's title, or `null` when unresolved. */
+  readonly title: string | null;
+}
+
+/** One entry in `GET /api/notes/:filename/backlinks`. */
+export interface Backlink {
+  readonly filename: Filename;
+  readonly title: string;
+  /** A short slice of the linking note's body around the `[[link]]`, for context. */
+  readonly snippet: string;
+}
+
 /** The full-note projection returned by `GET /api/notes/:filename`. */
 export interface NoteDetail extends NoteSummary {
   readonly created: string;
   readonly body: string;
+  /** Outgoing `[[wikilinks]]`, de-duplicated, in first-seen order (M3). */
+  readonly links: readonly OutgoingLink[];
+  /** Body rendered to HTML; wikilinks are `<a class="wikilink [unresolved]">` (M3). */
+  readonly html: string;
 }
 
 /** Runtime configuration, resolved once at boot from the environment. */

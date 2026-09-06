@@ -8,10 +8,12 @@
 import { AppShell } from "./app-shell.js";
 import { NoteList } from "./note-list.js";
 import { NoteEditor } from "./note-editor.js";
+import { BacklinksPanel } from "./backlinks-panel.js";
 
 customElements.define("app-shell", AppShell);
 customElements.define("note-list", NoteList);
 customElements.define("note-editor", NoteEditor);
+customElements.define("backlinks-panel", BacklinksPanel);
 
 if (!document.querySelector("app-shell")) {
   document.body.append(new AppShell());

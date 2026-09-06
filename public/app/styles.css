@@ -139,3 +139,50 @@ button:disabled {
 .note-editor .actions .spacer {
   flex: 1;
 }
+
+.backlinks-panel {
+  border-top: 1px solid #ddd;
+  padding-top: 0.5rem;
+}
+
+.backlinks-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.backlinks-panel ul {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.backlinks-panel li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.backlinks-panel .backlink-title {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.95rem;
+  color: #1a56db;
+  cursor: pointer;
+}
+
+.backlinks-panel .backlink-title:hover {
+  text-decoration: underline;
+}
+
+.backlinks-panel .backlink-snippet {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.backlinks-panel .empty {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}

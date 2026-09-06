@@ -11,16 +11,23 @@
  *   - `editor-delete` — `detail: { filename }`
  */
 
+import { BacklinksPanel } from "./backlinks-panel.js";
+
 /** @typedef {import("./api.js").NoteDetail} NoteDetail */
+/** @typedef {import("./api.js").Backlink} Backlink */
 
 export class NoteEditor extends HTMLElement {
   /** @type {NoteDetail | null} */
   #note = null;
+  /** @type {Backlink[]} */
+  #backlinks = [];
 
   /** @type {HTMLInputElement | null} */
   #titleInput = null;
   /** @type {HTMLTextAreaElement | null} */
   #bodyInput = null;
+  /** @type {BacklinksPanel | null} */
+  #panel = null;
 
   /** @param {NoteDetail | null} value */
   set note(value) {
@@ -30,6 +37,12 @@ export class NoteEditor extends HTMLElement {
 
   get note() {
     return this.#note;
+  }
+
+  /** @param {Backlink[]} value */
+  set backlinks(value) {
+    this.#backlinks = value;
+    if (this.#panel) this.#panel.backlinks = value;
   }
 
   connectedCallback() {
@@ -83,6 +96,16 @@ export class NoteEditor extends HTMLElement {
     }
 
     this.append(title, body, actions);
+
+    // Backlinks only make sense for a note that exists.
+    if (!isNew) {
+      const panel = new BacklinksPanel();
+      panel.backlinks = this.#backlinks;
+      this.#panel = panel;
+      this.append(panel);
+    } else {
+      this.#panel = null;
+    }
   }
 
   #save() {

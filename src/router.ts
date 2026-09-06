@@ -10,19 +10,24 @@
 import { ApiError, type Config } from "./types.ts";
 import { isAuthorized } from "./auth.ts";
 import { serveStatic } from "./static.ts";
+import type { NoteIndex } from "./note-index.ts";
 import {
   createNote,
   deleteNote,
+  getBacklinks,
   getNote,
   type Handler,
   listNotes,
+  renameNote,
   updateNote,
 } from "./handlers.ts";
 
 export interface AppOptions {
+  /** The In-Memory Index, built at boot; every handler reads or updates it. */
+  readonly index: NoteIndex;
   /**
    * Directory to serve the client app shell from. When omitted, non-API
-   * requests get a 404 — the M1 API tests run without a client.
+   * requests get a 404.
    */
   readonly staticDir?: string;
 }
@@ -39,13 +44,15 @@ const ROUTES: readonly Route[] = [
   route("POST", "/api/notes", createNote),
   route("GET", "/api/notes/:filename", getNote),
   route("PUT", "/api/notes/:filename", updateNote),
+  route("PATCH", "/api/notes/:filename", renameNote),
   route("DELETE", "/api/notes/:filename", deleteNote),
+  route("GET", "/api/notes/:filename/backlinks", getBacklinks),
 ];
 
 /** Build the request handler for `Deno.serve`. Pure given `config` + `options`. */
 export function createApp(
   config: Config,
-  options: AppOptions = {},
+  options: AppOptions,
 ): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
     try {
@@ -73,7 +80,12 @@ export function createApp(
         if (params === null) continue;
         matchedPath = true;
         if (r.method !== req.method) continue;
-        return await r.handler({ notesDir: config.notesDir, params, req });
+        return await r.handler({
+          notesDir: config.notesDir,
+          index: options.index,
+          params,
+          req,
+        });
       }
 
       return errorResponse(

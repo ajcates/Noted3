@@ -143,6 +143,40 @@ export async function deleteNoteFile(
 }
 
 /**
+ * Move a note file. Throws {@link ApiError} 404 if `from` is missing, 409 if
+ * `to` already exists (an explicit rename shouldn't silently clobber).
+ */
+export async function renameNoteFile(
+  notesDir: string,
+  from: Filename,
+  to: Filename,
+): Promise<void> {
+  if (await noteFileExists(notesDir, to)) {
+    throw new ApiError(409, `a note named ${to} already exists`);
+  }
+  try {
+    await Deno.rename(join(notesDir, from), join(notesDir, to));
+  } catch (cause) {
+    if (cause instanceof Deno.errors.NotFound) {
+      throw new ApiError(404, `note not found: ${from}`);
+    }
+    throw cause;
+  }
+}
+
+/** File mtime in epoch ms, or `0` if it can't be read. */
+export async function noteMtime(
+  notesDir: string,
+  filename: Filename,
+): Promise<number> {
+  try {
+    return (await Deno.stat(join(notesDir, filename))).mtime?.getTime() ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Pick a free filename for a new note with the given title: `slug.md`, or
  * `slug-2.md`, `slug-3.md`, … if earlier ones are taken.
  */

@@ -14,6 +14,7 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { join } from "@std/path";
 import { createApp } from "../../src/router.ts";
+import { NoteIndex } from "../../src/note-index.ts";
 import type { NoteDetail, NoteSummary } from "../../src/types.ts";
 
 const TOKEN = "test-token";
@@ -27,9 +28,10 @@ interface Harness {
 
 async function withServer(fn: (h: Harness) => Promise<void>): Promise<void> {
   const notesDir = await Deno.makeTempDir({ prefix: "noted-e2e-" });
+  const index = await NoteIndex.build(notesDir);
   const server = Deno.serve(
     { port: 0, onListen: () => {} },
-    createApp({ notesDir, port: 0, authToken: TOKEN }),
+    createApp({ notesDir, port: 0, authToken: TOKEN }, { index }),
   );
   const { port } = server.addr as Deno.NetAddr;
   const base = `http://localhost:${port}`;

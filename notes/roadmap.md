@@ -36,15 +36,15 @@ One naming note before you start: the `notes/` folder in the project directory i
 
 **✅ v0 milestone** — the client ↔ server ↔ filesystem loop is proven end to end.
 
-## M3 — Wikilinks & backlinks — the core v1 differentiator
+## M3 — Wikilinks & backlinks — the core v1 differentiator ✅ (done 2026-09-06)
 
-- [ ] Markdown/Wikilink Parser — `markdown-it` (or similar, JSR-first — `techstack.md`) + a custom rule that extracts `[[links]]` from a body and renders resolved vs. unresolved link styling
-- [ ] In-Memory Index — build at boot by scanning every file through the parser; maintain the backlink graph and tag map
-- [ ] `GET /api/notes/:filename/backlinks` endpoint
-- [ ] Backlinks Panel component in the client
-- [ ] Rename handling — rewrite incoming `[[links]]` when a file's filename changes (flagged as tricky in spec.md §4)
-- [ ] Delete handling — mark dependent notes' links unresolved rather than silently breaking them
-- [ ] `deno test` + Playwright covering: a link resolves, a link stays unresolved until its target exists, a rename rewrites incoming links, a delete flags dependents
+- [x] Markdown/Wikilink Parser — `markdown-it` + a custom inline rule; `[[link]]` and `[[link|alias]]`; extraction is tokenizer-based so code is ignored; resolved vs. `unresolved` link styling in the rendered HTML
+- [x] In-Memory Index — `NoteIndex`, built at boot; backlink graph + tag map, recomputed on every mutation; `GET /api/notes` now served from it with no disk I/O
+- [x] `GET /api/notes/:filename/backlinks` endpoint (with context snippet)
+- [x] Backlinks Panel component in the client (`<backlinks-panel>`, under the editor)
+- [x] Rename handling — `PATCH /api/notes/:filename`; rewrites incoming filename-form `[[links]]`, 409 on name clash
+- [x] Delete handling — dependents' links go `resolved: false`, nothing silently breaks
+- [x] `deno test` + Playwright covering: a link resolves, a link stays unresolved until its target exists, a rename rewrites incoming links, a delete flags dependents (16/16 tests green)
 
 ## M4 — Real editor
 

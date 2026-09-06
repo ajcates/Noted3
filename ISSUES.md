@@ -35,6 +35,21 @@ gaps into `spec.md` §11.
 - 2026-09-05 (M2) — Playwright e2e depends on a system Chrome install
   (`channel: "chrome"`) since the version-matched browser binary isn't
   downloaded. If Chrome isn't present, run `npx playwright install chromium`.
+- 2026-09-06 (M3) — Wikilink resolution on duplicate titles is "first by sorted
+  filename wins" — silent and arbitrary. Fine for a personal vault; if it bites,
+  surface the ambiguity or prefer the closest slug.
+- 2026-09-06 (M3) — `rewriteWikilinkTarget` (used only on rename) is a raw-text
+  regex, so it would also rewrite a `[[old-name]]` sitting inside a code block.
+  Extraction/indexing is tokenizer-based and unaffected. Acceptable for now.
+- 2026-09-06 (M3) — The In-Memory Index has no file watcher: notes edited on
+  disk while the server runs aren't reflected until restart (or a future rebuild
+  endpoint). Out of scope for v1 per `spec.md` §2, worth a note.
+- 2026-09-06 (M3) — `GET /api/notes/:filename` always renders `html` even though
+  only M4's editor/preview will consume it. Cheap; revisit if it shows up in
+  profiling.
+- 2026-09-06 (M3) — The client `note-editor` still shows raw `[[wikilinks]]` in
+  the textarea (no in-place link rendering / navigation from the editor). The
+  rendered `html` + de-emphasis land with CodeMirror in M4.
 
 ## Closed
 

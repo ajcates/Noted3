@@ -4,20 +4,52 @@ Granular task list, one level finer than `notes/roadmap.md`. Checkbox format
 matches the roadmap. Finished tasks move under a dated `## Done` heading (newest
 first) per `notes/development.md` §5 — they are not deleted.
 
-## M3 — Wikilinks & backlinks (next)
+## M4 — Real editor (next)
 
-- [ ] Markdown/Wikilink Parser — `markdown-it` (JSR-first) + a custom rule
-      extracting `[[links]]`; resolved vs. unresolved rendering
-- [ ] In-Memory Index — built at boot by scanning every file; backlink graph +
-      tag map; updated incrementally on write
-- [ ] `GET /api/notes/:filename/backlinks`
-- [ ] Backlinks Panel component in the client
-- [ ] Rename handling — rewrite incoming `[[links]]` when a filename changes
-- [ ] Delete handling — mark dependents' links unresolved, don't silently break
-- [ ] `deno test` + Playwright: link resolves; stays unresolved until target
-      exists; rename rewrites incoming links; delete flags dependents
+- [ ] Swap the textarea for CodeMirror 6 + `@codemirror/lang-markdown` (ESM, no
+      bundler)
+- [ ] Inline markdown-syntax de-emphasis (spec.md §6)
+- [ ] Wikilink Autocomplete — `[[` trigger, title-filtered dropdown, "create new
+      note" action
+- [ ] Search View + `GET /api/search` + Search Module (naive substring)
+- [ ] Tag Browser — `GET /api/tags`, `GET /api/tags/:tag` (index already builds
+      the tag map)
+- [ ] Playwright e2e for the autocomplete flow (trigger, filter, select, "create
+      new")
 
 ## Done
+
+### 2026-09-06 — M3: Wikilinks & backlinks
+
+- [x] **Markdown/Wikilink Parser** (`src/markdown.ts`) — one `markdown-it`
+      instance with a custom `[[wikilink]]` (+ `[[target|alias]]`) inline rule.
+      `extractWikilinkTargets` (tokenizer-based, so code spans/fences are
+      ignored), `renderMarkdown` (body → HTML, resolved vs. `unresolved`
+      `<a class="wikilink">`), `rewriteWikilinkTarget` (rename), and
+      `firstWikilinkSnippet` (backlinks context).
+- [x] **In-Memory Index** (`src/note-index.ts`) — `NoteIndex` stateful class,
+      built at boot by scanning `NOTES_DIR`; per note holds normalized
+      frontmatter + outgoing targets + mtime; derives the title lookup, backlink
+      graph, and tag map (recomputed in full on every mutation). `resolve` tries
+      filename → title (ci) → slug. `GET /api/notes` now serves from the index
+      with no disk I/O.
+- [x] **`GET /api/notes/:filename/backlinks`** — linkers + title + de-bracketed
+      snippet; 404 when the note isn't indexed.
+- [x] `GET /api/notes/:filename` gains `links[]` (outgoing, resolved) and `html`
+      (rendered body).
+- [x] **`PATCH /api/notes/:filename`** `{ filename }` — rename: moves the file,
+      rewrites filename-form `[[links]]` in every backlinker (title-form links
+      untouched, they still resolve), 409 on name clash.
+- [x] **Delete handling** — `index.remove` drops the entry; dependents' links
+      simply stop resolving (`resolved: false`), nothing silently breaks.
+- [x] **Backlinks Panel** (`public/app/backlinks-panel.js`) —
+      `<backlinks-panel>`, collapsible, shown under the editor for an existing
+      note; emits `note-open`. App Shell fetches note + backlinks together.
+- [x] **Tests** — `tests/e2e/wikilinks.test.ts` (7 API cases: resolve/unresolve,
+      filename forms, backlinks + 404, code-fence ignore, rename rewrite, rename
+      409, delete breaks links) + `tests/e2e/backlinks-panel.test.ts`
+      (Playwright: panel lists linkers, click navigates). 16/16 green;
+      `check`/`lint`/`fmt` clean.
 
 ### 2026-09-05 — M2: Minimal client (v0 milestone)
 

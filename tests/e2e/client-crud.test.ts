@@ -16,6 +16,7 @@ import { fromFileUrl, join } from "@std/path";
 import { exists } from "@std/fs";
 import { type Browser, chromium } from "playwright";
 import { createApp } from "../../src/router.ts";
+import { NoteIndex } from "../../src/note-index.ts";
 
 const TOKEN = "test-token";
 const STATIC_DIR = fromFileUrl(new URL("../../public/", import.meta.url));
@@ -27,9 +28,11 @@ Deno.test({
   sanitizeOps: false,
   async fn() {
     const notesDir = await Deno.makeTempDir({ prefix: "noted-pw-" });
+    const index = await NoteIndex.build(notesDir);
     const server = Deno.serve(
       { port: 0, onListen: () => {} },
       createApp({ notesDir, port: 0, authToken: TOKEN }, {
+        index,
         staticDir: STATIC_DIR,
       }),
     );
