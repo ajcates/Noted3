@@ -7,7 +7,11 @@
  * A result click emits `note-open` (`detail: { filename }`).
  */
 
+import { el, emit } from "./ui.js";
+
 /** @typedef {import("./api.js").SearchResult} SearchResult */
+
+const DEBOUNCE_MS = 200;
 
 export class SearchView extends HTMLElement {
   /** @type {SearchResult[]} */
@@ -35,65 +39,52 @@ export class SearchView extends HTMLElement {
   connectedCallback() {
     this.classList.add("search-view");
 
-    const input = document.createElement("input");
-    input.type = "search";
-    input.placeholder = "Search notes…";
-    input.value = this.#query;
-    input.addEventListener("input", () => {
-      globalThis.clearTimeout(this.#debounce);
-      this.#debounce = globalThis.setTimeout(() => {
-        this.dispatchEvent(
-          new CustomEvent("search-query", {
-            detail: { q: input.value },
-            bubbles: true,
-          }),
+    this.#input = /** @type {HTMLInputElement} */ (el("input", {
+      type: "search",
+      placeholder: "Search notes…",
+      value: this.#query,
+      oninput: () => {
+        clearTimeout(this.#debounce);
+        this.#debounce = setTimeout(
+          () => emit(this, "search-query", { q: this.#input?.value ?? "" }),
+          DEBOUNCE_MS,
         );
-      }, 200);
-    });
-    this.#input = input;
+      },
+    }));
+    this.#list = el("ul");
 
-    const list = document.createElement("ul");
-    this.#list = list;
-
-    this.replaceChildren(input, list);
+    this.replaceChildren(this.#input, this.#list);
     this.#renderList();
-    input.focus();
+    this.#input.focus();
+  }
+
+  disconnectedCallback() {
+    clearTimeout(this.#debounce);
   }
 
   #renderList() {
     if (!this.#list) return;
-    this.#list.replaceChildren();
+    const hasQuery = (this.#input?.value ?? "").trim() !== "";
+    this.#list.replaceChildren(
+      ...!hasQuery
+        ? []
+        : this.#results.length === 0
+        ? [el("li", { class: "empty", textContent: "No matches." })]
+        : this.#results.map((r) => this.#renderItem(r)),
+    );
+  }
 
-    if (this.#input && this.#input.value.trim() === "") return;
-    if (this.#results.length === 0) {
-      const empty = document.createElement("li");
-      empty.className = "empty";
-      empty.textContent = "No matches.";
-      this.#list.append(empty);
-      return;
-    }
-
-    for (const r of this.#results) {
-      const li = document.createElement("li");
-
-      const open = document.createElement("button");
-      open.className = "result-title";
-      open.textContent = r.title;
-      open.addEventListener("click", () => {
-        this.dispatchEvent(
-          new CustomEvent("note-open", {
-            detail: { filename: r.filename },
-            bubbles: true,
-          }),
-        );
-      });
-
-      const snippet = document.createElement("p");
-      snippet.className = "result-snippet";
-      snippet.textContent = r.snippet;
-
-      li.append(open, snippet);
-      this.#list.append(li);
-    }
+  /** @param {SearchResult} r */
+  #renderItem(r) {
+    return el(
+      "li",
+      {},
+      el("button", {
+        class: "result-title",
+        textContent: r.title,
+        onclick: () => emit(this, "note-open", { filename: r.filename }),
+      }),
+      el("p", { class: "result-snippet", textContent: r.snippet }),
+    );
   }
 }

@@ -18,14 +18,20 @@ import {
 } from "./types.ts";
 import {
   deleteNoteFile,
-  filenameToTitle,
   noteMtime,
-  parseFilename,
   readNoteFile,
   renameNoteFile,
   resolveNewFilename,
   writeNoteFile,
 } from "./file-store.ts";
+import { filenameToTitle, parseFilename, stripExt } from "./filename.ts";
+import {
+  json,
+  optionalString,
+  optionalStringArray,
+  readJsonObject,
+  requireString,
+} from "./http.ts";
 import {
   normalizeFrontmatter,
   parseNote,
@@ -46,11 +52,10 @@ export interface HandlerContext {
   readonly req: Request;
 }
 
-export type Handler = (ctx: HandlerContext) => Promise<Response>;
+export type Handler = (ctx: HandlerContext) => Response | Promise<Response>;
 
 /** `GET /api/notes` — summaries for the note browser, newest first (from the index). */
-export const listNotes: Handler = (ctx) =>
-  Promise.resolve(json(ctx.index.list()));
+export const listNotes: Handler = (ctx) => json(ctx.index.list());
 
 /** `GET /api/notes/:filename` — full content of one note, plus outgoing links. */
 export const getNote: Handler = async ({ notesDir, index, params }) => {
@@ -86,7 +91,7 @@ export const getBacklinks: Handler = async ({ notesDir, index, params }) => {
 
 /** `POST /api/notes` — create from `{ title, body? }`; server picks the filename. */
 export const createNote: Handler = async ({ notesDir, index, req }) => {
-  const input = await readJson(req);
+  const input = await readJsonObject(req);
   const title = requireString(input, "title");
   const body = optionalString(input, "body") ?? "";
 
@@ -96,12 +101,7 @@ export const createNote: Handler = async ({ notesDir, index, req }) => {
     fallbackTitle: title,
     now,
   });
-  await writeNoteFile(notesDir, filename, serializeNote(frontmatter, body));
-  index.upsert(filename, {
-    frontmatter,
-    body,
-    mtime: await noteMtime(notesDir, filename),
-  });
+  await writeNoteAndIndex(notesDir, index, filename, frontmatter, body);
 
   return json(buildDetail(filename, frontmatter, body, index), 201, {
     location: `/api/notes/${filename}`,
@@ -120,26 +120,27 @@ export const updateNote: Handler = async ({ notesDir, index, params, req }) => {
     await readNoteFile(notesDir, filename),
     index,
   );
-  const input = await readJson(req);
-
-  const title = optionalString(input, "title") ?? existing.title;
-  const body = optionalString(input, "body") ?? existing.body;
-  const tags = optionalStringArray(input, "tags") ?? existing.tags;
+  const input = await readJsonObject(req);
 
   const frontmatter: Frontmatter = {
-    title,
-    tags,
+    title: mergedTitle(optionalString(input, "title"), existing.title),
+    tags: optionalStringArray(input, "tags") ?? existing.tags,
     created: existing.created,
     updated: new Date().toISOString(),
   };
-  await writeNoteFile(notesDir, filename, serializeNote(frontmatter, body));
-  index.upsert(filename, {
-    frontmatter,
-    body,
-    mtime: await noteMtime(notesDir, filename),
-  });
+  const body = optionalString(input, "body") ?? existing.body;
+
+  await writeNoteAndIndex(notesDir, index, filename, frontmatter, body);
   return json(buildDetail(filename, frontmatter, body, index));
 };
+
+/** Apply a PUT's `title` field: absent → keep current; present-but-blank → 400. */
+function mergedTitle(provided: string | undefined, current: string): string {
+  if (provided === undefined) return current;
+  const trimmed = provided.trim();
+  if (trimmed === "") throw new ApiError(400, '"title" must not be blank');
+  return trimmed;
+}
 
 /**
  * `PATCH /api/notes/:filename` with `{ filename: "new-name.md" }` — rename a
@@ -151,7 +152,7 @@ export const renameNote: Handler = async ({ notesDir, index, params, req }) => {
   const from = parseFilename(params.filename ?? "");
   if (!index.has(from)) throw new ApiError(404, `note not found: ${from}`);
 
-  const input = await readJson(req);
+  const input = await readJsonObject(req);
   const to = parseFilename(requireString(input, "filename"));
   if (to === from) {
     throw new ApiError(400, "new filename is the same as the old one");
@@ -163,8 +164,8 @@ export const renameNote: Handler = async ({ notesDir, index, params, req }) => {
   await renameNoteFile(notesDir, from, to);
   index.rename(from, to);
 
-  const fromBare = from.replace(/\.md$/i, "");
-  const toBare = to.replace(/\.md$/i, "");
+  const fromBare = stripExt(from);
+  const toBare = stripExt(to);
   for (const linker of linkers) {
     const parsed = parseNote(await readNoteFile(notesDir, linker));
     const { body: rewrittenBody, changed } = rewriteWikilinkTarget(
@@ -173,17 +174,13 @@ export const renameNote: Handler = async ({ notesDir, index, params, req }) => {
       toBare,
     );
     if (changed === 0) continue;
+    // A mechanical link fix — keep the linker's existing frontmatter (its
+    // `updated` is not bumped).
     const fm = normalizeFrontmatter(parsed.frontmatter, {
       fallbackTitle: filenameToTitle(linker),
       now: new Date().toISOString(),
     });
-    // A mechanical link fix — do not bump the linker's `updated`.
-    await writeNoteFile(notesDir, linker, serializeNote(fm, rewrittenBody));
-    index.upsert(linker, {
-      frontmatter: fm,
-      body: rewrittenBody,
-      mtime: await noteMtime(notesDir, linker),
-    });
+    await writeNoteAndIndex(notesDir, index, linker, fm, rewrittenBody);
   }
 
   return json(toDetail(to, await readNoteFile(notesDir, to), index));
@@ -198,18 +195,36 @@ export const deleteNote: Handler = async ({ notesDir, index, params }) => {
 };
 
 /** `GET /api/search?q=` — naive title+body search over the index. */
-export const search: Handler = ({ index, req }) => {
-  const query = new URL(req.url).searchParams.get("q") ?? "";
-  return Promise.resolve(json(index.search(query)));
-};
+export const search: Handler = ({ index, req }) =>
+  json(index.search(new URL(req.url).searchParams.get("q") ?? ""));
 
 /** `GET /api/tags` — every tag with its note count. */
-export const listTags: Handler = (ctx) =>
-  Promise.resolve(json(ctx.index.tagCounts()));
+export const listTags: Handler = ({ index }) => json(index.tagCounts());
 
 /** `GET /api/tags/:tag` — summaries of notes carrying `:tag` (empty array if none). */
 export const notesByTag: Handler = ({ index, params }) =>
-  Promise.resolve(json(index.notesForTag(params.tag ?? "")));
+  json(index.notesForTag(params.tag ?? ""));
+
+// --- write path ----------------------------------------------------------------
+
+/**
+ * Serialize + write a note, then reflect it in the index — the one place the
+ * two stay in sync, so no handler can update disk and forget the index.
+ */
+async function writeNoteAndIndex(
+  notesDir: string,
+  index: NoteIndex,
+  filename: Filename,
+  frontmatter: Frontmatter,
+  body: string,
+): Promise<void> {
+  await writeNoteFile(notesDir, filename, serializeNote(frontmatter, body));
+  index.upsert(filename, {
+    frontmatter,
+    body,
+    mtime: await noteMtime(notesDir, filename),
+  });
+}
 
 // --- projections -----------------------------------------------------------
 
@@ -242,68 +257,4 @@ function buildDetail(
     links: index.outgoingLinksFor(body),
     html: renderMarkdown(body, (target) => index.resolve(target)),
   };
-}
-
-// --- request/response helpers --------------------------------------------------
-
-function json(
-  data: unknown,
-  status = 200,
-  extraHeaders: Readonly<Record<string, string>> = {},
-): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      ...extraHeaders,
-    },
-  });
-}
-
-async function readJson(req: Request): Promise<Record<string, unknown>> {
-  let parsed: unknown;
-  try {
-    parsed = await req.json();
-  } catch {
-    throw new ApiError(400, "request body must be valid JSON");
-  }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new ApiError(400, "request body must be a JSON object");
-  }
-  return parsed as Record<string, unknown>;
-}
-
-function requireString(input: Record<string, unknown>, key: string): string {
-  const value = input[key];
-  if (typeof value !== "string" || value.trim() === "") {
-    throw new ApiError(
-      400,
-      `"${key}" is required and must be a non-empty string`,
-    );
-  }
-  return value;
-}
-
-function optionalString(
-  input: Record<string, unknown>,
-  key: string,
-): string | undefined {
-  const value = input[key];
-  if (value === undefined) return undefined;
-  if (typeof value !== "string") {
-    throw new ApiError(400, `"${key}" must be a string`);
-  }
-  return value;
-}
-
-function optionalStringArray(
-  input: Record<string, unknown>,
-  key: string,
-): readonly string[] | undefined {
-  const value = input[key];
-  if (value === undefined) return undefined;
-  if (!Array.isArray(value) || value.some((v) => typeof v !== "string")) {
-    throw new ApiError(400, `"${key}" must be an array of strings`);
-  }
-  return value as string[];
 }

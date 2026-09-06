@@ -61,6 +61,11 @@ gaps into `spec.md` §11.
 - 2026-09-06 (M4) — Search reads `body` from every index entry; the index now
   holds all note bodies in memory. Fine at personal scale; the "real full-text
   index" in spec.md §9 is the escalation if a vault gets large.
+- 2026-09-06 (review) — `PATCH` rename isn't transactional: if a backlinker
+  rewrite fails mid-loop, the file is already moved and some linkers still hold
+  the old target (they render as unresolved, not wrong). Self-heals on the next
+  boot (`NoteIndex.build` re-reads disk). Left as-is; a proper transaction is a
+  bigger change than v1 warrants.
 
 ## Closed
 

@@ -1,33 +1,35 @@
 // @ts-check
 /**
- * Tag Browser (system-overview.md §1 — part of the Note List / browsing).
+ * Tag Browser (system-overview.md §1 — part of the browsing surface).
  *
- * Two modes, driven by which setter the App Shell calls:
- *   - `tags`    → the full tag list; a tag click emits `tag-open` (`{ tag }`)
- *   - `forTag`  → `{ tag, notes }` for one tag; a note click emits `note-open`,
- *                 "All tags" emits `tags-all`
+ * One `#view` discriminated union drives the render:
+ *   - `{ kind: "all", tags }`  → the full tag list; a tag click emits `tag-open`
+ *   - `{ kind: "one", tag, notes }` → notes with one tag; a note click emits
+ *     `note-open`, "All tags" emits `tags-all`
  */
+
+import { el, emit } from "./ui.js";
 
 /** @typedef {import("./api.js").TagCount} TagCount */
 /** @typedef {import("./api.js").NoteSummary} NoteSummary */
+/**
+ * @typedef {{ kind: "all", tags: TagCount[] }
+ *   | { kind: "one", tag: string, notes: NoteSummary[] }} TagView
+ */
 
 export class TagBrowser extends HTMLElement {
-  /** @type {TagCount[] | null} */
-  #tags = null;
-  /** @type {{ tag: string, notes: NoteSummary[] } | null} */
-  #forTag = null;
+  /** @type {TagView} */
+  #view = { kind: "all", tags: [] };
 
-  /** @param {TagCount[]} value */
-  set tags(value) {
-    this.#tags = value;
-    this.#forTag = null;
+  /** @param {TagCount[]} tags */
+  set tags(tags) {
+    this.#view = { kind: "all", tags };
     this.#render();
   }
 
   /** @param {{ tag: string, notes: NoteSummary[] }} value */
   set forTag(value) {
-    this.#forTag = value;
-    this.#tags = null;
+    this.#view = { kind: "one", ...value };
     this.#render();
   }
 
@@ -37,80 +39,71 @@ export class TagBrowser extends HTMLElement {
   }
 
   #render() {
-    this.replaceChildren();
-    if (this.#forTag) this.#renderForTag(this.#forTag);
-    else this.#renderTagList(this.#tags ?? []);
+    this.replaceChildren(
+      ...(this.#view.kind === "all"
+        ? this.#renderAll(this.#view.tags)
+        : this.#renderOne(this.#view.tag, this.#view.notes)),
+    );
   }
 
   /** @param {TagCount[]} tags */
-  #renderTagList(tags) {
-    const h = document.createElement("h2");
-    h.textContent = "Tags";
-    this.append(h);
-
+  #renderAll(tags) {
     if (tags.length === 0) {
-      const p = document.createElement("p");
-      p.className = "empty";
-      p.textContent = "No tags yet.";
-      this.append(p);
-      return;
+      return [
+        el("h2", { textContent: "Tags" }),
+        el("p", { class: "empty", textContent: "No tags yet." }),
+      ];
     }
-
-    const ul = document.createElement("ul");
-    for (const { tag, count } of tags) {
-      const li = document.createElement("li");
-      const btn = document.createElement("button");
-      btn.className = "tag-chip";
-      btn.textContent = `#${tag}`;
-      btn.addEventListener("click", () => this.#emit("tag-open", { tag }));
-      const n = document.createElement("span");
-      n.className = "tag-count";
-      n.textContent = String(count);
-      li.append(btn, n);
-      ul.append(li);
-    }
-    this.append(ul);
-  }
-
-  /** @param {{ tag: string, notes: NoteSummary[] }} value */
-  #renderForTag({ tag, notes }) {
-    const back = document.createElement("button");
-    back.textContent = "← All tags";
-    back.addEventListener("click", () => this.#emit("tags-all"));
-
-    const h = document.createElement("h2");
-    h.textContent = `#${tag}`;
-    this.append(back, h);
-
-    if (notes.length === 0) {
-      const p = document.createElement("p");
-      p.className = "empty";
-      p.textContent = "No notes with this tag.";
-      this.append(p);
-      return;
-    }
-
-    const ul = document.createElement("ul");
-    for (const note of notes) {
-      const li = document.createElement("li");
-      const btn = document.createElement("button");
-      btn.className = "result-title";
-      btn.textContent = note.title;
-      btn.addEventListener(
-        "click",
-        () => this.#emit("note-open", { filename: note.filename }),
-      );
-      li.append(btn);
-      ul.append(li);
-    }
-    this.append(ul);
+    return [
+      el("h2", { textContent: "Tags" }),
+      el(
+        "ul",
+        {},
+        ...tags.map(({ tag, count }) =>
+          el(
+            "li",
+            {},
+            el("button", {
+              class: "tag-chip",
+              textContent: `#${tag}`,
+              onclick: () => emit(this, "tag-open", { tag }),
+            }),
+            el("span", { class: "tag-count", textContent: String(count) }),
+          )
+        ),
+      ),
+    ];
   }
 
   /**
-   * @param {string} type
-   * @param {Record<string, unknown>} [detail]
+   * @param {string} tag
+   * @param {NoteSummary[]} notes
    */
-  #emit(type, detail) {
-    this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
+  #renderOne(tag, notes) {
+    return [
+      el("button", {
+        textContent: "← All tags",
+        onclick: () => emit(this, "tags-all"),
+      }),
+      el("h2", { textContent: `#${tag}` }),
+      notes.length === 0
+        ? el("p", { class: "empty", textContent: "No notes with this tag." })
+        : el(
+          "ul",
+          {},
+          ...notes.map((note) =>
+            el(
+              "li",
+              {},
+              el("button", {
+                class: "result-title",
+                textContent: note.title,
+                onclick: () =>
+                  emit(this, "note-open", { filename: note.filename }),
+              }),
+            )
+          ),
+        ),
+    ];
   }
 }

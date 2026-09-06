@@ -21,6 +21,7 @@ import MarkdownIt from "markdown-it";
 import type Token from "markdown-it/lib/token.mjs";
 import type StateInline from "markdown-it/lib/rules_inline/state_inline.mjs";
 import type Renderer from "markdown-it/lib/renderer.mjs";
+import { ensureExt, stripExt } from "./filename.ts";
 
 type RuleInline = (state: StateInline, silent: boolean) => boolean;
 type RenderRule = NonNullable<Renderer["rules"][string]>;
@@ -123,19 +124,19 @@ export function rewriteWikilinkTarget(
   fromTarget: string,
   toTarget: string,
 ): { body: string; changed: number } {
-  const fromBare = stripMd(fromTarget).toLowerCase();
+  const fromBare = stripExt(fromTarget).toLowerCase();
   let changed = 0;
 
   const next = body.replace(/\[\[([^\]\n]+)\]\]/g, (whole, inner: string) => {
     const pipe = inner.indexOf("|");
     const rawTarget = (pipe >= 0 ? inner.slice(0, pipe) : inner).trim();
     const aliasPart = pipe >= 0 ? inner.slice(pipe) : "";
-    const bare = stripMd(rawTarget).toLowerCase();
+    const bare = stripExt(rawTarget).toLowerCase();
     if (bare !== fromBare) return whole;
     changed++;
     const keepsExt = /\.md$/i.test(rawTarget);
     return `[[${
-      keepsExt ? ensureMd(toTarget) : stripMd(toTarget)
+      keepsExt ? ensureExt(toTarget) : stripExt(toTarget)
     }${aliasPart}]]`;
   });
 
@@ -193,14 +194,6 @@ function splitTarget(inner: string): WikilinkRef {
     target: (pipe >= 0 ? inner.slice(0, pipe) : inner).trim(),
     alias: pipe >= 0 ? inner.slice(pipe + 1).trim() : "",
   };
-}
-
-function stripMd(name: string): string {
-  return name.trim().replace(/\.md$/i, "");
-}
-
-function ensureMd(name: string): string {
-  return /\.md$/i.test(name.trim()) ? name.trim() : `${name.trim()}.md`;
 }
 
 /** `[[Target|Alias]]` → `Alias`, `[[Target]]` → `Target`, for readable snippets. */

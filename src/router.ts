@@ -8,6 +8,7 @@
  */
 
 import { ApiError, type Config } from "./types.ts";
+import { errorResponse } from "./http.ts";
 import { isAuthorized } from "./auth.ts";
 import { serveStatic } from "./static.ts";
 import type { NoteIndex } from "./note-index.ts";
@@ -140,11 +141,4 @@ function matchSegments(
     }
   }
   return params;
-}
-
-function errorResponse(err: ApiError): Response {
-  return new Response(JSON.stringify({ error: err.message }), {
-    status: err.status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
 }

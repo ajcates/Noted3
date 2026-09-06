@@ -10,8 +10,13 @@
  *   - `editor-delete`      — `detail: { filename }`
  *   - `editor-create-link` — `detail: { title }` (autocomplete "Create …")
  *   - `editor-error`       — `detail: { message }`
+ *
+ * The App Shell sets `.note` / `.backlinks` / `.noteTitles` before appending
+ * this element; those setters just store while disconnected, and
+ * `connectedCallback` renders once.
  */
 
+import { el, emit } from "./ui.js";
 import { createMarkdownEditor } from "./codemirror-setup.js";
 import { BacklinksPanel } from "./backlinks-panel.js";
 
@@ -36,7 +41,7 @@ export class NoteEditor extends HTMLElement {
   /** @param {NoteDetail | null} value */
   set note(value) {
     this.#note = value;
-    this.#render();
+    if (this.isConnected) this.#render();
   }
 
   get note() {
@@ -51,13 +56,12 @@ export class NoteEditor extends HTMLElement {
 
   /** @param {string[]} value */
   set noteTitles(value) {
-    this.#noteTitles = value;
+    this.#noteTitles = value; // read live by the completion source
   }
 
   connectedCallback() {
     this.classList.add("note-editor");
-    // The App Shell sets `.note` before appending us, which already rendered.
-    if (this.childElementCount === 0) this.#render();
+    this.#render();
   }
 
   disconnectedCallback() {
@@ -68,87 +72,74 @@ export class NoteEditor extends HTMLElement {
   #render() {
     this.#editor?.destroy();
     this.#editor = null;
-    this.replaceChildren();
-    const isNew = this.#note === null;
+    this.#panel = null;
 
-    const title = document.createElement("input");
-    title.className = "title";
-    title.type = "text";
-    title.placeholder = "Title";
-    title.value = this.#note?.title ?? "";
-    this.#titleInput = title;
+    const note = this.#note;
+    this.#titleInput = /** @type {HTMLInputElement} */ (el("input", {
+      class: "title",
+      type: "text",
+      placeholder: "Title",
+      value: note?.title ?? "",
+    }));
 
-    const host = document.createElement("div");
-    host.className = "cm-host";
+    const host = el("div", { class: "cm-host" });
+    this.#panel = note ? new BacklinksPanel() : null;
+    if (this.#panel) this.#panel.backlinks = this.#backlinks;
 
-    const actions = document.createElement("div");
-    actions.className = "actions";
-
-    const back = document.createElement("button");
-    back.textContent = "Back";
-    back.addEventListener("click", () => this.#emit("editor-back"));
-
-    const save = document.createElement("button");
-    save.className = "primary save";
-    save.textContent = "Save";
-    save.addEventListener("click", () => this.#save());
-
-    actions.append(back, save);
-
-    if (!isNew) {
-      const spacer = document.createElement("span");
-      spacer.className = "spacer";
-      const del = document.createElement("button");
-      del.className = "delete";
-      del.textContent = "Delete";
-      del.addEventListener("click", () => {
-        const note = this.#note;
-        if (note && confirm(`Delete "${note.title}"?`)) {
-          this.#emit("editor-delete", { filename: note.filename });
-        }
-      });
-      actions.append(spacer, del);
-    }
-
-    this.append(title, host, actions);
+    /** @type {(Node)[]} */
+    const kids = [this.#titleInput, host, this.#renderActions(note)];
+    if (this.#panel) kids.push(this.#panel);
+    this.replaceChildren(...kids);
 
     this.#editor = createMarkdownEditor({
       parent: host,
-      doc: this.#note?.body ?? "",
+      doc: note?.body ?? "",
       getNoteTitles: () => this.#noteTitles,
-      onCreateNote: (t) => this.#emit("editor-create-link", { title: t }),
+      onCreateNote: (title) => emit(this, "editor-create-link", { title }),
     });
+  }
 
-    if (!isNew) {
-      const panel = new BacklinksPanel();
-      panel.backlinks = this.#backlinks;
-      this.#panel = panel;
-      this.append(panel);
-    } else {
-      this.#panel = null;
-    }
+  /** @param {NoteDetail | null} note */
+  #renderActions(note) {
+    return el(
+      "div",
+      { class: "actions" },
+      el("button", {
+        textContent: "Back",
+        onclick: () => emit(this, "editor-back"),
+      }),
+      el("button", {
+        class: "primary save",
+        textContent: "Save",
+        onclick: () => this.#save(),
+      }),
+      note ? el("span", { class: "spacer" }) : null,
+      note
+        ? el("button", {
+          class: "delete",
+          textContent: "Delete",
+          onclick: () => {
+            if (confirm(`Delete "${note.title}"?`)) {
+              emit(this, "editor-delete", { filename: note.filename });
+            }
+          },
+        })
+        : null,
+    );
   }
 
   #save() {
     const title = this.#titleInput?.value.trim() ?? "";
     const body = this.#editor?.getValue() ?? "";
     if (title === "") {
-      this.#emit("editor-error", { message: "A note needs a title." });
+      emit(this, "editor-error", { message: "A note needs a title." });
       this.#titleInput?.focus();
       return;
     }
-    this.#emit("editor-save", {
+    emit(this, "editor-save", {
       filename: this.#note?.filename ?? null,
       title,
       body,
     });
-  }
-
-  /**
-   * @param {string} type
-   * @param {Record<string, unknown>} [detail]
-   */
-  #emit(type, detail) {
-    this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
   }
 }

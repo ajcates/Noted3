@@ -171,6 +171,32 @@ Deno.test("bad input: non-JSON body and missing title are 400", async () => {
   });
 });
 
+Deno.test("PUT with a blank title is rejected; PUT without title keeps it", async () => {
+  await withServer(async ({ api }) => {
+    const created = await (await api("/api/notes", {
+      method: "POST",
+      body: JSON.stringify({ title: "Keep Me", body: "one" }),
+    })).json() as NoteDetail;
+
+    // blank title -> 400
+    assertEquals(
+      (await api(`/api/notes/${created.filename}`, {
+        method: "PUT",
+        body: JSON.stringify({ title: "   ", body: "two" }),
+      })).status,
+      400,
+    );
+
+    // title omitted -> unchanged, body still updates
+    const updated = await (await api(`/api/notes/${created.filename}`, {
+      method: "PUT",
+      body: JSON.stringify({ body: "three" }),
+    })).json() as NoteDetail;
+    assertEquals(updated.title, "Keep Me");
+    assertEquals(updated.body, "three");
+  });
+});
+
 Deno.test("unknown route is 404, wrong method on a known route is 405", async () => {
   await withServer(async ({ api }) => {
     assertEquals((await api("/api/nope")).status, 404);

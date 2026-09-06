@@ -15,6 +15,33 @@ first) per `notes/development.md` §5 — they are not deleted.
 
 ## Done
 
+### 2026-09-06 — Review + micro-refactor (post-M4)
+
+- [x] **Bugs fixed** — `PUT {title:""}` now 400s instead of silently blanking
+      the title (+ trims titles on create/update); `NoteIndex.build` skips a
+      file that vanishes mid-scan instead of failing boot; misleading `auth.ts`
+      constant-time comment corrected; dead `Note` type removed.
+- [x] **`src/filename.ts`** — the filename/slug rules (`parseFilename`,
+      `slugify`, `filenameToTitle`, `stripExt`/`ensureExt`, `NOTE_EXT`) pulled
+      out of `file-store.ts` and the two duplicate `ensureMd`/`stripMd` copies
+      in `markdown.ts` / `note-index.ts` collapsed into it. `file-store.ts` is
+      now purely disk I/O.
+- [x] **`src/http.ts`** — `json` / `errorResponse` / `readJsonObject` / the
+      request-field validators moved here; router and handlers no longer each
+      build JSON responses their own way.
+- [x] **`writeNoteAndIndex` helper** — the write→stat→`index.upsert` triple
+      (create / update / rename) is now one call, so no handler can update disk
+      and forget the index.
+- [x] **`public/app/ui.js`** — `el()` + `emit()` DOM helpers; every view
+      component rewritten with them (render methods ~40% shorter, event dispatch
+      uniform). `NoteEditor` setters no longer render while disconnected
+      (removed the `childElementCount` guard + triple render).
+- [x] App Shell caches note titles (`#titlesLoaded`) instead of re-fetching
+      `/api/notes` on every note open. `search-view` clears its debounce on
+      disconnect.
+- [x] All 21 tests green; `check`/`lint`/`fmt` clean; browser-smoked list /
+      editor / backlinks / search / tags.
+
 ### 2026-09-06 — M4: Real editor (CodeMirror), search, tags
 
 - [x] **CodeMirror 6 editor** (`public/app/codemirror-setup.js`) — markdown

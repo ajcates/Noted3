@@ -41,21 +41,23 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 |---|---|
 | **`NOTES_DIR`** | The actual source of truth — one `.md` file per note. Everything server-side exists to read, write, and index this directory; nothing else stores note content. |
 
-### Server module map (as built, M1–M3)
+### Server module map (as built, M1–M4)
 
 | File | Components it holds |
 |---|---|
 | `main.ts` | Boot sequence: `loadConfig` → `NoteIndex.build` → `createApp` → `Deno.serve` |
 | `src/config.ts` | Config Loader (`loadConfig`, `ConfigError`) |
-| `src/router.ts` | HTTP Router + the `createApp(config, { index, staticDir })` wiring: `/api/*` is auth-gated + dispatched; everything else falls through to the static shell; `ApiError` → JSON |
+| `src/router.ts` | HTTP Router + the `createApp(config, { index, staticDir })` wiring: `/api/*` is auth-gated + dispatched; everything else falls through to the static shell |
+| `src/http.ts` | HTTP glue shared by router + handlers: `json`, `errorResponse`, `readJsonObject`, `requireString`/`optionalString`/`optionalStringArray` |
 | `src/auth.ts` | Auth Middleware (`isAuthorized`) |
 | `src/static.ts` | Static file server for the client shell (thin wrapper over `@std/http` `serveDir`) — **not auth-gated**, the browser must load the shell before it has a token |
-| `src/handlers.ts` | Notes API Handlers, one per endpoint, plus request/response helpers |
+| `src/handlers.ts` | Notes API Handlers, one per endpoint; `writeNoteAndIndex` keeps disk + index in sync in one place |
 | `src/frontmatter.ts` | Frontmatter Parser (`parseNote`, `normalizeFrontmatter`, `serializeNote`) |
+| `src/filename.ts` | Filename & slug rules, pure: `parseFilename`, `slugify`, `filenameToTitle`, `stripExt`/`ensureExt`, `NOTE_EXT` |
 | `src/markdown.ts` | Markdown/Wikilink Parser — `markdown-it` + custom `[[wikilink]]` rule; `extractWikilinkTargets`, `renderMarkdown`, `rewriteWikilinkTarget`, `firstWikilinkSnippet` |
 | `src/note-index.ts` | In-Memory Index — `NoteIndex` class; entries (incl. body) + derived title/backlink/tag maps; `resolve`, `list`, `search`, `tagCounts`, `notesForTag`, `backlinkFilenames`, `outgoingLinksFor`, `upsert`/`remove`/`rename` |
 | `src/search.ts` | Search Module — `searchNotes(snapshot, query)`, pure; naive title+body substring, title hits ranked first, body-match snippet |
-| `src/file-store.ts` | File Store (list/read/write/delete/rename, `slugify`, `resolveNewFilename`, `parseFilename`, `noteMtime`) |
+| `src/file-store.ts` | File Store — only module that touches disk: list/read/write (atomic)/delete/rename/mtime; `resolveNewFilename` |
 | `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `OutgoingLink`, `Backlink`, `SearchResult`, `TagCount`, `Config`, `ApiError` |
 
 **M3 read-path change:** `GET /api/notes` is now served from the In-Memory
@@ -72,7 +74,8 @@ Served straight from `public/` as ES modules — no bundler, no transpile step.
 |---|---|
 | `public/index.html` | App shell document; loads `/app/main.js`, contains `<app-shell>` |
 | `public/app/main.js` | Registers the custom elements |
-| `public/app/app-shell.js` | App Shell / Router — `<app-shell>`, hash routing, top bar, auth-token field, status line; the only caller of the API Client |
+| `public/app/ui.js` | `el(tag, props, …children)` + `emit(node, type, detail)` — the two DOM helpers every view uses so `#render()` stays declarative |
+| `public/app/app-shell.js` | App Shell / Router — `<app-shell>`, hash routing, top bar, auth-token field, status line; the only caller of the API Client; caches note titles for `[[` autocomplete |
 | `public/app/note-list.js` | Note List View — `<note-list>`, pure render, emits intent events |
 | `public/app/note-editor.js` | Editor View — `<note-editor>`, title `<input>` + CodeMirror body (M4); emits intent events; hosts the backlinks panel |
 | `public/app/codemirror-setup.js` | `createMarkdownEditor` — CM6 markdown lang, syntax de-emphasis plugin, `[[` autocomplete |

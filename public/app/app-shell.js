@@ -16,20 +16,27 @@
  */
 
 import * as api from "./api.js";
+import { el } from "./ui.js";
 import { NoteList } from "./note-list.js";
 import { NoteEditor } from "./note-editor.js";
 import { SearchView } from "./search-view.js";
 import { TagBrowser } from "./tag-browser.js";
 
+/** @type {Array<[label: string, hash: string]>} */
+const NAV = [["Notes", "#/"], ["Search", "#/search"], ["Tags", "#/tags"]];
+
 export class AppShell extends HTMLElement {
-  /** @type {HTMLElement} */
-  #main = document.createElement("main");
-  /** @type {HTMLElement} */
-  #status = document.createElement("div");
+  #main = el("main");
+  #status = el("div", { class: "shell-status" });
   /** @type {HTMLInputElement} */
-  #tokenInput = document.createElement("input");
+  #tokenInput = /** @type {HTMLInputElement} */ (el("input", {
+    type: "password",
+    autocomplete: "off",
+  }));
+
   /** @type {string[]} — cached note titles for `[[` autocomplete */
   #noteTitles = [];
+  #titlesLoaded = false;
   /** @type {string} — last search query, kept across navigation */
   #searchQuery = "";
 
@@ -37,38 +44,25 @@ export class AppShell extends HTMLElement {
     this.#renderChrome();
     globalThis.addEventListener("hashchange", this.#onHashChange);
 
-    this.addEventListener("note-new", () => this.#go("#/new"));
-    this.addEventListener(
-      "note-open",
-      (e) => this.#go(`#/note/${encodeURIComponent(detailStr(e, "filename"))}`),
-    );
-    this.addEventListener(
-      "note-delete",
-      (e) => this.#deleteNote(detailStr(e, "filename"), "#/"),
-    );
-    this.addEventListener("editor-back", () => this.#go("#/"));
-    this.addEventListener(
-      "editor-delete",
-      (e) => this.#deleteNote(detailStr(e, "filename"), "#/"),
-    );
-    this.addEventListener(
-      "editor-error",
-      (e) => this.#setStatus(detailStr(e, "message"), true),
-    );
-    this.addEventListener("editor-save", (e) => this.#saveNote(e));
-    this.addEventListener(
-      "editor-create-link",
-      (e) => this.#createLinkedNote(detailStr(e, "title")),
-    );
-    this.addEventListener(
-      "search-query",
-      (e) => this.#runSearch(detailStr(e, "q")),
-    );
-    this.addEventListener(
-      "tag-open",
-      (e) => this.#go(`#/tags/${encodeURIComponent(detailStr(e, "tag"))}`),
-    );
-    this.addEventListener("tags-all", () => this.#go("#/tags"));
+    /** @type {Record<string, (e: CustomEvent) => void>} */
+    const on = {
+      "note-new": () => this.#go("#/new"),
+      "note-open": (e) =>
+        this.#go(`#/note/${encodeURIComponent(e.detail.filename)}`),
+      "note-delete": (e) => this.#deleteNote(e.detail.filename, "#/"),
+      "editor-back": () => this.#go("#/"),
+      "editor-delete": (e) => this.#deleteNote(e.detail.filename, "#/"),
+      "editor-error": (e) => this.#setStatus(String(e.detail.message), true),
+      "editor-save": (e) => this.#saveNote(e.detail),
+      "editor-create-link": (e) =>
+        this.#createLinkedNote(String(e.detail.title)),
+      "search-query": (e) => this.#runSearch(String(e.detail.q)),
+      "tag-open": (e) => this.#go(`#/tags/${encodeURIComponent(e.detail.tag)}`),
+      "tags-all": () => this.#go("#/tags"),
+    };
+    for (const [type, handler] of Object.entries(on)) {
+      this.addEventListener(type, /** @type {EventListener} */ (handler));
+    }
 
     if (location.hash === "") location.hash = "#/";
     else this.#route();
@@ -81,40 +75,26 @@ export class AppShell extends HTMLElement {
   #onHashChange = () => this.#route();
 
   #renderChrome() {
-    const header = document.createElement("header");
-    header.className = "shell-header";
-
-    const h1 = document.createElement("h1");
-    h1.textContent = "noted";
-
-    const nav = document.createElement("nav");
-    /** @type {Array<[string, string]>} */
-    const navLinks = [["Notes", "#/"], ["Search", "#/search"], [
-      "Tags",
-      "#/tags",
-    ]];
-    for (const [label, hash] of navLinks) {
-      const a = document.createElement("a");
-      a.textContent = label;
-      a.href = hash;
-      nav.append(a);
-    }
-
-    const label = document.createElement("label");
-    label.textContent = "token ";
-    this.#tokenInput.type = "password";
     this.#tokenInput.value = api.getToken();
-    this.#tokenInput.autocomplete = "off";
     this.#tokenInput.addEventListener("change", () => {
       api.setToken(this.#tokenInput.value.trim());
       this.#setStatus("Token saved.", false);
       this.#route();
     });
-    label.append(this.#tokenInput);
 
-    header.append(h1, nav, label);
-    this.#status.className = "shell-status";
-
+    const header = el(
+      "header",
+      { class: "shell-header" },
+      el("h1", { textContent: "noted" }),
+      el(
+        "nav",
+        {},
+        ...NAV.map(([label, hash]) =>
+          el("a", { textContent: label, href: hash })
+        ),
+      ),
+      el("label", { textContent: "token " }, this.#tokenInput),
+    );
     this.replaceChildren(header, this.#status, this.#main);
   }
 
@@ -130,7 +110,7 @@ export class AppShell extends HTMLElement {
 
     try {
       if (hash === "/new") {
-        await this.#refreshTitles();
+        await this.#ensureTitles();
         this.#show(makeEditor(null, [], this.#noteTitles));
         return;
       }
@@ -138,12 +118,11 @@ export class AppShell extends HTMLElement {
       const noteMatch = /^\/note\/(.+)$/.exec(hash);
       if (noteMatch) {
         const filename = decodeURIComponent(noteMatch[1] ?? "");
-        const [note, backlinks, summaries] = await Promise.all([
+        await this.#ensureTitles();
+        const [note, backlinks] = await Promise.all([
           api.getNote(filename),
           api.getBacklinks(filename),
-          api.listNotes(),
         ]);
-        this.#noteTitles = summaries.map((s) => s.title);
         this.#show(makeEditor(note, backlinks, this.#noteTitles));
         return;
       }
@@ -161,9 +140,8 @@ export class AppShell extends HTMLElement {
       const tagMatch = /^\/tags\/(.+)$/.exec(hash);
       if (tagMatch) {
         const tag = decodeURIComponent(tagMatch[1] ?? "");
-        const notes = await api.getNotesByTag(tag);
         const view = new TagBrowser();
-        view.forTag = { tag, notes };
+        view.forTag = { tag, notes: await api.getNotesByTag(tag) };
         this.#show(view);
         return;
       }
@@ -177,7 +155,7 @@ export class AppShell extends HTMLElement {
 
       // default: the note list
       const summaries = await api.listNotes();
-      this.#noteTitles = summaries.map((s) => s.title);
+      this.#setTitles(summaries);
       const list = new NoteList();
       list.notes = summaries;
       this.#show(list);
@@ -186,8 +164,20 @@ export class AppShell extends HTMLElement {
     }
   }
 
+  /** Warm the autocomplete title cache once (arriving straight at a note URL). */
+  async #ensureTitles() {
+    if (!this.#titlesLoaded) this.#setTitles(await api.listNotes());
+  }
+
+  /** Refresh the title cache — after a create/rename/update changed the set. */
   async #refreshTitles() {
-    this.#noteTitles = (await api.listNotes()).map((s) => s.title);
+    this.#setTitles(await api.listNotes());
+  }
+
+  /** @param {import("./api.js").NoteSummary[]} summaries */
+  #setTitles(summaries) {
+    this.#noteTitles = summaries.map((s) => s.title);
+    this.#titlesLoaded = true;
   }
 
   /** @param {HTMLElement} view */
@@ -195,9 +185,8 @@ export class AppShell extends HTMLElement {
     this.#main.replaceChildren(view);
   }
 
-  /** @param {Event} e */
-  async #saveNote(e) {
-    const detail = /** @type {CustomEvent} */ (e).detail ?? {};
+  /** @param {{ filename: string | null, title?: string, body?: string }} detail */
+  async #saveNote(detail) {
     const title = String(detail.title ?? "");
     const body = String(detail.body ?? "");
     const filename = detail.filename == null ? null : String(detail.filename);
@@ -205,15 +194,13 @@ export class AppShell extends HTMLElement {
     try {
       if (filename === null) {
         const created = await api.createNote({ title, body });
+        await this.#refreshTitles();
         this.#setStatus("Created.", false);
         this.#go(`#/note/${encodeURIComponent(created.filename)}`);
       } else {
         const updated = await api.updateNote(filename, { title, body });
-        const [backlinks, summaries] = await Promise.all([
-          api.getBacklinks(filename),
-          api.listNotes(),
-        ]);
-        this.#noteTitles = summaries.map((s) => s.title);
+        const backlinks = await api.getBacklinks(filename);
+        await this.#refreshTitles();
         this.#show(makeEditor(updated, backlinks, this.#noteTitles));
         this.#setStatus("Saved.", false);
       }
@@ -252,6 +239,7 @@ export class AppShell extends HTMLElement {
   async #deleteNote(filename, afterHash) {
     try {
       await api.deleteNote(filename);
+      this.#titlesLoaded = false; // set shrank; refresh lazily on next need
       this.#setStatus("Deleted.", false);
       this.#go(afterHash);
     } catch (err) {
@@ -264,8 +252,7 @@ export class AppShell extends HTMLElement {
     if (err instanceof api.ApiError && err.status === 401) {
       this.#setStatus("Unauthorized — check the token field.", true);
     } else {
-      const message = err instanceof Error ? err.message : String(err);
-      this.#setStatus(message, true);
+      this.#setStatus(err instanceof Error ? err.message : String(err), true);
     }
   }
 
@@ -290,14 +277,4 @@ function makeEditor(note, backlinks = [], noteTitles = []) {
   editor.backlinks = backlinks;
   editor.noteTitles = noteTitles;
   return editor;
-}
-
-/**
- * @param {Event} e
- * @param {string} key
- * @returns {string}
- */
-function detailStr(e, key) {
-  const detail = /** @type {CustomEvent} */ (e).detail ?? {};
-  return String(detail[key] ?? "");
 }

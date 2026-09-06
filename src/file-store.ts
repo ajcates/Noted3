@@ -1,70 +1,15 @@
 /**
  * File Store (system-overview.md §1) — the only module that touches disk.
  *
- * Thin wrappers around `Deno.*` plus the slug/collision logic for turning a
- * note title into a stable filename. Everything here takes `notesDir`
- * explicitly rather than reading config, so it stays trivially testable
- * against a throwaway directory.
- *
- * Filenames are validated and branded ({@link parseFilename}) before they are
- * ever joined to a path, so a request param like `../../etc/passwd` or
- * `sub/dir.md` is rejected up front and path traversal can't happen.
+ * Thin wrappers around `Deno.*`. Everything here takes `notesDir` explicitly
+ * rather than reading config, so it stays trivially testable against a
+ * throwaway directory. Filename validation and slug rules live in
+ * `filename.ts`; callers pass an already-branded {@link Filename}.
  */
 
-import { join, normalize } from "@std/path";
+import { join } from "@std/path";
 import { ApiError, type Filename } from "./types.ts";
-
-const NOTE_EXT = ".md";
-
-/**
- * Validate an untrusted string as a note filename and brand it.
- *
- * Accepts a single path segment ending in `.md` with no separators, no `..`,
- * and no leading dot. Throws {@link ApiError} 400 otherwise — this is on the
- * request path.
- */
-export function parseFilename(value: string): Filename {
-  const name = value.trim();
-  if (
-    name === "" ||
-    !name.endsWith(NOTE_EXT) ||
-    name.length === NOTE_EXT.length ||
-    name.includes("/") ||
-    name.includes("\\") ||
-    name.includes("\0") ||
-    name.startsWith(".") ||
-    name.includes("..") ||
-    normalize(name) !== name
-  ) {
-    throw new ApiError(400, `invalid filename: ${value}`);
-  }
-  return name as Filename;
-}
-
-/**
- * Turn a note title into a filesystem slug (without extension).
- *
- * Lowercase, spaces and underscores to `-`, drop anything outside
- * `[a-z0-9-]`, collapse and trim `-`. An empty result becomes `untitled`.
- */
-export function slugify(title: string): string {
-  // NFKD splits accented letters into base + combining mark; the
-  // `[^a-z0-9-]` pass below then drops the marks, so "café" → "cafe".
-  const slug = title
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\s_]+/g, "-")
-    .replace(/[^a-z0-9-]+/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-  return slug || "untitled";
-}
-
-/** Best-effort inverse of {@link slugify}, for backfilling a missing title. */
-export function filenameToTitle(filename: Filename): string {
-  const base = filename.slice(0, -NOTE_EXT.length).replace(/-+/g, " ").trim();
-  return base.length > 0 ? base[0]!.toUpperCase() + base.slice(1) : "Untitled";
-}
+import { NOTE_EXT, slugify } from "./filename.ts";
 
 /** List every `*.md` file directly under `notesDir` (not recursive — v1 is flat). */
 export async function listNoteFiles(notesDir: string): Promise<Filename[]> {

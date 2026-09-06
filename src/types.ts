@@ -11,7 +11,7 @@ declare const filenameBrand: unique symbol;
 /**
  * A note's on-disk filename, e.g. `my-note.md`. Branded so an arbitrary
  * `string` can't be passed where a validated filename is expected — callers
- * must go through {@link import("./file-store.ts").parseFilename}.
+ * must go through {@link import("./filename.ts").parseFilename}.
  */
 export type Filename = string & { readonly [filenameBrand]: true };
 
@@ -34,13 +34,6 @@ export interface RawFrontmatter {
   readonly tags?: readonly string[];
   readonly created?: string;
   readonly updated?: string;
-}
-
-/** A parsed note: normalized frontmatter plus the markdown body. */
-export interface Note {
-  readonly filename: Filename;
-  readonly frontmatter: Frontmatter;
-  readonly body: string;
 }
 
 /** The list-view projection returned by `GET /api/notes`. */

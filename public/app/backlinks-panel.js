@@ -7,6 +7,8 @@
  * turns into navigation — same event the Note List View emits.
  */
 
+import { el, emit } from "./ui.js";
+
 /** @typedef {import("./api.js").Backlink} Backlink */
 
 export class BacklinksPanel extends HTMLElement {
@@ -29,51 +31,30 @@ export class BacklinksPanel extends HTMLElement {
   }
 
   #render() {
-    this.replaceChildren();
-    const details = document.createElement("details");
-    details.open = this.#backlinks.length > 0;
-
-    const summary = document.createElement("summary");
-    summary.textContent = `Backlinks (${this.#backlinks.length})`;
-    details.append(summary);
-
-    if (this.#backlinks.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "empty";
-      empty.textContent = "No notes link here yet.";
-      details.append(empty);
-    } else {
-      const ul = document.createElement("ul");
-      for (const bl of this.#backlinks) {
-        ul.append(this.#renderItem(bl));
-      }
-      details.append(ul);
-    }
-
-    this.append(details);
+    const count = this.#backlinks.length;
+    this.replaceChildren(
+      el(
+        "details",
+        { open: count > 0 },
+        el("summary", { textContent: `Backlinks (${count})` }),
+        count === 0
+          ? el("p", { class: "empty", textContent: "No notes link here yet." })
+          : el("ul", {}, ...this.#backlinks.map((b) => this.#renderItem(b))),
+      ),
+    );
   }
 
   /** @param {Backlink} bl */
   #renderItem(bl) {
-    const li = document.createElement("li");
-
-    const open = document.createElement("button");
-    open.className = "backlink-title";
-    open.textContent = bl.title;
-    open.addEventListener("click", () => {
-      this.dispatchEvent(
-        new CustomEvent("note-open", {
-          detail: { filename: bl.filename },
-          bubbles: true,
-        }),
-      );
-    });
-
-    const snippet = document.createElement("p");
-    snippet.className = "backlink-snippet";
-    snippet.textContent = bl.snippet;
-
-    li.append(open, snippet);
-    return li;
+    return el(
+      "li",
+      {},
+      el("button", {
+        class: "backlink-title",
+        textContent: bl.title,
+        onclick: () => emit(this, "note-open", { filename: bl.filename }),
+      }),
+      el("p", { class: "backlink-snippet", textContent: bl.snippet }),
+    );
   }
 }

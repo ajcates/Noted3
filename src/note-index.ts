@@ -4,10 +4,11 @@
  *
  * Built at boot by scanning `NOTES_DIR` and kept current as notes are written,
  * renamed, and deleted. It holds, per note, the normalized frontmatter, the
- * list of outgoing `[[wikilink]]` targets, and the file mtime; from those it
- * derives the title lookup used for link resolution, the backlink graph, and
- * the tag map. It is a cache: `NoteIndex.build` can always rebuild it from
- * disk, and nothing here is a source of truth (spec.md §2).
+ * markdown body (so search is a pure function over the snapshot), the list of
+ * outgoing `[[wikilink]]` targets, and the file mtime; from those it derives
+ * the title lookup used for link resolution, the backlink graph, and the tag
+ * map. It is a cache: `NoteIndex.build` can always rebuild it from disk, and
+ * nothing here is a source of truth (spec.md §2).
  *
  * The derived maps are recomputed in full after every mutation. For a
  * personal-scale vault that is a few milliseconds and removes a whole class of
@@ -24,7 +25,8 @@ import type {
   SearchResult,
   TagCount,
 } from "./types.ts";
-import { filenameToTitle, listNoteFiles, slugify } from "./file-store.ts";
+import { listNoteFiles } from "./file-store.ts";
+import { ensureExt, filenameToTitle, slugify } from "./filename.ts";
 import { normalizeFrontmatter, parseNote } from "./frontmatter.ts";
 import { extractWikilinkTargets } from "./markdown.ts";
 import { searchNotes } from "./search.ts";
@@ -57,9 +59,17 @@ export class NoteIndex {
     const index = new NoteIndex();
     for (const filename of await listNoteFiles(notesDir)) {
       const path = join(notesDir, filename);
-      const raw = await Deno.readTextFile(path);
-      const mtime = (await Deno.stat(path)).mtime?.getTime() ?? 0;
-      index.#entries.set(filename, toEntry(filename, raw, mtime));
+      try {
+        const raw = await Deno.readTextFile(path);
+        const mtime = (await Deno.stat(path)).mtime?.getTime() ?? 0;
+        index.#entries.set(filename, toEntry(filename, raw, mtime));
+      } catch (cause) {
+        // A file listed but gone/unreadable by the time we read it — skip it
+        // rather than failing the whole boot. It'll be picked up on rebuild.
+        console.warn(
+          `note-index: skipping ${filename}: ${(cause as Error).message}`,
+        );
+      }
     }
     index.#rebuildDerived();
     return index;
@@ -122,7 +132,7 @@ export class NoteIndex {
   resolve(target: string): { filename: Filename; title: string } | null {
     const trimmed = target.trim();
 
-    const asFile = ensureMd(trimmed) as Filename;
+    const asFile = ensureExt(trimmed) as Filename;
     const byFile = this.#entries.get(asFile);
     if (byFile) return { filename: asFile, title: byFile.frontmatter.title };
 
@@ -245,8 +255,4 @@ function toEntry(filename: Filename, raw: string, mtime: number): IndexEntry {
     body: parsed.body,
     mtime,
   };
-}
-
-function ensureMd(name: string): string {
-  return /\.md$/i.test(name) ? name : `${name}.md`;
 }

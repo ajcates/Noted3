@@ -10,26 +10,26 @@
 
 /**
  * Return `true` iff the request carries `Authorization: Bearer <token>`
- * matching `expected`. The compare is length-constant to avoid leaking the
- * token's length/prefix via response timing.
+ * matching `expected`. The compare runs in time independent of *how much of
+ * the expected token is correct*, so an attacker can't recover it byte by
+ * byte from response timing. (It still runs longer for a longer supplied
+ * string — an acceptable leak for a single static home-network token.)
  */
 export function isAuthorized(req: Request, expected: string): boolean {
   const header = req.headers.get("authorization");
   if (!header) return false;
   const match = /^Bearer (.+)$/.exec(header);
   if (!match) return false;
-  return timingSafeEqual(match[1]!, expected);
+  return constantTimeEqual(match[1]!, expected);
 }
 
-function timingSafeEqual(a: string, b: string): boolean {
+function constantTimeEqual(supplied: string, expected: string): boolean {
   const enc = new TextEncoder();
-  const ab = enc.encode(a);
-  const bb = enc.encode(b);
-  // Compare against a fixed-length buffer so the loop count doesn't depend on
-  // the attacker-supplied string's length.
-  let diff = ab.length ^ bb.length;
-  for (let i = 0; i < ab.length; i++) {
-    diff |= ab[i]! ^ (bb[i] ?? 0);
+  const a = enc.encode(supplied);
+  const b = enc.encode(expected);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a[i]! ^ (b[i] ?? 0);
   }
   return diff === 0;
 }
