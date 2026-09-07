@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+doc-page:not(:defined){visibility:hidden}
+a{color:oklch(45% 0.16 275)}a:hover{color:oklch(38% 0.14 275)}
+</style>
+<script src="./doc-page.js"></script>
+</helmet>
+<doc-page margin="0.8in">
+
+<h1 style="font-family:Fraunces,serif;font-weight:500;font-size:34px;line-height:1.12;letter-spacing:-0.01em;color:oklch(22% 0.02 275);margin:0 0 10px">noted — design notes</h1>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:oklch(52% 0.09 55);margin:0 0 22px">Theory · principles · elements · interaction · motion</p>
+
+<p style="font-family:Manrope,sans-serif;font-size:15.5px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 16px">This is the reasoning behind the nine screens of the <strong>noted</strong> Android design: a personal markdown vault that lives on the user's own device, served by their own machine, edited on a phone. The document records why the design looks the way it does, catalogues every element it uses, states how those elements are meant to relate to one another, and specifies how they move. It is written so that a second designer or an engineer can extend the app without guessing.</p>
+
+<h2 style="font-family:Fraunces,serif;font-weight:600;font-size:22px;line-height:1.2;color:oklch(24% 0.02 275);margin:30px 0 10px;padding-bottom:7px;border-bottom:2px solid oklch(52% 0.09 55)">1 · Theory of the design</h2>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">1.1 The product is a file system with opinions</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Every note is a real <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">.md</code> file on disk. The design never hides that. Filenames appear in monospace, paths appear as paths, the index is described in the terms the server actually uses (entries, inverted graph, mtime), and sync is shown as a queue that drains rather than a magic cloud. The theory: a tool for people who chose plain text should keep showing them the plain text. Trust in this app comes from legibility of mechanism, not from concealment of it.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">1.2 Two voices: the field guide and Material 3 Expressive</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">The visual language pairs an editorial, field-guide voice — a serif with real personality for anything the user wrote, monospace for anything the machine owns — with Material 3 Expressive's structural vocabulary: tonal surfaces, generous corner families, a single loud action per screen, a docked bottom bar that carries navigation and the primary verb. The serif supplies authorship; Material supplies affordance. Where they conflict, authorship wins on content and Material wins on chrome.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">1.3 Expressiveness is carried by shape, not by decoration</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">The app has no gradients, no illustration, no drop-shadow stacking, and exactly three accent hues. Its personality comes from the shape system: asymmetric corner families that mirror across a row, cookie-shaped badges for agentic and identity moments, pill ends on the primary action, and a lifted 30px shoulder on the docked bar. Because expressiveness lives in geometry, it survives theming, it costs nothing at render, and it never competes with the user's prose.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">1.4 Thumb-first, one-hand-first</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Every destructive or committing action is reachable in the bottom third of the screen. The top of the screen is for orientation only — masthead, search field, breadcrumb — and is allowed to scroll away. Menus and panels rise from the bottom edge and are anchored to the control that opened them, so the finger never has to leave the region it was already in.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">1.5 Nothing irreversible</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">The editor has undo. The AI writes proposals, not edits. Every apply is preceded by a snapshot, and every snapshot is browsable and restorable. This is what makes an AI-editing surface acceptable in a personal archive: the cost of a wrong suggestion is one tap, and the user can see that cost before they accept it.</p>
+
+<h2 style="font-family:Fraunces,serif;font-weight:600;font-size:22px;line-height:1.2;color:oklch(24% 0.02 275);margin:30px 0 10px;padding-bottom:7px;border-bottom:2px solid oklch(52% 0.09 55)">2 · Guiding principles</h2>
+
+<ol style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.6;color:oklch(30% 0.015 275);margin:0 0 14px;padding-left:22px">
+  <li style="margin-bottom:8px"><strong>One loud thing per screen.</strong> Ember is the commit colour and appears once: New, Snapshot, Apply, Restore. If a screen has two ember elements, one of them is wrong.</li>
+  <li style="margin-bottom:8px"><strong>Colour means role, never mood.</strong> Ink = link, selection, AI. Moss = health, sync, additions. Ember = commit, unsynced, section rails. A hue never appears outside its role.</li>
+  <li style="margin-bottom:8px"><strong>Type declares ownership.</strong> Serif for what the user wrote, sans for what the app says, mono for what the file system knows. A label in the wrong family is a lie about who wrote it.</li>
+  <li style="margin-bottom:8px"><strong>Show the mechanism, quietly.</strong> Counts, timings, byte sizes and queue depths belong in the interface — small, monospaced, never in the way.</li>
+  <li style="margin-bottom:8px"><strong>Density is a mode, not a compromise.</strong> Snippet cards, folders and tags are three legitimate readings of the same vault; each has its own row height and none is a degraded version of another.</li>
+  <li style="margin-bottom:8px"><strong>Propose, then commit.</strong> Any automated change is rendered as a diff with a count before it can be accepted.</li>
+  <li style="margin-bottom:8px"><strong>Motion explains hierarchy.</strong> Things that come from a control grow out of that control. Things that own the screen rise from the edge. Nothing fades in from nowhere.</li>
+</ol>
+
+<h2 style="font-family:Fraunces,serif;font-weight:600;font-size:22px;line-height:1.2;color:oklch(24% 0.02 275);margin:30px 0 10px;padding-bottom:7px;border-bottom:2px solid oklch(52% 0.09 55)">3 · Foundations</h2>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 8px">3.1 Colour</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">All colour is authored in OKLCH so that lightness can be held constant while hue and chroma move — every accent in the ramp lands at a predictable contrast against the same surface. Three seed hues, four surface steps, one text ramp.</p>
+
+<table style="width:100%;border-collapse:collapse;font-family:Manrope,sans-serif;font-size:13px;margin:0 0 14px">
+  <thead>
+    <tr>
+      <th style="text-align:left;padding:7px 8px;border-bottom:1.5px solid oklch(35% 0.02 275);font-weight:800;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(38% 0.02 275)">Role</th>
+      <th style="text-align:left;padding:7px 8px;border-bottom:1.5px solid oklch(35% 0.02 275);font-weight:800;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(38% 0.02 275)">Value (dark theme)</th>
+      <th style="text-align:left;padding:7px 8px;border-bottom:1.5px solid oklch(35% 0.02 275);font-weight:800;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(38% 0.02 275)">Where it is allowed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">Ink (brand)</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">oklch(80% 0.13 275)</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Wikilinks, caret, selected chip, AI affordance, wordmark</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">Ink container</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">oklch(32% 0.11 275)</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Selected chips, AI avatar, user chat bubble, active nav</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">Moss</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">oklch(78% 0.07 175)</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Saved/verified state, backlinks, diff additions, timings</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">Ember</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">oklch(80% 0.12 55)</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Section rails, unsynced dot, snapshot marker, tags</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">Ember container</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">oklch(34% 0.08 55)</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">The one committing button per screen</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">Surfaces</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">11% · 16% · 19% · 27%</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Well / page / card / docked bar, in that order of elevation</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">Text</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">93% · 85% · 78% · 70%</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Body / secondary / label / metadata</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">Diff red</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">oklch(80% 0.10 25)</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Removals and conflicts only — never a UI accent</td></tr>
+  </tbody>
+</table>
+<p style="font-family:Manrope,sans-serif;font-size:14px;line-height:1.6;color:oklch(38% 0.015 275);margin:0 0 12px">Rules: text carries full-opacity ink, never a translucent tint; a hue on a hue is forbidden (ember text never sits on ink container); the well surface exists only to hold code, diffs and inputs — it is the "recessed" register and reads as machine space.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="display:flex;gap:8px">
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(80% 0.13 275);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(22% 0.09 275)">INK</span></div>
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(32% 0.11 275);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(90% 0.05 275)">INK CONT</span></div>
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(78% 0.07 175);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(24% 0.05 175)">MOSS</span></div>
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(80% 0.12 55);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(26% 0.06 55)">EMBER</span></div>
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(34% 0.08 55);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(91% 0.05 55)">EMBER CONT</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(11% 0.008 275);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(78% 0.014 275)">WELL 11%</span></div>
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(16% 0.012 275);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(78% 0.014 275)">PAGE 16%</span></div>
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(19% 0.013 275);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(78% 0.014 275)">CARD 19%</span></div>
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(27% 0.016 275);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(93% 0.008 275)">BAR 27%</span></div>
+      <div style="flex:1;min-width:0;border-radius:14px;background:oklch(80% 0.10 25);height:58px;display:flex;align-items:flex-end;padding:8px;box-sizing:border-box"><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:oklch(24% 0.05 25)">DIFF −</span></div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 1 — Accent roles above, surface ladder below. Each accent has exactly one job; surfaces climb 11 → 27% with elevation.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 8px">3.2 Type</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 10px">Three families, each with a fixed jurisdiction:</p>
+<ul style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.6;color:oklch(30% 0.015 275);margin:0 0 12px;padding-left:22px">
+  <li style="margin-bottom:6px"><strong>Fraunces</strong> — note titles, screen titles, headings inside prose, the wordmark (italic at 40px), the <em>Aa</em> format glyph. Weight 400–600, optical size high. Never used for a control label.</li>
+  <li style="margin-bottom:6px"><strong>Manrope</strong> — all chrome: buttons, chips, row titles, body copy in the editor, panel prose. 700–800 for controls, 400–600 for reading.</li>
+  <li style="margin-bottom:6px"><strong>IBM Plex Mono</strong> — filenames, paths, timestamps, counts, diff bodies, section-rail labels, badges (SNAPSHOT), token masks. Uppercase with 0.10–0.14em tracking when used as a rail label.</li>
+</ul>
+<p style="font-family:Manrope,sans-serif;font-size:14px;line-height:1.6;color:oklch(38% 0.015 275);margin:0 0 12px">Scale in use: 40 (wordmark) · 27/24/21 (titles) · 18 (card title) · 16 (editor body) · 15/14.5 (row title, control) · 13 (chip, secondary) · 11–12 (metadata) · 10–11 (rail/badge). Nothing tappable is labelled below 11px, and no body text is below 14px.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <div>
+        <div style="font-family:Fraunces,serif;font-weight:500;font-size:22px;color:oklch(93% 0.008 275)">Backlinks and the shape of thought</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.1em;color:oklch(80% 0.12 55);margin-top:3px">FRAUNCES · WHAT THE USER WROTE</div>
+      </div>
+      <div>
+        <div style="font-family:Manrope,sans-serif;font-size:15px;font-weight:700;color:oklch(93% 0.008 275)">Restore this version · Apply to 11 · Sync on reconnect</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.1em;color:oklch(80% 0.12 55);margin-top:3px">MANROPE · WHAT THE APP SAYS</div>
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:oklch(93% 0.008 275)">backlinks-and-the-shape-of-thought.md · 09:41 · +42 −7</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.1em;color:oklch(80% 0.12 55);margin-top:3px">PLEX MONO · WHAT THE FILE SYSTEM KNOWS</div>
+      </div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 2 — Three families, three jurisdictions. A label in the wrong family misstates who authored the string.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 8px">3.3 The shape family</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 10px">Shape is the app's signature and is systematic, not arbitrary:</p>
+<ul style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.6;color:oklch(30% 0.015 275);margin:0 0 12px;padding-left:22px">
+  <li style="margin-bottom:6px"><strong>Mirrored squircle, 16/26px</strong> — icon buttons. Adjacent buttons alternate the mirror (16/26 then 26/16) so a row of them reads as a rhythm instead of a strip.</li>
+  <li style="margin-bottom:6px"><strong>Card family, 28px with one 12px notch</strong> — snippet cards. The notch rotates position card to card, which gives a scrolling list visible variety at zero cost in structure.</li>
+  <li style="margin-bottom:6px"><strong>Menu cells, 26/14 mirrored, 74px tall</strong> — the format grid. Each cell is a different member of one family; Bold is filled with ember container to mark active state.</li>
+  <li style="margin-bottom:6px"><strong>Pill (999px)</strong> — anything that filters or scopes: chips, the search field, the wikilink/tag/code row.</li>
+  <li style="margin-bottom:6px"><strong>Asymmetric pill, 22px/999px</strong> — committing buttons (New, Snapshot, Apply, Restore). The flat end points back at the content it acts on.</li>
+  <li style="margin-bottom:6px"><strong>Cookie (12-point clip)</strong> — reserved for two things only: the format badge and the AI avatar. It marks "something acts on your text".</li>
+  <li style="margin-bottom:6px"><strong>Sheet shoulders</strong> — 30px on the docked bar, 32px on menus, 36px on AI panels. Elevation reads through corner size, so the stack is legible without shadows.</li>
+</ul>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <div style="width:56px;height:56px;border-radius:16px 26px 16px 26px;background:oklch(24% 0.014 275);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:oklch(85% 0.012 275)">16/26</div>
+      <div style="width:56px;height:56px;border-radius:26px 16px 26px 16px;background:oklch(24% 0.014 275);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:oklch(85% 0.012 275)">26/16</div>
+      <div style="width:74px;height:56px;border-radius:28px 12px 28px 28px;background:oklch(19% 0.013 275);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:oklch(85% 0.012 275)">card</div>
+      <div style="height:56px;padding:0 20px;border-radius:999px;background:oklch(32% 0.11 275);display:flex;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:oklch(90% 0.05 275)">pill</div>
+      <div style="height:56px;padding:0 20px;border-radius:22px 999px 999px 22px;background:oklch(34% 0.08 55);display:flex;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:oklch(91% 0.05 55)">commit</div>
+      <div style="width:56px;height:56px;background:oklch(80% 0.12 55);display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:15px;color:oklch(26% 0.06 55);clip-path:polygon(96.0% 50.0%,84.5% 68.0%,73.0% 82.5%,53.5% 75.5%,35.5% 82.5%,29.0% 63.0%,14.0% 50.0%,29.0% 37.0%,35.5% 17.5%,53.5% 24.5%,73.0% 17.5%,84.5% 32.0%)">Aa</div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 3 — The shape family: mirrored squircles, notched card, filter pill, asymmetric commit pill, cookie. Adjacent members alternate their mirror.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 8px">3.4 Space, density and touch</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Screen gutter 18–20px. Card padding 17/18px. Gaps come from flex and grid <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">gap</code>, never margins on siblings — 8px inside a control cluster, 10–12px between cards, 20–22px before a section rail. Row heights: snippet card ~120px, folder row 58px, tag row 52px, file row under a folder 46px with a 30px indent. Every tap target is at least 44×44px, controls in the docked bar are 46px, and menu cells are 74px because they are hit at speed.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 8px">3.5 Iconography</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Icons are typographic where the concept is typographic (B, I, S, H2, ”, ‹›, [[, #) and glyphic where it is spatial (⌕ search, ⇅ sort, ◎ view mode, ⏱ snapshot, ↶↷ undo/redo, ✦ AI, ▾▴ expander, › drill-in). No icon appears without a label in the format menu; in toolbars, icon-only is allowed because the set is small and permanent. The folder mark is a shape, not an icon — a tab-topped rectangle that fills with ember container when open.</p>
+
+<h2 style="font-family:Fraunces,serif;font-weight:600;font-size:22px;line-height:1.2;color:oklch(24% 0.02 275);margin:30px 0 10px;padding-bottom:7px;border-bottom:2px solid oklch(52% 0.09 55)">4 · Element catalogue</h2>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.1 Masthead</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">An ember mono kicker (<code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">vault · 214 notes</code>) above a 40px Fraunces italic wordmark, with a single settings squircle at the right. It states scale before identity, which is the honest order for an archive. On non-root screens the masthead collapses to a back squircle plus a two-line identity block (filename in mono, state in sans) — the same slot, less weight.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.2 Search field and sort button</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">A full-pill field on the 32% surface, with a detached 46px sort button to its right. The sort button is deliberately outside the field: sorting is a property of the <em>result set</em>, not of the query. It is a two-line control — glyph over a mono key label (<code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">SORT</code> when idle, the active key such as <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">REL</code>, <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">MOD</code>, <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">A–Z</code> once chosen) so the current sort is readable without opening anything. It fills with ink container when a non-default sort is active.</p>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">The menu it opens is a bottom-anchored sheet of radio rows — Recently edited, Recently created, Title A–Z, Most backlinks, File size — with a direction toggle and a "Group by day" switch. On the search screen the first option is Relevance and the match count stays visible above the results while the sheet is open, because changing sort must be evaluated against the result set.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.3 Section rail and view-mode switcher</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">A section rail is an ember mono uppercase label, optionally with a hairline and a count. It is the app's structural punctuation: it tells you what the following rows are grouped by. On the list screen the rail shares its line with the view-mode switcher — a bordered pill with an ◎ glyph, the current mode in mono uppercase, and a caret. Placing the switcher on the rail rather than in the toolbar makes the grammar explicit: the rail describes the grouping, the switcher changes it.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:oklch(80% 0.12 55)">vault · 214 notes</div>
+          <div style="font-family:Fraunces,serif;font-style:italic;font-size:34px;line-height:1;color:oklch(80% 0.13 275);margin-top:4px">noted</div>
+        </div>
+        <div style="width:40px;height:40px;border-radius:24px 15px 24px 15px;background:oklch(27% 0.016 275);display:flex;align-items:center;justify-content:center;font-size:15px;color:oklch(93% 0.008 275)">⚙</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-top:14px">
+        <div style="flex:1;min-width:0;padding:12px 16px;border-radius:999px;background:oklch(32% 0.018 275);display:flex;align-items:center;gap:9px;font-family:Manrope,sans-serif;font-size:13px;color:oklch(78% 0.014 275)"><span>⌕</span><span>Search your notes…</span></div>
+        <div style="width:44px;height:44px;border-radius:50%;background:oklch(32% 0.018 275);display:flex;flex-direction:column;align-items:center;justify-content:center;color:oklch(93% 0.008 275)"><span style="font-size:14px;line-height:1">⇅</span><span style="font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:oklch(78% 0.014 275)">SORT</span></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(80% 0.12 55)">Recently edited</span>
+        <div style="display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(93% 0.008 275)"><span style="font-size:12px">◎</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.08em">LIST</span><span style="font-size:8px;color:oklch(78% 0.014 275)">▾</span></div>
+      </div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 4 — Orientation stack: kicker, wordmark, field + detached sort key, then the rail sharing its line with the view-mode switcher.</figcaption>
+</figure>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Three modes, each with its own rail text: <strong>list</strong> (rail: "Recently edited"), <strong>folders</strong> (rail: the vault path, plus a breadcrumb line), <strong>tags</strong> (rail: "42 tags · a–z", plus an alphabet index). The switcher fills with ink container when the mode is not the default, so a user who left the app in tag view can see why the screen looks different.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.4 Snippet card</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">The list mode's unit: Fraunces title (18px, two lines maximum), a three-line excerpt with wikilinks rendered in ink, then a footer of tag chip, relationship chip ("3 backlinks", "edit queued") and a mono timestamp. An unsynced note grows a 7px ember dot after its title. The card never shows a menu button; long-press is the route to per-note actions, keeping the resting state quiet.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto;background:oklch(19% 0.013 275);border-radius:28px 12px 28px 28px;padding:16px 17px;font-family:Manrope,sans-serif">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="font-family:Fraunces,serif;font-weight:500;font-size:17px;line-height:1.25;color:oklch(93% 0.008 275)">Vault hygiene, weekly</div>
+        <span style="width:7px;height:7px;border-radius:50%;background:oklch(80% 0.12 55);flex-shrink:0"></span>
+      </div>
+      <div style="font-size:12.5px;line-height:1.5;color:oklch(78% 0.014 275);margin-bottom:11px">Prune unresolved links, retitle anything starting with <span style="color:oklch(80% 0.13 275);font-weight:600">[[Untitled]]</span>, and check that every daily note got a tag…</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:6px">
+          <span style="padding:4px 10px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:11px;font-weight:700">#routine</span>
+          <span style="padding:4px 10px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(85% 0.012 275);font-size:11px;font-weight:700">edit queued</span>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(78% 0.014 275)">offline</span>
+      </div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 5 — Snippet card, unsynced variant: ember dot after the title, ember tag chip, outline relationship chip, mono state at the right.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.5 Folder row and file row</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">A folder row carries the tab-topped folder mark, a sans name, a mono subtitle stating what is inside ("96 · 2026-09-05 · newest", "unsorted · 3 untitled"), a count and a drill-in chevron. Open folders take ember container and their children appear as file rows indented 30px with a 3px status bar in place of the folder mark. The bar's hue is the note's state: ember unsynced, ink linked, moss synced-and-quiet, grey unresolved. Folder view is the only place a breadcrumb appears.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto;font-family:Manrope,sans-serif">
+      <div style="display:flex;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(78% 0.014 275);padding-bottom:10px"><span style="color:oklch(80% 0.13 275)">vault</span><span>/</span><span style="color:oklch(93% 0.008 275)">notes</span></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid oklch(20% 0.010 275)">
+        <span style="width:34px;height:28px;flex-shrink:0;border-radius:8px 18px 18px 18px;background:oklch(27% 0.016 275);border-top:5px solid oklch(40% 0.014 275);box-sizing:border-box"></span>
+        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:oklch(93% 0.008 275)">daily</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(78% 0.014 275);margin-top:2px">2026-09-05 · newest</div></div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(70% 0.014 275)">96</span><span style="font-size:12px;color:oklch(70% 0.014 275)">›</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid oklch(20% 0.010 275)">
+        <span style="width:34px;height:28px;flex-shrink:0;border-radius:8px 18px 18px 18px;background:oklch(34% 0.08 55);border-top:5px solid oklch(80% 0.12 55);box-sizing:border-box"></span>
+        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:oklch(93% 0.008 275)">essays</div><div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(78% 0.014 275);margin-top:2px">open · 4 subfolders</div></div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(70% 0.014 275)">34</span><span style="font-size:12px;color:oklch(70% 0.014 275)">›</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:10px 0 10px 28px;border-bottom:1px solid oklch(20% 0.010 275)">
+        <span style="width:3px;height:18px;border-radius:2px;background:oklch(80% 0.12 55)"></span>
+        <span style="flex:1;min-width:0;font-size:13.5px;font-weight:600;color:oklch(93% 0.008 275)">Vault hygiene, weekly</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(80% 0.12 55)">queued</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:10px 0 10px 28px">
+        <span style="width:3px;height:18px;border-radius:2px;background:oklch(80% 0.13 275)"></span>
+        <span style="flex:1;min-width:0;font-size:13.5px;font-weight:600;color:oklch(93% 0.008 275)">OKLCH color space</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(70% 0.014 275)">Fri</span>
+      </div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 6 — Folder view: closed folder, open folder in ember container, and its indented file rows whose 3px bar encodes note state.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.6 Tag row and expander</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Every tag in the vault, alphabetical, one per row: a <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">#</code> mark, the tag, a count, and a 34px squircle expander. Tapping the expander — not the row — opens the tag in place: the row takes the card surface, its mark turns ember, the caret flips, and up to three file rows appear beneath, closed by a "20 more in #design" line with an "open tag" pill that navigates to the full filtered list. Tapping the row itself goes straight to that filtered list. Two gestures, two intents, no ambiguity. An A–Z index above the list jumps to first letters and highlights the letter currently at the top of the viewport.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto;font-family:Manrope,sans-serif">
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-bottom:1px solid oklch(20% 0.010 275)">
+        <span style="font-size:14px;font-weight:700;color:oklch(70% 0.014 275)">#</span>
+        <span style="flex:1;font-size:14px;font-weight:700;color:oklch(93% 0.008 275)">deploy</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(70% 0.014 275)">19</span>
+        <span style="width:30px;height:30px;border-radius:11px 20px 11px 20px;background:oklch(24% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:9px;color:oklch(85% 0.012 275)">▼</span>
+      </div>
+      <div style="background:oklch(19% 0.013 275)">
+        <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-bottom:1px solid oklch(20% 0.010 275)">
+          <span style="font-size:14px;font-weight:700;color:oklch(80% 0.12 55)">#</span>
+          <span style="flex:1;font-size:14px;font-weight:700;color:oklch(93% 0.008 275)">design</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(70% 0.014 275)">23</span>
+          <span style="width:30px;height:30px;border-radius:20px 11px 20px 11px;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:9px;color:oklch(90% 0.05 275)">▲</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 12px 9px 30px;border-bottom:1px solid oklch(20% 0.010 275)"><span style="width:3px;height:18px;border-radius:2px;background:oklch(80% 0.13 275)"></span><span style="flex:1;font-size:13.5px;font-weight:600;color:oklch(93% 0.008 275)">OKLCH color space</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(70% 0.014 275)">Fri</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 12px 9px 30px;border-bottom:1px solid oklch(20% 0.010 275)"><span style="width:3px;height:18px;border-radius:2px;background:oklch(78% 0.07 175)"></span><span style="flex:1;font-size:13.5px;font-weight:600;color:oklch(93% 0.008 275)">Design tokens, five seeds</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(70% 0.014 275)">Thu</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px 11px 30px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:oklch(80% 0.13 275);white-space:nowrap">20 more in #design</span><span style="flex:1"></span>
+          <span style="white-space:nowrap;padding:4px 11px;border-radius:999px;border:1px solid oklch(34% 0.012 275);font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(85% 0.012 275)">open tag</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 12px">
+        <span style="font-size:14px;font-weight:700;color:oklch(70% 0.014 275)">#</span>
+        <span style="flex:1;font-size:14px;font-weight:700;color:oklch(93% 0.008 275)">inbox</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:oklch(70% 0.014 275)">12</span>
+        <span style="width:30px;height:30px;border-radius:11px 20px 11px 20px;background:oklch(24% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:9px;color:oklch(85% 0.012 275)">▼</span>
+      </div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 7 — Tag view with #design expanded: card surface, ember mark, ink expander, three children and an overflow line. Expander expands; the row itself navigates.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.7 Docked bar and primary action</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">A 27%-surface bar with 30px shoulders, pinned to the bottom edge. Left: a cluster of 46px squircles — menu, tags, and the ✦ AI button, the last in ink container because AI is a mode, not a commitment. Right: the ember asymmetric pill, which is the only committing action on the screen ("New" on the list, "Snapshot" in the editor, "Snapshot now" in history). On the search screen the search squircle takes ink container to show where you are. The bar never hides on scroll; it is the app's floor.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto;background:oklch(27% 0.016 275);border-radius:30px 30px 0 0;border-top:1px solid oklch(34% 0.012 275);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px">
+      <div style="display:flex;gap:8px">
+        <div style="width:42px;height:42px;border-radius:16px 26px 16px 26px;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:15px;color:oklch(93% 0.008 275)">☰</div>
+        <div style="width:42px;height:42px;border-radius:26px 16px 26px 16px;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:15px;color:oklch(93% 0.008 275)">#</div>
+        <div style="width:42px;height:42px;border-radius:26px 16px 26px 16px;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(90% 0.05 275)">✦</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 18px;border-radius:22px 999px 999px 22px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-family:Manrope,sans-serif;font-size:13.5px;font-weight:700"><span>✎</span><span>New</span></div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 8 — Docked bar: alternating squircles, ink-container AI (a mode), one ember commit pill (an action). Its flat end points back at the list.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.8 Editor surface</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Markdown is rendered live in its final styling — no raw syntax, no split preview. Headings are Fraunces, body is 16px Manrope at 1.6, wikilinks are ink with a 2px underline offset 2px, bullets take an ember marker, code blocks sit on the well surface with a moss left rule. Only the token being typed reveals its syntax: an in-progress <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">[[oklch</code> shows its brackets in mono ink beside a 2px ink caret, and collapses to styled text on completion. Title and tag chips sit above the body, with a dashed "+ tag" affordance. Below the body: a "Backlinks · 2" rail and quoted context lines, so the note's inbound edges are part of the note.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.9 Wikilink autocomplete</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">A well-surface list with a 28px radius that appears directly under the caret line: matched titles, the first in ink container, and a final ink-text row "+ Create 'oklch'". It never covers the line being typed, and it is dismissed by any character that closes the token. Existing notes always outrank creation.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.10 Format pop menu</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Opened by the <em>Aa</em> squircle in the editor toolbar; the modifiers are not permanently docked, because they are only meaningful with a selection or an intent. A 32px container floats 14px above the bar and holds: a header with the ember cookie <em>Aa</em> badge, the word "Format" in Fraunces, a mono "selection" qualifier, and a close squircle; a 3×3 grid of 74px shape cells (Bold, Italic, Strike, Heading, List, Quote) whose corner families mirror across the grid, active items filled ember container; and a row of three full pills for Wikilink (ink container), Tag and Code. Grid items are character formats; the pill row inserts structure. Active states are read from the selection and update live as the caret moves.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto;background:oklch(19% 0.013 275);border:1px solid oklch(30% 0.012 275);border-radius:32px;padding:13px;font-family:Manrope,sans-serif">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 3px 11px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:30px;height:30px;background:oklch(80% 0.12 55);color:oklch(26% 0.06 55);display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:11px;font-weight:600;clip-path:polygon(96.0% 50.0%,84.5% 68.0%,73.0% 82.5%,53.5% 75.5%,35.5% 82.5%,29.0% 63.0%,14.0% 50.0%,29.0% 37.0%,35.5% 17.5%,53.5% 24.5%,73.0% 17.5%,84.5% 32.0%)">Aa</span>
+          <span style="font-family:Fraunces,serif;font-size:15px;font-weight:500;color:oklch(93% 0.008 275)">Format</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)">selection</span>
+        </div>
+        <span style="width:28px;height:28px;border-radius:50%;background:oklch(24% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:11px;color:oklch(85% 0.012 275)">✕</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+        <div style="height:58px;border-radius:24px;background:oklch(34% 0.08 55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-size:18px;font-weight:800;color:oklch(93% 0.05 55)">B</span><span style="font-size:10px;font-weight:700;color:oklch(93% 0.05 55)">Bold</span></div>
+        <div style="height:58px;border-radius:24px 12px 24px 12px;background:oklch(24% 0.014 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-family:Fraunces,serif;font-style:italic;font-size:18px;color:oklch(93% 0.008 275)">I</span><span style="font-size:10px;font-weight:700;color:oklch(93% 0.008 275)">Italic</span></div>
+        <div style="height:58px;border-radius:12px 24px 12px 24px;background:oklch(24% 0.014 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-size:17px;color:oklch(93% 0.008 275);text-decoration:line-through">S</span><span style="font-size:10px;font-weight:700;color:oklch(93% 0.008 275)">Strike</span></div>
+        <div style="height:58px;border-radius:24px 12px 12px 24px;background:oklch(26% 0.05 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-family:Fraunces,serif;font-weight:600;font-size:17px;color:oklch(93% 0.008 275)">H2</span><span style="font-size:10px;font-weight:700;color:oklch(93% 0.008 275)">Heading</span></div>
+        <div style="height:58px;border-radius:12px;background:oklch(24% 0.014 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-size:15px;color:oklch(93% 0.008 275)">•—</span><span style="font-size:10px;font-weight:700;color:oklch(93% 0.008 275)">List</span></div>
+        <div style="height:58px;border-radius:12px 24px 24px 12px;background:oklch(24% 0.014 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-family:Fraunces,serif;font-size:22px;color:oklch(93% 0.008 275)">”</span><span style="font-size:10px;font-weight:700;color:oklch(93% 0.008 275)">Quote</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:7px;margin-top:7px">
+        <div style="height:48px;border-radius:999px;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;gap:7px"><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:oklch(90% 0.05 275)">[[</span><span style="font-size:11px;font-weight:700;color:oklch(90% 0.05 275)">Wikilink</span></div>
+        <div style="height:48px;border-radius:999px;background:oklch(24% 0.014 275);display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:14px;font-weight:700;color:oklch(80% 0.12 55)">#</span><span style="font-size:11px;font-weight:700;color:oklch(93% 0.008 275)">Tag</span></div>
+        <div style="height:48px;border-radius:999px;background:oklch(24% 0.014 275);display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:oklch(85% 0.02 175)">‹›</span><span style="font-size:11px;font-weight:700;color:oklch(93% 0.008 275)">Code</span></div>
+      </div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 9 — Format pop menu. Grid = character marks (Bold active in ember container); pill row = structure. Corner families mirror across the grid.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.11 Undo, redo and Snapshot</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Undo and redo are neighbouring squircles; a disabled step drops to the 52% text tone rather than disappearing, so the pair keeps its shape. The old "Done" is replaced by an ember <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">⏱ Snapshot</code> pill: leaving the editor is not an event worth a button, but marking a version is. Snapshot is idempotent-feeling — pressing it with no changes since the last version reports "no changes to snapshot" rather than writing a duplicate.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.12 Version history</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Scope chips (Snapshots / Autosaves / All) sit above a selected-version card — a 32px card with a 14px notch, an ember mono "selected · today 09:41" line, a moss <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">+42 −7</code> count, a four-line diff on the well surface, and the ember "Restore this version" pill beside a compare squircle. Beneath it, a timeline: 12px ink dots for snapshots (the current draft's dot is ember with a halo), 9px grey dots for autosaves, connected by a 2px rule, grouped by day rails. Snapshots get a mono SNAPSHOT badge and a device name; autosaves get a smaller, quieter row. The footer states retention ("keeps 30 days · 214 kB") because a version store that silently grows is a liability.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto;font-family:Manrope,sans-serif">
+      <div style="display:flex;align-items:baseline;gap:9px;padding-bottom:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(80% 0.12 55)">today</span><span style="flex:1;height:1px;background:oklch(28% 0.012 275)"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(70% 0.014 275)">3</span></div>
+      <div style="display:flex;gap:12px;padding:9px 0">
+        <div style="display:flex;flex-direction:column;align-items:center;width:12px;flex-shrink:0"><span style="width:11px;height:11px;border-radius:50%;background:oklch(80% 0.12 55);box-shadow:0 0 0 4px oklch(34% 0.08 55)"></span><span style="flex:1;width:2px;background:oklch(28% 0.012 275);margin-top:4px"></span></div>
+        <div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:oklch(93% 0.008 275)">Current draft</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(70% 0.014 275)">09:41</span></div><div style="font-size:11.5px;color:oklch(78% 0.014 275);margin-top:2px">Unsnapshotted edits · 1.9 kB</div></div>
+      </div>
+      <div style="display:flex;gap:12px;padding:9px 0">
+        <div style="display:flex;flex-direction:column;align-items:center;width:12px;flex-shrink:0"><span style="width:11px;height:11px;border-radius:50%;background:oklch(80% 0.13 275)"></span><span style="flex:1;width:2px;background:oklch(28% 0.012 275);margin-top:4px"></span></div>
+        <div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:oklch(93% 0.008 275)">Reworked the index section</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(70% 0.014 275)">09:12</span></div>
+        <div style="display:flex;align-items:center;gap:7px;margin-top:4px"><span style="padding:2px 8px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700">SNAPSHOT</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(78% 0.07 175)">+42 −7</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(70% 0.014 275)">pixel</span></div></div>
+      </div>
+      <div style="display:flex;gap:12px;padding:9px 0">
+        <div style="display:flex;flex-direction:column;align-items:center;width:12px;flex-shrink:0"><span style="width:8px;height:8px;border-radius:50%;background:oklch(45% 0.014 275);margin-top:2px"></span></div>
+        <div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font-size:12.5px;font-weight:600;color:oklch(80% 0.012 275)">Autosave</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(70% 0.014 275)">08:47</span></div><div style="font-size:11.5px;color:oklch(70% 0.014 275);margin-top:2px">+6 −0 · typo pass</div></div>
+      </div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 10 — Version timeline: ember haloed dot for the live draft, 11px ink dots plus SNAPSHOT badges for versions, 8px grey dots for autosaves.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.13 AI panel — single note</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">A bottom sheet with 36px shoulders over a dimmed editor. Header: cookie ✦ avatar, "Edit with AI", and a mono scope line ("this note + 2 backlinks") — the scope is stated before the conversation, because an editing agent's scope is the whole safety story. Body: ink-container user bubbles (26px, 8px tail) on the right, surface assistant bubbles on the left, and beneath the assistant's prose a proposed-diff block on the well surface with a header count. Actions are "Apply both" (ember) and "Review one by one" (outline), followed by a moss ⏱ line: "a snapshot is taken before applying". A row of quick-action chips (Summarize, Suggest links, Fix tags) sits above the composer, and the composer is a well-surface pill with a 52px ink send squircle.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto;font-family:Manrope,sans-serif;display:flex;flex-direction:column;gap:9px">
+      <div style="align-self:flex-end;max-width:82%;background:oklch(32% 0.11 275);color:oklch(93% 0.04 275);border-radius:26px 26px 8px 26px;padding:10px 13px;font-size:12.5px;line-height:1.5">Tighten the index section and fence the endpoint.</div>
+      <div style="background:oklch(22% 0.014 275);border-radius:26px 26px 26px 8px;padding:10px 13px;font-size:12.5px;line-height:1.5;color:oklch(93% 0.008 275);max-width:92%">Two edits — a shorter opening, and the endpoint as code.</div>
+      <div style="background:oklch(11% 0.008 275);border:1px solid oklch(30% 0.012 275);border-radius:14px;overflow:hidden;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5">
+        <div style="display:flex;justify-content:space-between;padding:7px 11px;border-bottom:1px solid oklch(24% 0.012 275);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)"><span>proposed diff</span><span style="color:oklch(78% 0.07 175)">+9 −4</span></div>
+        <div style="display:flex;gap:8px;padding:5px 11px;background:oklch(24% 0.045 25)"><span style="color:oklch(80% 0.10 25)">−</span><span style="color:oklch(84% 0.03 25)">One entry per file — title, tags, outgoing…</span></div>
+        <div style="display:flex;gap:8px;padding:5px 11px;background:oklch(23% 0.045 175)"><span style="color:oklch(78% 0.07 175)">+</span><span style="color:oklch(88% 0.03 175)">One entry per file, plus the inverted graph.</span></div>
+      </div>
+      <div style="display:flex;gap:7px">
+        <div style="padding:9px 14px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:11.5px;font-weight:700;white-space:nowrap">Apply both</div>
+        <div style="padding:9px 14px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(93% 0.008 275);font-size:11.5px;font-weight:700;white-space:nowrap">Review one by one</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(78% 0.014 275)"><span style="color:oklch(78% 0.07 175)">⏱</span><span>a snapshot is taken before applying</span></div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 11 — Propose-then-commit: ink user bubble, surface assistant bubble, well-surface diff with a moss count, one ember commit, and the snapshot promise.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.14 AI panel — many notes</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Same sheet, different unit of work. Scope becomes editable: removable ink chips (#design ×) plus a dashed "+ scope". The assistant's answer is a plan, not prose — a well-surface list of one row per note with an ember checkbox, the filename in mono, and a per-file diff count; excluded rows show an unchecked box and a red "conflict" tag with the note's reason. The commit button counts what it will touch ("Apply to 11"), and the moss line promises one snapshot per note with a batch undo. Bulk editing is only tolerable when the blast radius is enumerated, per file, before the tap.</p>
+<figure style="break-inside:avoid;margin:16px 0 20px">
+  <div style="background:oklch(16% 0.012 275);border-radius:20px;padding:18px;box-sizing:border-box">
+    <div style="max-width:340px;margin:0 auto;background:oklch(11% 0.008 275);border:1px solid oklch(30% 0.012 275);border-radius:14px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid oklch(24% 0.012 275);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)"><span>per-note plan</span><span style="color:oklch(80% 0.12 55)">11 selected</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid oklch(20% 0.010 275)"><span style="width:16px;height:16px;border-radius:5px;background:oklch(80% 0.12 55);color:oklch(26% 0.06 55);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800">✓</span><span style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">oklch-color-space.md</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(78% 0.07 175)">+2 −1</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid oklch(20% 0.010 275)"><span style="width:16px;height:16px;border-radius:5px;background:oklch(80% 0.12 55);color:oklch(26% 0.06 55);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800">✓</span><span style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">design-tokens.md</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(78% 0.07 175)">+2</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px"><span style="width:16px;height:16px;border-radius:5px;border:1px solid oklch(40% 0.012 275)"></span><span style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">reading-list-2026.md</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:oklch(80% 0.10 25)">conflict</span></div>
+    </div>
+  </div>
+  <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;line-height:1.5;letter-spacing:0.04em;color:oklch(45% 0.02 275);margin-top:7px">Fig. 12 — Bulk plan: one row per file, ember checkbox, per-file diff count, and excluded rows kept visible with their reason.</figcaption>
+</figure>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.15 Search results</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Scope chips (Everything / Titles / Tags / Links), a result meta line pairing "7 notes · 12 matches" with a moss "index · 4ms", then result cards: Fraunces title with matched spans in ink-container highlight, a mono provenance line (filename · tags · backlink count), and a quoted excerpt with the same highlight. A dashed card offers to create the missing note when the query has no title match, and a mono footer notes cached results. Search always tells you how it knew.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 6px">4.16 Settings</h3>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">Ember mono rails (Vault, Auth token, Sync, Appearance) over grouped 28px cards. Values that are really strings from a config file are mono; explanations are sans. The token is masked with wide tracking and a reveal glyph, and its truth is a moss verification line with a timestamp — "Verified against this server 4m ago" — not a green tick. Toggles are 52×32px with ink container when on. The screen ends with a mono status footer (version, index rebuild time).</p>
+
+<h2 style="font-family:Fraunces,serif;font-weight:600;font-size:22px;line-height:1.2;color:oklch(24% 0.02 275);margin:30px 0 10px;padding-bottom:7px;border-bottom:2px solid oklch(52% 0.09 55)">5 · How the elements must interact</h2>
+
+<ul style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.6;color:oklch(30% 0.015 275);margin:0 0 12px;padding-left:22px">
+  <li style="margin-bottom:8px"><strong>One surface at a time.</strong> The format menu, the wikilink autocomplete, the sort sheet and the AI panel are mutually exclusive. Opening any one dismisses the others; the AI panel additionally dismisses the keyboard, since it owns the composer.</li>
+  <li style="margin-bottom:8px"><strong>Sort and view mode are independent but not orthogonal.</strong> Sort applies within groups: in folder view it orders files inside each folder; in tag view it orders notes inside an expanded tag; in list view it orders the whole list and may replace the day rails. Changing view mode preserves the sort key when the key still makes sense and falls back to A–Z when it doesn't (tags have no mtime).</li>
+  <li style="margin-bottom:8px"><strong>The rail always describes what the rows are.</strong> Any change to grouping, sorting or scope must update the rail text and its count in the same frame as the rows. A rail that disagrees with its rows is the worst bug this design can have.</li>
+  <li style="margin-bottom:8px"><strong>Scope flows down, never up.</strong> The list's AI panel inherits the active view mode, tag filter and search query as its initial scope chips; the editor's AI panel inherits the open note plus its backlinks. Editing scope inside a panel never changes the list behind it.</li>
+  <li style="margin-bottom:8px"><strong>Every apply writes a version.</strong> AI applies, restores and bulk edits all go through the same snapshot path as the Snapshot button, so history is the single audit log. Restoring a version is itself snapshotted, which is why history can never trap the user in the past.</li>
+  <li style="margin-bottom:8px"><strong>Undo and history are one stack, two resolutions.</strong> Undo steps through keystroke-level edits in the current session; history steps through committed versions. An AI apply is a single undo step and a single version, so both stacks agree.</li>
+  <li style="margin-bottom:8px"><strong>Format menu obeys the selection.</strong> Active cells reflect the current selection's marks; with an empty selection the menu applies to the word under the caret, and block items (Heading, List, Quote, Code) apply to the whole block regardless of selection.</li>
+  <li style="margin-bottom:8px"><strong>Autocomplete outranks the toolbar.</strong> While the wikilink list is open the format menu button is inert, and the <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">[[</code> pill in the menu is disabled — you cannot open a link inside a link.</li>
+  <li style="margin-bottom:8px"><strong>Sync state propagates to every representation of a note.</strong> An unsynced note shows the ember dot on its snippet card, an ember status bar in folder and tag views, an ember "queued" timestamp in dense rows, and a pending-writes count in Settings. One fact, one hue, everywhere it is visible.</li>
+  <li style="margin-bottom:8px"><strong>Counts must be live and honest.</strong> Vault count, tag counts, folder counts, match counts, pending writes and version counts all come from the index, and all show a stale marker rather than an old number when the index is rebuilding.</li>
+  <li style="margin-bottom:8px"><strong>Tag rows: expander expands, row navigates.</strong> This split must hold everywhere the pattern is reused, including inside the AI scope picker.</li>
+  <li style="margin-bottom:8px"><strong>Ember exclusivity.</strong> When a sheet with an ember commit button is open, the docked bar's ember button drops to its outline treatment. Only one commit is offered at a time.</li>
+</ul>
+
+<h2 style="font-family:Fraunces,serif;font-weight:600;font-size:22px;line-height:1.2;color:oklch(24% 0.02 275);margin:30px 0 10px;padding-bottom:7px;border-bottom:2px solid oklch(52% 0.09 55)">6 · Motion</h2>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 8px">6.1 Motion tokens</h3>
+<table style="width:100%;border-collapse:collapse;font-family:Manrope,sans-serif;font-size:13px;margin:0 0 14px">
+  <thead>
+    <tr>
+      <th style="text-align:left;padding:7px 8px;border-bottom:1.5px solid oklch(35% 0.02 275);font-weight:800;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(38% 0.02 275)">Token</th>
+      <th style="text-align:left;padding:7px 8px;border-bottom:1.5px solid oklch(35% 0.02 275);font-weight:800;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(38% 0.02 275)">Curve / duration</th>
+      <th style="text-align:left;padding:7px 8px;border-bottom:1.5px solid oklch(35% 0.02 275);font-weight:800;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(38% 0.02 275)">Used for</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">spatial-fast</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">spring, ~280ms, damping 0.82</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Chips, expanders, toggle knobs, press response</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">spatial-default</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">spring, ~420ms, damping 0.8</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Menus, sheets, list regrouping, shape morphs</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">spatial-slow</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">spring, ~560ms, damping 0.85</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Full-screen transitions, view-mode changes</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">effects</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">cubic-bezier(0.2,0,0,1), 150–200ms</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Colour, opacity, highlight, scrim</td></tr>
+    <tr><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-weight:700">exit</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);font-family:'IBM Plex Mono',monospace;font-size:11.5px">cubic-bezier(0.3,0,0.8,0.15), 200ms</td><td style="padding:7px 8px;border-bottom:1px solid oklch(88% 0.008 275);color:oklch(38% 0.015 275)">Dismissals — always faster than the entrance</td></tr>
+  </tbody>
+</table>
+<p style="font-family:Manrope,sans-serif;font-size:14px;line-height:1.6;color:oklch(38% 0.015 275);margin:0 0 12px">Springs, not eases, for anything that moves or changes size — the shape family only reads as a family when its members morph elastically. Colour never springs; it uses the effects curve so hue changes feel like state, not motion.</p>
+
+<h3 style="font-family:Manrope,sans-serif;font-weight:800;font-size:14px;letter-spacing:0.02em;color:oklch(28% 0.02 275);margin:18px 0 8px">6.2 Specified behaviours</h3>
+<ul style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.6;color:oklch(30% 0.015 275);margin:0 0 12px;padding-left:22px">
+  <li style="margin-bottom:8px"><strong>Press.</strong> Every tappable element scales to 0.96 and shifts one surface step brighter over 100ms, releasing on spatial-fast. Icon squircles additionally morph their corner family toward its mirror while held — the press <em>is</em> a shape change. No ripples; the shape system replaces them.</li>
+  <li style="margin-bottom:8px"><strong>Format menu open.</strong> The Aa button morphs into the menu: the menu scales from 0.9 with its origin at the button, translating up 14px on spatial-default, while the nine cells stagger in at 18ms intervals from the bottom-left cell (nearest the thumb) with a 6px rise. Closing reverses without the stagger, on exit.</li>
+  <li style="margin-bottom:8px"><strong>Format apply.</strong> The tapped cell fills ember container in 150ms and pulses its corner radius once (26→30→26px). In the body, the affected text animates its own change — weight, slant or colour on the effects curve — so the eye is drawn to the text, not the button.</li>
+  <li style="margin-bottom:8px"><strong>Undo / redo.</strong> The pressed arrow rotates 12° and springs back; the changed passage flashes an ink-container highlight that fades over 400ms and scrolls into view if off-screen. Holding either button repeats at 5 steps/second with one shared highlight, never one flash per step.</li>
+  <li style="margin-bottom:8px"><strong>Snapshot.</strong> The ⏱ pill compresses, then a small chip lifts out of it carrying the new version's time and settles into the top-right of the screen before fading — the snapshot visibly leaves the button and goes somewhere. If history is open behind, the new dot springs into the timeline instead. Nothing blocks the editor; the pill returns to rest in 500ms.</li>
+  <li style="margin-bottom:8px"><strong>Wikilink autocomplete.</strong> Opens by height only — 0 to auto on spatial-fast with no fade — because it must feel attached to the caret line. Rows re-rank in place as the user types, using a shared-element position spring so a row that stays in the list slides rather than reappearing. Accepting a suggestion collapses the list in 120ms while the raw <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">[[…]]</code> tokens cross-fade to the styled link.</li>
+  <li style="margin-bottom:8px"><strong>Sort sheet.</strong> Rises 24px with a scrim at 40% over 200ms. Choosing a key dismisses the sheet immediately, and the list reorders <em>after</em> the sheet is gone: rows animate to new positions on spatial-default with a 12ms per-row stagger, and rows leaving the set fade at 0.9 scale. The sort button's mono label cross-fades to the new key.</li>
+  <li style="margin-bottom:8px"><strong>View-mode change.</strong> The switcher morphs into the new rail label, then rows perform a grouped reflow: outgoing rows drop 8px and fade over 160ms, the new rails draw their hairline left-to-right in 220ms, incoming rows rise 10px with a 15ms stagger. Notes present in both modes keep identity and slide to their new position — going from list to folders should feel like the same notes rearranging, not a new screen.</li>
+  <li style="margin-bottom:8px"><strong>Tag expander.</strong> The caret rotates 180°, the row's surface and mark colour shift on effects, and child rows expand by height with a 20ms stagger, each rising 6px. Expanding one tag collapses any other open tag in the same gesture, its rows leaving upward — a single continuous motion, so the list never appears to jump twice.</li>
+  <li style="margin-bottom:8px"><strong>Folder drill-in.</strong> The tapped folder's mark and name are shared elements: the mark scales up into the breadcrumb while the file rows of the previous level clear downward and the new level rises. Back reverses exactly, restoring scroll position.</li>
+  <li style="margin-bottom:8px"><strong>AI panel open.</strong> The ✦ button morphs into the cookie avatar in the sheet header while the sheet rises from the bottom edge on spatial-default with a 36px corner that eases from 48px, and the content behind dims to 45% and scales to 0.99 — receding, not disappearing. Quick-action chips stagger in at 20ms.</li>
+  <li style="margin-bottom:8px"><strong>AI thinking and streaming.</strong> While waiting, the cookie avatar rotates slowly (8s per turn) with a 2px ink halo breathing at 1.4s — patient, not urgent. The response types in line by line; the diff block reveals row by row at 60ms intervals, additions wiping in from the left in moss, removals in red, and its <code style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:oklch(95% 0.006 275);padding:1px 5px;border-radius:5px">+n −n</code> count counts up as rows land. Action buttons animate in only when the proposal is complete, so nothing can be accepted mid-stream.</li>
+  <li style="margin-bottom:8px"><strong>AI apply (single note).</strong> The sheet drops away first, then the edits land in the body one at a time, 90ms apart: each changed passage flashes moss and settles. Simultaneously the snapshot chip lifts from the ember pill, tying the change to the version that now protects it. A toast with "Undo" holds for 6 seconds.</li>
+  <li style="margin-bottom:8px"><strong>AI apply (bulk).</strong> The plan list stays visible and each row completes in sequence: checkbox to a moss tick, count to "done", row dimming as it finishes, with a progress rule filling under the header. The sheet stays until every row has resolved, then collapses to a summary line "11 notes updated · Undo all". Failures stay in place, red, and are never dismissed automatically.</li>
+  <li style="margin-bottom:8px"><strong>Version select and restore.</strong> Tapping a timeline dot expands the dot to 12px, springs the selected-version card to the new diff (old diff rows leaving upward, new ones entering from below), and moves the ember halo. Restore asks for confirmation in place — the pill widens into "Restore · takes a snapshot first" and requires a second tap — then transitions to the editor with the restored text arriving as a moss highlight sweep.</li>
+  <li style="margin-bottom:8px"><strong>Search.</strong> Results replace on a 120ms crossfade with no reflow of the meta line; highlight spans grow their background from the centre out in 180ms. Scope chip changes re-filter without re-querying, so the change is instant by design.</li>
+  <li style="margin-bottom:8px"><strong>Sync and state.</strong> Ember dots pulse once (scale 1→1.3→1) when a note enters the queue, and cross-fade to moss when it drains. Nothing spins persistently: an active sync shows a 2px moss progress rule under the docked bar's top edge.</li>
+  <li style="margin-bottom:8px"><strong>Keyboard.</strong> The docked bar and any open menu ride the IME's own curve, tracking its height frame by frame rather than animating separately; the caret line is kept at least 96px above the keyboard, and the autocomplete list is clamped to the space between them.</li>
+  <li style="margin-bottom:8px"><strong>Reduced motion.</strong> With the OS setting on, all springs become 120ms opacity fades, shape morphs land instantly at their end state, staggers collapse to zero, the AI avatar stops rotating, and highlights still appear but do not sweep. Every state must be reachable and legible with all motion removed.</li>
+</ul>
+
+<h2 style="font-family:Fraunces,serif;font-weight:600;font-size:22px;line-height:1.2;color:oklch(24% 0.02 275);margin:30px 0 10px;padding-bottom:7px;border-bottom:2px solid oklch(52% 0.09 55)">7 · States still to design</h2>
+<p style="font-family:Manrope,sans-serif;font-size:15px;line-height:1.65;color:oklch(30% 0.015 275);margin:0 0 12px">The nine screens cover the resting and success paths. The following states should be drawn before build, in the same grammar: an empty vault and an empty tag; index-rebuilding (rail count replaced by a stale marker); server unreachable (the docked bar keeps working, the search rail says "offline cache"); a sync conflict banner offering "keep mine / keep theirs / open both"; the keyboard-up editor at its smallest usable height; the sort sheet and the long-press note menu in their open states; and a name-this-snapshot sheet for versions the user wants to find later by name rather than by time.</p>
+
+</doc-page>
+</x-dc>
+</body>
+</html>

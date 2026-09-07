@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:oklch(11% 0.008 275);color:oklch(93% 0.008 275);font-family:Manrope,system-ui,sans-serif}
+a{color:oklch(80% 0.13 275)}a:hover{color:oklch(88% 0.09 275)}
+.dv-turn{padding:44px 48px 36px;border-bottom:1px solid oklch(28% 0.012 275);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.dv-tid{font:600 10px "IBM Plex Mono",ui-monospace,monospace;padding:3px 7px;background:oklch(80% 0.13 275);color:oklch(22% 0.09 275);border-radius:4px;text-decoration:none}
+.dv-tname{font:500 15px/1.2 Fraunces,serif;color:oklch(93% 0.008 275)}
+.dv-note{max-width:52rem;margin:0 0 26px;font:400 13px/1.6 Manrope,sans-serif;color:oklch(70% 0.014 275)}
+.dv-opts{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px "IBM Plex Mono",ui-monospace,monospace;padding:3px 7px;background:oklch(27% 0.016 275);color:oklch(93% 0.008 275);border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.3 Manrope,sans-serif;color:oklch(70% 0.014 275)}
+.dv-card{max-width:100%}
+.dv-opt:target .dv-oid{background:oklch(80% 0.12 55);color:oklch(26% 0.06 55)}
+.dv-next{margin:26px 0 0;font:400 12px/1.6 Manrope,sans-serif;color:oklch(62% 0.014 275)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">noted for Android — dark, docked toolbar + FAB</span></div>
+<p class="dv-note">Four screens in the field guide's M3 Expressive language: ink for links and the caret, moss for backlinks and quiet state, ember for tags and the one loud action per screen; Fraunces for note titles, Manrope for chrome, Plex Mono for anything that is really a file. <a class="dv-oid" href="#1a">1a</a> is the chosen list — snippet cards with tag and backlink counts; <a class="dv-oid" href="#1c">1c</a>–<a class="dv-oid" href="#1f">1f</a> follow its register: the editor's modifiers now live in a Format pop menu, with undo/redo beside it and Snapshot writing a version into <a class="dv-oid" href="#1f">1f</a>'s history.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Note list — snippet cards, faithful to the guide</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px">
+    <span style="font-family:Fraunces,serif;font-style:italic;font-size:26px;font-weight:400;color:oklch(80% 0.13 275)">noted</span>
+    <div style="display:flex;gap:8px">
+      <div style="width:40px;height:40px;border-radius:50%;background:oklch(27% 0.016 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(93% 0.008 275)">⌕</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:oklch(27% 0.016 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">⚙</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:9px;margin:0 18px 16px">
+    <div style="flex:1;min-width:0;padding:13px 18px;border-radius:999px;background:oklch(32% 0.018 275);color:oklch(78% 0.014 275);font-size:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:15px">⌕</span><span>Search your notes…</span>
+    </div>
+    <div style="width:46px;height:46px;flex-shrink:0;border-radius:50%;background:oklch(32% 0.018 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:oklch(93% 0.008 275)">
+      <span style="font-size:15px;line-height:1">⇅</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.06em;color:oklch(78% 0.014 275)">SORT</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:0 18px 10px;overflow:hidden">
+    <div style="padding:7px 14px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:12.5px;font-weight:700">All notes</div>
+    <div style="padding:7px 14px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:12.5px;font-weight:600">#writing</div>
+    <div style="padding:7px 14px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:12.5px;font-weight:600">#deploy</div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 18px 8px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)">Recently edited</span>
+    <div style="display:flex;align-items:center;gap:7px;padding:6px 12px 6px 11px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(93% 0.008 275)">
+      <span style="font-size:14px;line-height:1">◎</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase">list</span>
+      <span style="font-size:9px;color:oklch(78% 0.014 275)">▾</span>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px;padding:0 18px 20px">
+
+    <div style="background:oklch(19% 0.013 275);border-radius:16px;padding:16px 17px">
+      <div style="font-family:Fraunces,serif;font-weight:500;font-size:18px;line-height:1.25;color:oklch(93% 0.008 275);margin-bottom:6px">Backlinks and the shape of thought</div>
+      <div style="font-size:13px;line-height:1.5;color:oklch(78% 0.014 275);margin-bottom:12px">A note on why <span style="color:oklch(80% 0.13 275);font-weight:600">[[wikilinks]]</span> beat folders for this vault, and what that means for how the index is rebuilt on boot…</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:6px">
+          <span style="padding:4px 11px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:11.5px;font-weight:700">#writing</span>
+          <span style="padding:4px 11px;border-radius:999px;background:oklch(30% 0.045 175);color:oklch(90% 0.03 175);font-size:11.5px;font-weight:700">3 backlinks</span>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275)">2h ago</span>
+      </div>
+    </div>
+
+    <div style="background:oklch(19% 0.013 275);border-radius:16px;padding:16px 17px">
+      <div style="font-family:Fraunces,serif;font-weight:500;font-size:18px;line-height:1.25;color:oklch(93% 0.008 275);margin-bottom:6px">Termux deploy notes</div>
+      <div style="font-size:13px;line-height:1.5;color:oklch(78% 0.014 275);margin-bottom:12px">Process supervision without systemd — a Deno server running on-device, restart-on-crash via a tiny wrapper script and a boot hook…</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:6px">
+          <span style="padding:4px 11px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:11.5px;font-weight:700">#deploy</span>
+          <span style="padding:4px 11px;border-radius:999px;background:oklch(30% 0.045 175);color:oklch(90% 0.03 175);font-size:11.5px;font-weight:700">4 backlinks</span>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275)">yesterday</span>
+      </div>
+    </div>
+
+    <div style="background:oklch(19% 0.013 275);border-radius:16px;padding:16px 17px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="font-family:Fraunces,serif;font-weight:500;font-size:18px;line-height:1.25;color:oklch(93% 0.008 275)">Vault hygiene, weekly</div>
+        <span style="width:7px;height:7px;border-radius:50%;background:oklch(80% 0.12 55);flex-shrink:0" title="unsynced"></span>
+      </div>
+      <div style="font-size:13px;line-height:1.5;color:oklch(78% 0.014 275);margin-bottom:12px">Prune unresolved links, retitle anything starting with "Untitled", and check that every daily note got a tag…</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:6px">
+          <span style="padding:4px 11px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:11.5px;font-weight:700">#routine</span>
+          <span style="padding:4px 11px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:11.5px;font-weight:700">edit queued</span>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275)">offline</span>
+      </div>
+    </div>
+
+    <div style="background:oklch(19% 0.013 275);border-radius:16px;padding:16px 17px">
+      <div style="font-family:Fraunces,serif;font-weight:500;font-size:18px;line-height:1.25;color:oklch(93% 0.008 275);margin-bottom:6px">OKLCH color space</div>
+      <div style="font-size:13px;line-height:1.5;color:oklch(78% 0.014 275);margin-bottom:12px">Perceptual lightness is the whole trick: hold L, move C and H, and every tone in the ramp stays readable against the same paper…</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:6px">
+          <span style="padding:4px 11px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:11.5px;font-weight:700">#design</span>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275)">3 days ago</span>
+      </div>
+    </div>
+
+  </div>
+  <div style="flex:1"></div>
+  <div style="position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:oklch(27% 0.016 275);border-top:1px solid oklch(34% 0.012 275)">
+    <div style="display:flex;gap:10px">
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">☰</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">#</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(90% 0.05 275)">✦</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:14px 20px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:14.5px;font-weight:700">
+      <span style="font-size:15px">✎</span><span>New</span>
+    </div>
+  </div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Editor — format pop menu, undo, snapshot</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">
+    <div style="width:40px;height:40px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(93% 0.008 275)">←</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.014 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">backlinks-and-the-shape-of-thought.md</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+        <span style="width:6px;height:6px;border-radius:50%;background:oklch(78% 0.07 175)"></span>
+        <span style="font-size:11px;color:oklch(78% 0.014 275)">Saved 2s ago</span>
+      </div>
+    </div>
+    <div style="width:40px;height:40px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">⋯</div>
+  </div>
+
+  <div style="padding:6px 20px 0">
+    <div style="font-family:Fraunces,serif;font-weight:500;font-size:27px;line-height:1.2;color:oklch(93% 0.008 275)">Backlinks and the shape of thought</div>
+    <div style="display:flex;gap:6px;margin-top:12px">
+      <span style="padding:4px 11px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:11.5px;font-weight:700">#writing</span>
+      <span style="padding:4px 11px;border-radius:999px;border:1px dashed oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:11.5px;font-weight:700">+ tag</span>
+    </div>
+  </div>
+
+  <div style="padding:20px 20px 8px;display:flex;flex-direction:column;gap:14px">
+    <p style="margin:0;font-size:16px;line-height:1.6;color:oklch(93% 0.008 275)">Folders make you decide where a thought belongs before you know what it is. <span style="color:oklch(80% 0.13 275);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:2px;font-weight:600">wikilinks</span> let you defer that: write the link, resolve the note later.</p>
+    <div style="font-family:Fraunces,serif;font-weight:500;font-size:21px;line-height:1.3;color:oklch(93% 0.008 275)">What the index actually holds</div>
+    <p style="margin:0;font-size:16px;line-height:1.6;color:oklch(93% 0.008 275)">One entry per file — title, tags, outgoing links, mtime — plus the inverted graph, built once at boot and patched per save.</p>
+    <div style="display:flex;flex-direction:column;gap:7px;padding-left:4px">
+      <div style="display:flex;gap:10px;font-size:15.5px;line-height:1.5;color:oklch(93% 0.008 275)"><span style="color:oklch(80% 0.12 55);font-weight:700">•</span><span>Reads never touch disk</span></div>
+      <div style="display:flex;gap:10px;font-size:15.5px;line-height:1.5;color:oklch(93% 0.008 275)"><span style="color:oklch(80% 0.12 55);font-weight:700">•</span><span>Backlinks are inverted at build time, not per request</span></div>
+    </div>
+    <div style="background:oklch(11% 0.008 275);border-left:2px solid oklch(78% 0.07 175);border-radius:8px;padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.6;color:oklch(85% 0.02 175)">GET /api/notes/:id/backlinks</div>
+    <p style="margin:0;font-size:16px;line-height:1.6;color:oklch(93% 0.008 275)">Related: <span style="font-family:'IBM Plex Mono',monospace;font-size:14.5px;color:oklch(80% 0.13 275)">[[oklch</span><span style="display:inline-block;width:2px;height:17px;background:oklch(80% 0.13 275);vertical-align:-3px;margin:0 1px"></span></p>
+  </div>
+
+  <div style="margin:4px 20px 0;background:oklch(11% 0.008 275);border:1px solid oklch(34% 0.012 275);border-radius:16px;overflow:hidden">
+    <div style="padding:11px 15px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:14.5px;font-weight:700">OKLCH color space</div>
+    <div style="padding:11px 15px;font-size:14.5px;color:oklch(93% 0.008 275);border-top:1px solid oklch(24% 0.012 275)">OKLCH relative color syntax</div>
+    <div style="padding:11px 15px;font-size:14px;font-weight:700;color:oklch(80% 0.13 275);border-top:1px solid oklch(24% 0.012 275)">+ Create “oklch”</div>
+  </div>
+
+  <div style="padding:22px 20px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)">Backlinks · 2</div>
+  <div style="padding:0 20px 20px;display:flex;flex-direction:column">
+    <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid oklch(24% 0.012 275)">
+      <span style="width:6px;height:6px;border-radius:50%;background:oklch(78% 0.07 175);margin-top:7px;flex-shrink:0"></span>
+      <div><div style="font-size:13.5px;font-weight:700;color:oklch(93% 0.008 275)">Termux deploy notes</div><div style="font-size:12.5px;line-height:1.45;color:oklch(78% 0.014 275)">“…restart-on-crash, see [[backlinks and the shape of thought]] for the indexing tradeoff.”</div></div>
+    </div>
+    <div style="display:flex;gap:10px;padding:10px 0">
+      <span style="width:6px;height:6px;border-radius:50%;background:oklch(78% 0.07 175);margin-top:7px;flex-shrink:0"></span>
+      <div><div style="font-size:13.5px;font-weight:700;color:oklch(93% 0.008 275)">Reading list, 2026</div><div style="font-size:12.5px;line-height:1.45;color:oklch(78% 0.014 275)">“Related: [[backlinks and the shape of thought]].”</div></div>
+    </div>
+  </div>
+
+  <div style="flex:1"></div>
+  <div style="position:sticky;bottom:0;background:oklch(27% 0.016 275);border-top:1px solid oklch(34% 0.012 275)">
+    <div style="margin:0 12px;transform:translateY(-14px);background:oklch(19% 0.013 275);border:1px solid oklch(30% 0.012 275);border-radius:32px;box-shadow:0 20px 46px oklch(8% 0.01 275 / 0.66);padding:14px 14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 12px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="width:34px;height:34px;background:oklch(80% 0.12 55);color:oklch(26% 0.06 55);display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:12px;font-weight:600;line-height:1;clip-path:polygon(96.0% 50.0%,84.5% 68.0%,73.0% 82.5%,53.5% 75.5%,35.5% 82.5%,29.0% 63.0%,14.0% 50.0%,29.0% 37.0%,35.5% 17.5%,53.5% 24.5%,73.0% 17.5%,84.5% 32.0%)">Aa</span>
+          <span style="font-family:Fraunces,serif;font-size:17px;font-weight:500;color:oklch(93% 0.008 275)">Format</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)">selection</span>
+        </div>
+        <span style="width:32px;height:32px;border-radius:50%;background:oklch(24% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:13px;color:oklch(85% 0.012 275)">✕</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:74px;border-radius:26px 26px 26px 26px;background:oklch(34% 0.08 55)">
+        <span style="font-family:Manrope,sans-serif;font-weight:800;font-size:22px;line-height:1;color:oklch(93% 0.05 55);">B</span>
+        <span style="font-size:11px;font-weight:700;letter-spacing:0.01em;color:oklch(93% 0.05 55)">Bold</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:74px;border-radius:26px 14px 26px 14px;background:oklch(24% 0.014 275)">
+        <span style="font-family:Fraunces,serif;font-weight:500;font-size:22px;line-height:1;color:oklch(93% 0.008 275);font-style:italic;">I</span>
+        <span style="font-size:11px;font-weight:700;letter-spacing:0.01em;color:oklch(93% 0.008 275)">Italic</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:74px;border-radius:14px 26px 14px 26px;background:oklch(24% 0.014 275)">
+        <span style="font-family:Manrope,sans-serif;font-weight:700;font-size:20px;line-height:1;color:oklch(93% 0.008 275);text-decoration:line-through;">S</span>
+        <span style="font-size:11px;font-weight:700;letter-spacing:0.01em;color:oklch(93% 0.008 275)">Strike</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:74px;border-radius:26px 14px 14px 26px;background:oklch(26% 0.05 275)">
+        <span style="font-family:Fraunces,serif;font-weight:600;font-size:21px;line-height:1;color:oklch(93% 0.008 275);">H2</span>
+        <span style="font-size:11px;font-weight:700;letter-spacing:0.01em;color:oklch(93% 0.008 275)">Heading</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:74px;border-radius:14px;background:oklch(24% 0.014 275)">
+        <span style="font-family:Manrope,sans-serif;font-weight:700;font-size:18px;line-height:1;color:oklch(93% 0.008 275);">•—</span>
+        <span style="font-size:11px;font-weight:700;letter-spacing:0.01em;color:oklch(93% 0.008 275)">List</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:74px;border-radius:14px 26px 26px 14px;background:oklch(24% 0.014 275)">
+        <span style="font-family:Fraunces,serif;font-weight:500;font-size:26px;line-height:1;color:oklch(93% 0.008 275);">”</span>
+        <span style="font-size:11px;font-weight:700;letter-spacing:0.01em;color:oklch(93% 0.008 275)">Quote</span>
+      </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div style="display:flex;align-items:center;justify-content:center;gap:9px;height:58px;border-radius:999px;background:oklch(32% 0.11 275)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:oklch(90% 0.05 275)">[[</span>
+          <span style="font-size:12.5px;font-weight:700;color:oklch(90% 0.05 275)">Wikilink</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:58px;border-radius:999px;background:oklch(24% 0.014 275)">
+          <span style="font-size:16px;font-weight:700;color:oklch(80% 0.12 55)">#</span>
+          <span style="font-size:12.5px;font-weight:700;color:oklch(93% 0.008 275)">Tag</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:58px;border-radius:999px;background:oklch(24% 0.014 275)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:oklch(85% 0.02 175)">‹›</span>
+          <span style="font-size:12.5px;font-weight:700;color:oklch(93% 0.008 275)">Code</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 14px 10px">
+      <div style="display:flex;gap:5px">
+        <div style="width:44px;height:44px;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;font-size:17px;color:oklch(90% 0.05 275)">Aa</div>
+        <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(93% 0.008 275)">↶</div>
+        <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(52% 0.014 275)">↷</div>
+        <div style="width:44px;height:44px;border-radius:50%;border:1px solid oklch(80% 0.13 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(80% 0.13 275)">✦</div>
+      </div>
+      <div style="display:flex;flex-shrink:0;align-items:center;gap:7px;height:44px;padding:0 15px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:13.5px;font-weight:700;white-space:nowrap"><span style="font-size:15px">⏱</span><span>Snapshot</span></div>
+    </div>
+  </div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Search — query, scope chips, matched spans</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="padding:12px 14px 10px;display:flex;align-items:center;gap:10px">
+    <div style="width:40px;height:40px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(93% 0.008 275)">←</div>
+    <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:999px;background:oklch(32% 0.018 275)">
+      <span style="font-size:15px;color:oklch(78% 0.014 275)">⌕</span>
+      <span style="font-size:14.5px;font-weight:600;color:oklch(93% 0.008 275)">oklch</span>
+      <span style="display:inline-block;width:2px;height:17px;background:oklch(80% 0.13 275)"></span>
+      <span style="flex:1"></span>
+      <span style="font-size:15px;color:oklch(78% 0.014 275)">✕</span>
+    </div>
+    <div style="width:44px;height:44px;flex-shrink:0;border-radius:50%;background:oklch(32% 0.11 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:oklch(90% 0.05 275)">
+      <span style="font-size:15px;line-height:1">⇅</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.06em">REL</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;padding:2px 18px 12px">
+    <div style="padding:7px 14px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:12.5px;font-weight:700">Everything</div>
+    <div style="padding:7px 14px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:12.5px;font-weight:600">Titles</div>
+    <div style="padding:7px 14px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:12.5px;font-weight:600">Tags</div>
+    <div style="padding:7px 14px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:12.5px;font-weight:600">Links</div>
+  </div>
+  <div style="display:flex;align-items:baseline;justify-content:space-between;padding:4px 20px 8px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)">7 notes · 12 matches</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.07 175)">index · 4ms</span>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;padding:0 18px 20px">
+    <div style="background:oklch(19% 0.013 275);border-radius:16px;padding:14px 16px">
+      <div style="font-family:Fraunces,serif;font-weight:500;font-size:17.5px;color:oklch(93% 0.008 275)"><span style="background:oklch(32% 0.11 275);color:oklch(93% 0.05 275);border-radius:4px;padding:0 3px">OKLCH</span> color space</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);margin:5px 0 9px">oklch-color-space.md · #design</div>
+      <div style="font-size:13px;line-height:1.5;color:oklch(78% 0.014 275)">“…every tone in the ramp stays readable because <span style="background:oklch(32% 0.11 275);color:oklch(93% 0.05 275);border-radius:4px;padding:0 3px">oklch</span> lightness is perceptual, not sRGB luma…”</div>
+    </div>
+    <div style="background:oklch(19% 0.013 275);border-radius:16px;padding:14px 16px">
+      <div style="font-family:Fraunces,serif;font-weight:500;font-size:17.5px;color:oklch(93% 0.008 275)">Design tokens, five seeds</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);margin:5px 0 9px">design-tokens.md · #design · 6 backlinks</div>
+      <div style="font-size:13px;line-height:1.5;color:oklch(78% 0.014 275)">“--seed-ink: <span style="background:oklch(32% 0.11 275);color:oklch(93% 0.05 275);border-radius:4px;padding:0 3px">oklch</span>(52% 0.19 275) — the one brand color, one place per screen…”</div>
+    </div>
+    <div style="background:oklch(19% 0.013 275);border-radius:16px;padding:14px 16px">
+      <div style="font-family:Fraunces,serif;font-weight:500;font-size:17.5px;color:oklch(93% 0.008 275)">Backlinks and the shape of thought</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);margin:5px 0 9px">backlinks-and-the-shape-of-thought.md · #writing</div>
+      <div style="font-size:13px;line-height:1.5;color:oklch(78% 0.014 275)">“Related: [[<span style="background:oklch(32% 0.11 275);color:oklch(93% 0.05 275);border-radius:4px;padding:0 3px">oklch</span> color space]]”</div>
+    </div>
+    <div style="border:1px dashed oklch(34% 0.012 275);border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:oklch(93% 0.008 275)">No note titled “oklch”</div>
+        <div style="font-size:12.5px;color:oklch(78% 0.014 275);margin-top:2px">Create it and link from here</div>
+      </div>
+      <div style="padding:9px 15px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:12.5px;font-weight:700">Create</div>
+    </div>
+    <div style="text-align:center;padding:10px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(62% 0.014 275)">4 older matches · offline cache</div>
+  </div>
+
+  <div style="flex:1"></div>
+  <div style="position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:oklch(27% 0.016 275);border-top:1px solid oklch(34% 0.012 275)">
+    <div style="display:flex;gap:10px">
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">☰</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(90% 0.05 275)">⌕</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(80% 0.13 275)">✦</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:14px 22px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:14.5px;font-weight:700">
+      <span style="font-size:15px">✎</span><span>New note</span>
+    </div>
+  </div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1f">
+<div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Version history — snapshots, diff preview, restore</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div data-screen-label="Version history" style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 14px 6px">
+    <div style="width:40px;height:40px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(93% 0.008 275)">←</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-family:Fraunces,serif;font-weight:500;font-size:21px;line-height:1.2;color:oklch(93% 0.008 275)">History</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.014 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">backlinks-and-the-shape-of-thought.md · 9 versions</div>
+    </div>
+    <div style="width:40px;height:40px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">⋯</div>
+  </div>
+
+  <div style="display:flex;gap:8px;padding:10px 18px 12px">
+    <div style="padding:7px 14px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:12.5px;font-weight:700">Snapshots</div>
+    <div style="padding:7px 14px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:12.5px;font-weight:600">Autosaves</div>
+    <div style="padding:7px 14px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(78% 0.014 275);font-size:12.5px;font-weight:600">All</div>
+  </div>
+
+  <div style="margin:0 18px;background:oklch(19% 0.013 275);border-radius:18px;padding:15px 16px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(80% 0.12 55)">selected · today 09:41</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.07 175)">+42 −7</span>
+    </div>
+    <div style="margin-top:11px;background:oklch(11% 0.008 275);border-radius:12px;overflow:hidden;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.55">
+      <div style="display:flex;gap:9px;padding:7px 12px;background:oklch(24% 0.045 25)"><span style="color:oklch(80% 0.10 25)">−</span><span style="color:oklch(84% 0.03 25)">Related: [[color]]</span></div>
+      <div style="display:flex;gap:9px;padding:7px 12px;background:oklch(23% 0.045 175)"><span style="color:oklch(78% 0.07 175)">+</span><span style="color:oklch(88% 0.03 175)">Related: [[oklch color space]]</span></div>
+      <div style="display:flex;gap:9px;padding:7px 12px;background:oklch(23% 0.045 175)"><span style="color:oklch(78% 0.07 175)">+</span><span style="color:oklch(88% 0.03 175)">## What the index actually holds</span></div>
+      <div style="display:flex;gap:9px;padding:7px 12px;color:oklch(70% 0.014 275)"><span style="opacity:0.5">·</span><span>One entry per file — title, tags…</span></div>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:13px">
+      <div style="flex:1;text-align:center;padding:11px 0;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:13.5px;font-weight:700">Restore this version</div>
+      <div style="width:44px;height:42px;border-radius:999px;border:1px solid oklch(34% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:15px;color:oklch(93% 0.008 275)">⇱</div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:baseline;gap:10px;padding:22px 20px 6px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(80% 0.12 55)">today</span>
+    <span style="flex:1;height:1px;background:oklch(28% 0.012 275)"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">3</span>
+  </div>
+
+  <div style="padding:0 20px">
+    <div style="display:flex;gap:14px;padding:11px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0">
+        <span style="width:12px;height:12px;border-radius:50%;background:oklch(80% 0.12 55);box-shadow:0 0 0 4px oklch(34% 0.08 55 / 0.45)"></span>
+        <span style="flex:1;width:2px;background:oklch(28% 0.012 275);margin-top:4px"></span>
+      </div>
+      <div style="flex:1;min-width:0;padding-bottom:4px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+          <span style="font-size:14.5px;font-weight:700;color:oklch(93% 0.008 275)">Current draft</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">09:41</span>
+        </div>
+        <div style="font-size:12.5px;line-height:1.45;color:oklch(78% 0.014 275);margin-top:2px">Unsnapshotted edits · 1.9 kB</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:14px;padding:11px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0">
+        <span style="width:12px;height:12px;border-radius:50%;background:oklch(80% 0.13 275)"></span>
+        <span style="flex:1;width:2px;background:oklch(28% 0.012 275);margin-top:4px"></span>
+      </div>
+      <div style="flex:1;min-width:0;padding-bottom:4px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+          <span style="font-size:14.5px;font-weight:700;color:oklch(93% 0.008 275)">Reworked the index section</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">09:12</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+          <span style="padding:3px 9px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700">SNAPSHOT</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.07 175)">+42 −7</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">pixel</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:14px;padding:11px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0">
+        <span style="width:9px;height:9px;border-radius:50%;background:oklch(45% 0.014 275);margin-top:2px"></span>
+        <span style="flex:1;width:2px;background:oklch(28% 0.012 275);margin-top:4px"></span>
+      </div>
+      <div style="flex:1;min-width:0;padding-bottom:4px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+          <span style="font-size:14px;font-weight:600;color:oklch(80% 0.012 275)">Autosave</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">08:47</span>
+        </div>
+        <div style="font-size:12.5px;color:oklch(70% 0.014 275);margin-top:2px">+6 −0 · typo pass</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:baseline;gap:10px;padding:16px 20px 6px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:oklch(80% 0.12 55)">earlier</span>
+    <span style="flex:1;height:1px;background:oklch(28% 0.012 275)"></span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">6</span>
+  </div>
+
+  <div style="padding:0 20px 20px">
+    <div style="display:flex;gap:14px;padding:11px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0">
+        <span style="width:12px;height:12px;border-radius:50%;background:oklch(80% 0.13 275)"></span>
+        <span style="flex:1;width:2px;background:oklch(28% 0.012 275);margin-top:4px"></span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+          <span style="font-size:14.5px;font-weight:700;color:oklch(93% 0.008 275)">Before the folders rewrite</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">Fri 17:20</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+          <span style="padding:3px 9px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700">SNAPSHOT</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.07 175)">+310 −24</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:14px;padding:11px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0">
+        <span style="width:9px;height:9px;border-radius:50%;background:oklch(45% 0.014 275);margin-top:2px"></span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+          <span style="font-size:14px;font-weight:600;color:oklch(80% 0.012 275)">First version</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">Aug 28</span>
+        </div>
+        <div style="font-size:12.5px;color:oklch(70% 0.014 275);margin-top:2px">Created from [[daily]] · 0.4 kB</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1"></div>
+  <div style="position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:oklch(27% 0.016 275);border-top:1px solid oklch(34% 0.012 275)">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.014 275)">keeps 30 days · 214 kB</span>
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(93% 0.008 275);font-size:13.5px;font-weight:700"><span style="font-size:14px">⏱</span><span>Snapshot now</span></div>
+  </div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1e">
+<div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Settings — vault, token, sync</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px 4px">
+    <div style="width:40px;height:40px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(93% 0.008 275)">←</div>
+    <span style="font-family:Fraunces,serif;font-weight:500;font-size:24px;color:oklch(93% 0.008 275)">Settings</span>
+  </div>
+
+  <div style="padding:16px 20px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(80% 0.12 55)">Vault</div>
+  <div style="margin:0 18px;background:oklch(19% 0.013 275);border-radius:16px;overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid oklch(24% 0.012 275)">
+      <div style="font-size:13px;color:oklch(78% 0.014 275);margin-bottom:3px">Server</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:oklch(93% 0.008 275)">http://pixel.local:8787</div>
+    </div>
+    <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:13px;color:oklch(78% 0.014 275);margin-bottom:3px">Notes directory</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:oklch(93% 0.008 275)">~/storage/vault</div>
+      </div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.07 175)">214 files</span>
+    </div>
+  </div>
+
+  <div style="padding:20px 20px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(80% 0.12 55)">Auth token</div>
+  <div style="margin:0 18px;background:oklch(19% 0.013 275);border-radius:16px;padding:14px 16px">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:oklch(32% 0.018 275)">
+      <span style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:14px;letter-spacing:0.18em;color:oklch(93% 0.008 275)">••••••••••••</span>
+      <span style="font-size:14px;color:oklch(78% 0.014 275)">◉</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:11px">
+      <span style="width:6px;height:6px;border-radius:50%;background:oklch(78% 0.07 175)"></span>
+      <span style="font-size:12.5px;color:oklch(90% 0.03 175)">Verified against this server 4m ago</span>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:14px">
+      <div style="padding:10px 18px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:13px;font-weight:700">Replace</div>
+      <div style="padding:10px 18px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(93% 0.008 275);font-size:13px;font-weight:700">Forget</div>
+    </div>
+  </div>
+
+  <div style="padding:20px 20px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(80% 0.12 55)">Sync</div>
+  <div style="margin:0 18px;background:oklch(19% 0.013 275);border-radius:16px;overflow:hidden">
+    <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(24% 0.012 275)">
+      <div>
+        <div style="font-size:14.5px;font-weight:700;color:oklch(93% 0.008 275)">Pending writes</div>
+        <div style="font-size:12.5px;color:oklch(78% 0.014 275);margin-top:2px">1 edit waiting — “Vault hygiene, weekly”</div>
+      </div>
+      <span style="padding:5px 11px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700">1</span>
+    </div>
+    <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(24% 0.012 275)">
+      <div>
+        <div style="font-size:14.5px;font-weight:700;color:oklch(93% 0.008 275)">Sync on reconnect</div>
+        <div style="font-size:12.5px;color:oklch(78% 0.014 275);margin-top:2px">Drain the queue in order</div>
+      </div>
+      <div style="width:52px;height:32px;border-radius:999px;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:flex-end;padding:3px;box-sizing:border-box">
+        <span style="width:26px;height:26px;border-radius:50%;background:oklch(80% 0.13 275)"></span>
+      </div>
+    </div>
+    <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:14.5px;font-weight:700;color:oklch(93% 0.008 275)">Keep bodies offline</div>
+        <div style="font-size:12.5px;color:oklch(78% 0.014 275);margin-top:2px">Last 50 opened notes · 3.1 MB</div>
+      </div>
+      <div style="width:52px;height:32px;border-radius:999px;background:oklch(32% 0.018 275);display:flex;align-items:center;padding:3px;box-sizing:border-box">
+        <span style="width:26px;height:26px;border-radius:50%;background:oklch(58% 0.014 275)"></span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:20px 20px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(80% 0.12 55)">Appearance</div>
+  <div style="margin:0 18px 24px;background:oklch(19% 0.013 275);border-radius:16px;padding:14px 16px">
+    <div style="display:flex;gap:6px;padding:4px;border-radius:999px;border:1px solid oklch(34% 0.012 275)">
+      <span style="flex:1;text-align:center;padding:8px 0;border-radius:999px;font-size:13px;font-weight:700;color:oklch(78% 0.014 275)">System</span>
+      <span style="flex:1;text-align:center;padding:8px 0;border-radius:999px;font-size:13px;font-weight:700;color:oklch(78% 0.014 275)">Light</span>
+      <span style="flex:1;text-align:center;padding:8px 0;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:13px;font-weight:700">Dark</span>
+    </div>
+    <div style="font-size:12.5px;color:oklch(78% 0.014 275);margin-top:11px">Ink, moss and ember hold their contrast in both themes.</div>
+  </div>
+
+  <div style="flex:1"></div>
+  <div style="position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:oklch(27% 0.016 275);border-top:1px solid oklch(34% 0.012 275);font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.014 275)">
+    <span>noted v1 · deno 2.x</span>
+    <span style="color:oklch(78% 0.07 175)">index rebuilt 09:38</span>
+  </div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1g">
+<div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>AI edit panel — one note, proposed diff</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div data-screen-label="AI edit panel" style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="padding:14px 18px 12px;opacity:0.45">
+    <div style="font-family:Fraunces,serif;font-weight:500;font-size:24px;line-height:1.2;color:oklch(93% 0.008 275)">Backlinks and the shape of thought</div>
+    <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:oklch(85% 0.012 275)">Folders make you decide where a thought belongs before you know what it is…</p>
+  </div>
+  <div style="flex:1"></div>
+
+  <div style="background:oklch(19% 0.013 275);border-top:1px solid oklch(34% 0.012 275);border-radius:24px 24px 0 0;box-shadow:0 -22px 50px oklch(8% 0.01 275 / 0.6)">
+    <div style="display:flex;justify-content:center;padding:9px 0 2px"><span style="width:36px;height:4px;border-radius:2px;background:oklch(38% 0.012 275)"></span></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 18px 12px;border-bottom:1px solid oklch(24% 0.012 275)">
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:15px;color:oklch(90% 0.05 275)">✦</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14.5px;font-weight:700;color:oklch(93% 0.008 275)">Edit with AI</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">scope · this note + 2 backlinks</div>
+      </div>
+      <span style="font-size:15px;color:oklch(78% 0.014 275)">✕</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;padding:14px 18px 4px">
+      <div style="align-self:flex-end;max-width:82%;background:oklch(32% 0.11 275);color:oklch(93% 0.04 275);border-radius:16px 16px 4px 16px;padding:11px 14px;font-size:14px;line-height:1.5">Tighten the index section and pull the API line into a proper code block.</div>
+
+      <div style="align-self:flex-start;max-width:92%;display:flex;flex-direction:column;gap:9px">
+        <div style="background:oklch(22% 0.014 275);border-radius:16px 16px 16px 4px;padding:11px 14px;font-size:14px;line-height:1.55;color:oklch(93% 0.008 275)">Two edits — a shorter opening for “What the index actually holds”, and the endpoint fenced as code.</div>
+        <div style="background:oklch(11% 0.008 275);border:1px solid oklch(30% 0.012 275);border-radius:14px;overflow:hidden;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.55">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid oklch(24% 0.012 275);color:oklch(78% 0.014 275);font-size:10px;letter-spacing:0.1em;text-transform:uppercase">
+            <span>proposed diff</span><span style="color:oklch(78% 0.07 175)">+9 −4</span>
+          </div>
+          <div style="display:flex;gap:9px;padding:6px 12px;background:oklch(24% 0.045 25)"><span style="color:oklch(80% 0.10 25)">−</span><span style="color:oklch(84% 0.03 25)">One entry per file — title, tags, outgoing links, mtime — plus…</span></div>
+          <div style="display:flex;gap:9px;padding:6px 12px;background:oklch(23% 0.045 175)"><span style="color:oklch(78% 0.07 175)">+</span><span style="color:oklch(88% 0.03 175)">One entry per file, plus the inverted graph.</span></div>
+          <div style="display:flex;gap:9px;padding:6px 12px;background:oklch(23% 0.045 175)"><span style="color:oklch(78% 0.07 175)">+</span><span style="color:oklch(88% 0.03 175)">```http GET /api/notes/:id/backlinks ```</span></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="padding:10px 16px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:13px;font-weight:700">Apply both</div>
+          <div style="padding:10px 16px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(93% 0.008 275);font-size:13px;font-weight:700">Review one by one</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275)"><span style="color:oklch(78% 0.07 175)">⏱</span><span>a snapshot is taken before applying</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;padding:14px 18px 6px;overflow:hidden">
+      <span style="flex-shrink:0;white-space:nowrap;padding:7px 13px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(85% 0.012 275);font-size:12.5px;font-weight:600">Summarize</span>
+      <span style="flex-shrink:0;white-space:nowrap;padding:7px 13px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(85% 0.012 275);font-size:12.5px;font-weight:600">Suggest links</span>
+      <span style="flex-shrink:0;white-space:nowrap;padding:7px 13px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(85% 0.012 275);font-size:12.5px;font-weight:600">Fix tags</span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 16px 16px">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:999px;background:oklch(11% 0.008 275);border:1px solid oklch(30% 0.012 275)">
+        <span style="font-size:14px;color:oklch(78% 0.014 275)">✎</span>
+        <span style="font-size:14px;color:oklch(70% 0.014 275)">Ask for an edit…</span>
+      </div>
+      <div style="width:48px;height:48px;flex-shrink:0;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:18px;color:oklch(90% 0.05 275)">↑</div>
+    </div>
+  </div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1h">
+<div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>AI panel — bulk edits across selected notes</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div data-screen-label="AI bulk panel" style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="padding:14px 18px 10px;opacity:0.4">
+    <div style="font-family:Fraunces,serif;font-style:italic;font-size:24px;color:oklch(80% 0.13 275)">noted</div>
+  </div>
+  <div style="flex:1"></div>
+
+  <div style="background:oklch(19% 0.013 275);border-top:1px solid oklch(34% 0.012 275);border-radius:24px 24px 0 0;box-shadow:0 -22px 50px oklch(8% 0.01 275 / 0.6)">
+    <div style="display:flex;justify-content:center;padding:9px 0 2px"><span style="width:36px;height:4px;border-radius:2px;background:oklch(38% 0.012 275)"></span></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 18px 12px;border-bottom:1px solid oklch(24% 0.012 275)">
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:15px;color:oklch(90% 0.05 275)">✦</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14.5px;font-weight:700;color:oklch(93% 0.008 275)">Edit many notes</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275)">12 notes matched · #design, #writing</div>
+      </div>
+      <span style="font-size:15px;color:oklch(78% 0.014 275)">✕</span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 18px 0;overflow:hidden">
+      <span style="flex-shrink:0;padding:6px 12px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:12px;font-weight:700">#design ×</span>
+      <span style="flex-shrink:0;padding:6px 12px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275);font-size:12px;font-weight:700">#writing ×</span>
+      <span style="flex-shrink:0;padding:6px 12px;border-radius:999px;border:1px dashed oklch(38% 0.012 275);color:oklch(78% 0.014 275);font-size:12px;font-weight:700">+ scope</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;padding:14px 18px 4px">
+      <div style="align-self:flex-end;max-width:82%;background:oklch(32% 0.11 275);color:oklch(93% 0.04 275);border-radius:16px 16px 4px 16px;padding:11px 14px;font-size:14px;line-height:1.5">Add a frontmatter <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">status:</span> field to all of these and normalize the tag casing.</div>
+
+      <div style="align-self:flex-start;max-width:94%;display:flex;flex-direction:column;gap:9px">
+        <div style="background:oklch(22% 0.014 275);border-radius:16px 16px 16px 4px;padding:11px 14px;font-size:14px;line-height:1.55;color:oklch(93% 0.008 275)">12 notes affected. 9 get a new field, 4 have tags to lowercase, 1 already conflicts — I left it out.</div>
+
+        <div style="background:oklch(11% 0.008 275);border:1px solid oklch(30% 0.012 275);border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid oklch(24% 0.012 275);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)">
+            <span>per-note plan</span><span style="color:oklch(80% 0.12 55)">11 selected</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:10px 13px;border-bottom:1px solid oklch(20% 0.010 275)">
+            <span style="width:18px;height:18px;border-radius:5px;background:oklch(80% 0.12 55);color:oklch(26% 0.06 55);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">✓</span>
+            <span style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">oklch-color-space.md</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.07 175)">+2 −1</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:10px 13px;border-bottom:1px solid oklch(20% 0.010 275)">
+            <span style="width:18px;height:18px;border-radius:5px;background:oklch(80% 0.12 55);color:oklch(26% 0.06 55);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">✓</span>
+            <span style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">design-tokens.md</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.07 175)">+2</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:10px 13px;border-bottom:1px solid oklch(20% 0.010 275)">
+            <span style="width:18px;height:18px;border-radius:5px;background:oklch(80% 0.12 55);color:oklch(26% 0.06 55);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">✓</span>
+            <span style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">backlinks-and-the-shape-of-thought.md</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.07 175)">+2</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:10px 13px">
+            <span style="width:18px;height:18px;border-radius:5px;border:1px solid oklch(40% 0.012 275);flex-shrink:0"></span>
+            <span style="flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:oklch(70% 0.014 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">reading-list-2026.md</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(80% 0.10 25)">conflict</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px">
+          <div style="padding:10px 16px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:13px;font-weight:700">Apply to 11</div>
+          <div style="padding:10px 16px;border-radius:999px;border:1px solid oklch(34% 0.012 275);color:oklch(93% 0.008 275);font-size:13px;font-weight:700">Preview diffs</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275)"><span style="color:oklch(78% 0.07 175)">⏱</span><span>one snapshot per note, undo as a batch</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 16px 16px">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:999px;background:oklch(11% 0.008 275);border:1px solid oklch(30% 0.012 275)">
+        <span style="font-size:14px;color:oklch(78% 0.014 275)">✦</span>
+        <span style="font-size:14px;color:oklch(70% 0.014 275)">Describe a bulk edit…</span>
+      </div>
+      <div style="width:48px;height:48px;flex-shrink:0;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:18px;color:oklch(90% 0.05 275)">↑</div>
+    </div>
+  </div>
+</div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1i">
+<div class="dv-olabel"><a class="dv-oid" href="#1i">1i</a>Note list — folder view</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div data-screen-label="Folder view" style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px">
+    <span style="font-family:Fraunces,serif;font-style:italic;font-size:26px;font-weight:400;color:oklch(80% 0.13 275)">noted</span>
+    <div style="display:flex;gap:8px">
+      <div style="width:40px;height:40px;border-radius:50%;background:oklch(27% 0.016 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(93% 0.008 275)">⌕</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:oklch(27% 0.016 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">⚙</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:9px;margin:0 18px 14px">
+    <div style="flex:1;min-width:0;padding:13px 18px;border-radius:999px;background:oklch(32% 0.018 275);color:oklch(78% 0.014 275);font-size:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:15px">⌕</span><span>Search your notes…</span>
+    </div>
+    <div style="width:46px;height:46px;flex-shrink:0;border-radius:50%;background:oklch(32% 0.018 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:oklch(93% 0.008 275)">
+      <span style="font-size:15px;line-height:1">⇅</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.06em;color:oklch(78% 0.014 275)">SORT</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 18px 10px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)">~/storage/vault</span>
+    <div style="display:flex;align-items:center;gap:7px;padding:6px 12px 6px 11px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275)">
+      <span style="font-size:14px;line-height:1">◎</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase">folders</span>
+      <span style="font-size:9px">▾</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:0 18px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(78% 0.014 275)">
+    <span style="color:oklch(80% 0.13 275)">vault</span><span>/</span><span style="color:oklch(93% 0.008 275)">notes</span>
+  </div>
+  <div style="display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:13px;padding:14px 18px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:34px;height:28px;flex-shrink:0;border-radius:6px 8px 8px 8px;background:oklch(27% 0.016 275);border-top:5px solid oklch(40% 0.014 275);box-sizing:border-box"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">daily</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);margin-top:2px">2026-09-05 · newest</div>
+      </div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">96</span>
+      <span style="font-size:13px;color:oklch(70% 0.014 275)">›</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:13px;padding:14px 18px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:34px;height:28px;flex-shrink:0;border-radius:6px 8px 8px 8px;background:oklch(34% 0.08 55);border-top:5px solid oklch(80% 0.12 55);box-sizing:border-box"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">essays</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);margin-top:2px">open · 4 subfolders</div>
+      </div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">34</span>
+      <span style="font-size:13px;color:oklch(70% 0.014 275)">›</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 18px 11px 30px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:3px;height:20px;border-radius:2px;background:oklch(80% 0.12 55);flex-shrink:0"></span>
+      <span style="flex:1;min-width:0;font-size:14.5px;font-weight:600;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Backlinks and the shape of thought</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">09:41</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 18px 11px 30px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:3px;height:20px;border-radius:2px;background:oklch(80% 0.13 275);flex-shrink:0"></span>
+      <span style="flex:1;min-width:0;font-size:14.5px;font-weight:600;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">OKLCH color space</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">Fri</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 18px 11px 30px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:3px;height:20px;border-radius:2px;background:oklch(80% 0.12 55);flex-shrink:0"></span>
+      <span style="flex:1;min-width:0;font-size:14.5px;font-weight:600;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Vault hygiene, weekly</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">queued</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:13px;padding:14px 18px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:34px;height:28px;flex-shrink:0;border-radius:6px 8px 8px 8px;background:oklch(27% 0.016 275);border-top:5px solid oklch(40% 0.014 275);box-sizing:border-box"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">engineering</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);margin-top:2px">termux, deno, deploy</div>
+      </div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">48</span>
+      <span style="font-size:13px;color:oklch(70% 0.014 275)">›</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:13px;padding:14px 18px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:34px;height:28px;flex-shrink:0;border-radius:6px 8px 8px 8px;background:oklch(27% 0.016 275);border-top:5px solid oklch(40% 0.014 275);box-sizing:border-box"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">inbox</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);margin-top:2px">unsorted · 3 untitled</div>
+      </div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">12</span>
+      <span style="font-size:13px;color:oklch(70% 0.014 275)">›</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:13px;padding:14px 18px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:34px;height:28px;flex-shrink:0;border-radius:6px 8px 8px 8px;background:oklch(27% 0.016 275);border-top:5px solid oklch(40% 0.014 275);box-sizing:border-box"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">archive</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(78% 0.014 275);margin-top:2px">read-only</div>
+      </div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">24</span>
+      <span style="font-size:13px;color:oklch(70% 0.014 275)">›</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:3px;height:20px;border-radius:2px;background:oklch(58% 0.014 275);flex-shrink:0"></span>
+      <span style="flex:1;min-width:0;font-size:14.5px;font-weight:600;color:oklch(93% 0.008 275)">README.md</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">Aug 28</span>
+    </div>
+  </div>
+  <div style="padding:14px 18px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(62% 0.014 275)">214 notes · 6 folders · 3.1 MB cached</div>
+  <div style="flex:1"></div>
+  <div style="position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:oklch(27% 0.016 275);border-top:1px solid oklch(34% 0.012 275)">
+    <div style="display:flex;gap:10px">
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">☰</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">#</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(90% 0.05 275)">✦</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:14px 20px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:14.5px;font-weight:700">
+      <span style="font-size:15px">✎</span><span>New</span>
+    </div>
+  </div></div>
+</x-import>
+</div>
+</div>
+
+<div class="dv-opt" id="1j">
+<div class="dv-olabel"><a class="dv-oid" href="#1j">1j</a>Note list — tag view with expanders</div>
+<div class="dv-card">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ true }}" hint-size="428px,908px">
+<div data-screen-label="Tag view" style="min-height:100%;display:flex;flex-direction:column;background:oklch(16% 0.012 275);font-family:Manrope,sans-serif">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px">
+    <span style="font-family:Fraunces,serif;font-style:italic;font-size:26px;font-weight:400;color:oklch(80% 0.13 275)">noted</span>
+    <div style="display:flex;gap:8px">
+      <div style="width:40px;height:40px;border-radius:50%;background:oklch(27% 0.016 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(93% 0.008 275)">⌕</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:oklch(27% 0.016 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">⚙</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:9px;margin:0 18px 14px">
+    <div style="flex:1;min-width:0;padding:13px 18px;border-radius:999px;background:oklch(32% 0.018 275);color:oklch(78% 0.014 275);font-size:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:15px">⌕</span><span>Search your notes…</span>
+    </div>
+    <div style="width:46px;height:46px;flex-shrink:0;border-radius:50%;background:oklch(32% 0.018 275);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:oklch(93% 0.008 275)">
+      <span style="font-size:15px;line-height:1">⇅</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.06em;color:oklch(78% 0.014 275)">SORT</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 18px 10px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:oklch(78% 0.014 275)">42 tags · a–z</span>
+    <div style="display:flex;align-items:center;gap:7px;padding:6px 12px 6px 11px;border-radius:999px;background:oklch(32% 0.11 275);color:oklch(90% 0.05 275)">
+      <span style="font-size:14px;line-height:1">◎</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase">tags</span>
+      <span style="font-size:9px">▾</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;padding:0 18px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;color:oklch(78% 0.014 275)">
+    <span style="color:oklch(80% 0.12 55)">A</span><span>D</span><span>E</span><span>I</span><span>R</span><span>T</span><span>W</span>
+  </div>
+  <div style="display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid oklch(20% 0.010 275);">
+      <span style="font-size:15px;color:oklch(70% 0.014 275);font-weight:700">#</span>
+      <span style="flex:1;min-width:0;font-size:15px;font-weight:700;color:oklch(93% 0.008 275)">api</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">7</span>
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(24% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:10px;color:oklch(85% 0.012 275);flex-shrink:0">▼</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid oklch(20% 0.010 275);">
+      <span style="font-size:15px;color:oklch(70% 0.014 275);font-weight:700">#</span>
+      <span style="flex:1;min-width:0;font-size:15px;font-weight:700;color:oklch(93% 0.008 275)">deploy</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">19</span>
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(24% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:10px;color:oklch(85% 0.012 275);flex-shrink:0">▼</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid oklch(20% 0.010 275);background:oklch(19% 0.013 275)">
+      <span style="font-size:15px;color:oklch(80% 0.12 55);font-weight:700">#</span>
+      <span style="flex:1;min-width:0;font-size:15px;font-weight:700;color:oklch(93% 0.008 275)">design</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">23</span>
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:10px;color:oklch(90% 0.05 275);flex-shrink:0">▲</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 18px 11px 30px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:3px;height:20px;border-radius:2px;background:oklch(80% 0.13 275);flex-shrink:0"></span>
+      <span style="flex:1;min-width:0;font-size:14.5px;font-weight:600;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">OKLCH color space</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">Fri</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 18px 11px 30px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:3px;height:20px;border-radius:2px;background:oklch(80% 0.13 275);flex-shrink:0"></span>
+      <span style="flex:1;min-width:0;font-size:14.5px;font-weight:600;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Design tokens, five seeds</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">Thu</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 18px 11px 30px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="width:3px;height:20px;border-radius:2px;background:oklch(78% 0.07 175);flex-shrink:0"></span>
+      <span style="flex:1;min-width:0;font-size:14.5px;font-weight:600;color:oklch(93% 0.008 275);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">M3 Expressive, in practice</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(70% 0.014 275)">Wed</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 18px 13px 30px;border-bottom:1px solid oklch(20% 0.010 275)">
+      <span style="white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(80% 0.13 275);font-weight:600">20 more in #design</span>
+      <span style="flex:1"></span>
+      <span style="flex-shrink:0;white-space:nowrap;padding:5px 12px;border-radius:999px;border:1px solid oklch(34% 0.012 275);font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(85% 0.012 275)">open tag</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid oklch(20% 0.010 275);">
+      <span style="font-size:15px;color:oklch(70% 0.014 275);font-weight:700">#</span>
+      <span style="flex:1;min-width:0;font-size:15px;font-weight:700;color:oklch(93% 0.008 275)">inbox</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">12</span>
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(24% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:10px;color:oklch(85% 0.012 275);flex-shrink:0">▼</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid oklch(20% 0.010 275);">
+      <span style="font-size:15px;color:oklch(70% 0.014 275);font-weight:700">#</span>
+      <span style="flex:1;min-width:0;font-size:15px;font-weight:700;color:oklch(93% 0.008 275)">routine</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">8</span>
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(24% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:10px;color:oklch(85% 0.012 275);flex-shrink:0">▼</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid oklch(20% 0.010 275);">
+      <span style="font-size:15px;color:oklch(70% 0.014 275);font-weight:700">#</span>
+      <span style="flex:1;min-width:0;font-size:15px;font-weight:700;color:oklch(93% 0.008 275)">termux</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">15</span>
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(24% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:10px;color:oklch(85% 0.012 275);flex-shrink:0">▼</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid oklch(20% 0.010 275);">
+      <span style="font-size:15px;color:oklch(70% 0.014 275);font-weight:700">#</span>
+      <span style="flex:1;min-width:0;font-size:15px;font-weight:700;color:oklch(93% 0.008 275)">writing</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:oklch(70% 0.014 275)">31</span>
+      <span style="width:30px;height:30px;border-radius:50%;background:oklch(24% 0.012 275);display:flex;align-items:center;justify-content:center;font-size:10px;color:oklch(85% 0.012 275);flex-shrink:0">▼</span>
+    </div>
+  </div>
+  <div style="padding:14px 18px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:oklch(62% 0.014 275)">tags come from frontmatter and inline #hashes</div>
+  <div style="flex:1"></div>
+  <div style="position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:oklch(27% 0.016 275);border-top:1px solid oklch(34% 0.012 275)">
+    <div style="display:flex;gap:10px">
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">☰</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(22% 0.014 275);display:flex;align-items:center;justify-content:center;font-size:16px;color:oklch(93% 0.008 275)">#</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:oklch(32% 0.11 275);display:flex;align-items:center;justify-content:center;font-size:17px;color:oklch(90% 0.05 275)">✦</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:14px 20px;border-radius:999px;background:oklch(34% 0.08 55);color:oklch(91% 0.05 55);font-size:14.5px;font-weight:700">
+      <span style="font-size:15px">✎</span><span>New</span>
+    </div>
+  </div></div>
+</x-import>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: “show the sort menu open” · “a folder-picker sheet for moving notes” · “side-by-side version compare”</p>
+</section>
+
+</x-dc>
+</body>
+</html>
