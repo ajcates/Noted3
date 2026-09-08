@@ -57,10 +57,16 @@ One naming note before you start: the `notes/` folder in the project directory i
 
 ## M5 — Design system integration
 
-- [ ] Port the token set from `noted-field-guide.html` into the app's real stylesheet (spec.md §12 has the exact custom properties) — plain CSS, no preprocessor, no CSS-in-JS (`techstack.md`)
+- [ ] Read `notes/mobile-app-design-project/project/Noted Design Notes.dc.html` in full before touching CSS — it supersedes/extends the field-guide-only plan below with theory, principles, foundations, an element catalogue, interaction rules, and motion tokens for the nine mocked Android screens in the same folder (`Noted Mobile v1.dc.html`)
+- [ ] Port foundations from that doc's §3 (colour, type, the shape family, space/density/touch, iconography) into the app's real stylesheet — plain CSS, no preprocessor, no CSS-in-JS (`techstack.md`); this reconciles the "two voices" the doc names — the existing field guide (`noted-field-guide.html`, spec.md §12) and Material 3 Expressive
 - [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — never a hardcoded color/radius
+- [ ] Rebuild the app's existing screens against the element catalogue (§4): masthead; search field + sort button; section rail + view-mode switcher; snippet card; folder/file row; tag row + expander; docked bar + primary action; editor surface; wikilink autocomplete; format pop menu
+- [ ] Wire up the interaction rules (§5) and motion tokens (§6.1) per the specified behaviours (§6.2) — "nothing irreversible" is a stated principle (§1.5), not just a nice-to-have
 - [ ] Light/dark via `prefers-color-scheme`, same pattern the field guide already models
+- [ ] Before calling this milestone done, design the states the notes call out as missing (§7): empty vault / empty tag, index-rebuilding, server-unreachable, sync-conflict banner, keyboard-up editor at its smallest height, sort sheet, long-press note menu, name-this-snapshot sheet
 - [ ] Spot-check contrast against real note content, not just the palette swatches
+
+**Open decision surfaced by the design bundle:** three of the nine mocked screens design features with no home yet in `spec.md`'s v1 scope — undo/redo + Snapshot + Version History (§4.11–4.12, screen 1f), an AI edit panel for one note and for a bulk selection (§4.13–4.14, screens 1g/1h), and a folder-view note list (§4.5, screen 1i — folders are explicitly deferred to v2 in spec.md §9). Decide whether these get their own milestone (see **v2 candidates** below for what's already mocked) or get cut before implementation — don't build them just because they're drawn.
 
 ## M6 — PWA & offline-first — budget real time here, it's the hardest milestone
 
@@ -85,3 +91,5 @@ One naming note before you start: the `notes/` folder in the project directory i
 ## v2 candidates — not scheduled, don't build early
 
 Folders/nested organization, image attachments, a real full-text search index, note templates, git-backed history or export/import. Revisit only once v1 has survived actual daily use — see spec.md §9 for why these are explicitly out of scope for now.
+
+**Now also mocked (design only) in `notes/mobile-app-design-project/`:** version history/snapshots and an AI edit panel — single-note and bulk-across-selection (`Noted Design Notes.dc.html` §4.11–4.14, screens 1f/1g/1h of `Noted Mobile v1.dc.html`). A design exists; a spec does not — these need a `spec.md` pass (data model, server endpoints, how "keep mine/keep theirs" interacts with the M6 sync conflict UI) before they're buildable, not just a CSS port.
