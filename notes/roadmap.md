@@ -82,7 +82,7 @@ One naming note before you start: the `notes/` folder in the project directory i
 
 Build order (bottom-up: the two IndexedDB-backed data structures before the Service Worker that ties them together, per this file's own "leave yourself something to poke at" rule):
 
-- [ ] `manifest.webmanifest` + icons + `display: standalone` — independent, do anytime
+- [x] `manifest.webmanifest` + icons + `display: standalone`. _Done 2026-09-09:_ `public/manifest.webmanifest` (name/theme/background color from the M5 tokens, `display: standalone`), two generated PNG icons (`public/icons/`, on-brand — ink background, three note-line bars, one ember accent dot, no font-rendering dependency). Caught a real bug before it shipped: spec.md's original line put this under `/api/manifest.webmanifest`, which the router auth-gates — the OS fetches a manifest with no way to attach a bearer token, so that would have made the app permanently uninstallable. Fixed in spec.md and served as a plain static file instead (same unauthenticated path as `index.html`); verified 200 unauthenticated, correct `application/manifest+json` content type, and the browser actually discovering + fetching it.
 - [ ] IndexedDB Cache — direct IndexedDB, no wrapper library (`techstack.md`); note list + recently-opened bodies
 - [ ] Write Queue — durable pending-mutation log in IndexedDB, written before any network attempt
 - [ ] Service Worker — hand-written, no Workbox (`techstack.md`); registered as a module worker; precache the app shell (including `public/vendor/fonts/`), stale-while-revalidate for API GETs, cache-first for static assets

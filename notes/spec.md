@@ -105,7 +105,7 @@ REST/JSON over the Deno server. Illustrative, not final:
 - `GET /api/notes/:filename/backlinks` — notes that link to this one: `[{filename, title, snippet}]`, 404 if the note isn't indexed
 - `GET /api/search?q=` — naive case-insensitive title/body substring search **(M4)**; `[{filename,title,tags,updated,snippet}]`, title hits first, `[]` for a blank query
 - `GET /api/tags` **(M4)** → `[{tag,count}]`; `GET /api/tags/:tag` **(M4)** → `[NoteSummary]` (empty array if none)
-- `GET /api/manifest.webmanifest`, service worker at `/sw.js` _(M6)_
+- `manifest.webmanifest` and the service worker at `/sw.js` are **not** under `/api/` _(M6)_ — both are static files served the unauthenticated way `index.html` is (§2/system-overview.md's "the browser must be able to load the shell before it has a token" applies just as much to the manifest: the OS fetches it during install with no way to attach a bearer token, so gating it behind auth would make the app uninstallable). Caught during the pre-M6 review (`ISSUES.md`, 2026-09-09) — an earlier draft of this line had the manifest under `/api/`.
 
 **Wikilink resolution (M3), in order:** target as a filename (`name` or `name.md`) → exact case-insensitive title match → `slugify(target).md`. Duplicate titles: first by sorted filename wins (see ISSUES.md).
 

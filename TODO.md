@@ -17,7 +17,8 @@ Still open: the conflict-resolution UI (`spec.md` §11) wants its own design
 pass before being built, not an inline prompt bolted on — flag before
 starting that task specifically, not the whole milestone.
 
-- [ ] `manifest.webmanifest` + icons + `display: standalone`
+- [x] `manifest.webmanifest` + icons + `display: standalone` — see `roadmap.md`
+      M6 for the auth-gating bug this caught and fixed in `spec.md` first
 - [ ] IndexedDB Cache — note list + recently-opened bodies
 - [ ] Write Queue (IndexedDB-backed) — durable pending-mutation log
 - [ ] Service Worker (module worker) — precache app shell (incl. vendored

@@ -109,3 +109,15 @@ gaps into `spec.md` §11.
     array), since it needs to survive both a page reload and the SW's own
     lifecycle (a worker can be terminated and restarted between `sync`
     events).
+- 2026-09-09 (M6) — `spec.md` §5 originally listed the manifest as
+  `GET /api/manifest.webmanifest`. **Closed 2026-09-09, before it shipped**:
+  the router auth-gates everything under `/api/`, but a browser/OS fetching
+  a web app manifest during install has no way to attach a bearer token —
+  that route would have made the app permanently uninstallable, silently
+  (the manifest fetch just 401s, no visible error to the end user, "Add to
+  Home Screen" simply doesn't appear or does nothing). Fixed in `spec.md`
+  and served `public/manifest.webmanifest` as a plain static file instead,
+  the same unauthenticated path `index.html` already uses. Verified: 200
+  with no auth header, correct `application/manifest+json` content type,
+  and a real browser actually discovering and fetching it via the page's
+  `<link rel="manifest">`.
