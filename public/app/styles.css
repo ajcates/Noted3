@@ -152,6 +152,7 @@ h3 {
 @media (prefers-reduced-motion: reduce) {
   * {
     transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
   }
 }
 
@@ -225,6 +226,18 @@ app-shell {
   color: var(--error);
 }
 
+/*
+ * Press feedback (design notes §6.2 "Press"): every tappable element
+ * scales to 0.96 over 100ms on the way down, releasing on spatial-fast.
+ * The design's "shifts one surface step brighter" reads literally for
+ * plain (outlined) buttons, which sit on the surface ladder — for filled
+ * color buttons (primary, tag chips) a brightness dip stands in for the
+ * same state-layer idea, since ember/tertiary don't have a further step.
+ * Each variant below gets its own explicit press rule rather than
+ * leaning on `button:active` cascading in — that rule's specificity
+ * otherwise ties with `.primary`/`.tag-chip`/`.delete` and can win by
+ * source order, overwriting their color with the neutral surface tone.
+ */
 button {
   font: inherit;
   font-family: var(--font-body);
@@ -236,7 +249,7 @@ button {
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   cursor: pointer;
-  transition: transform var(--motion-spatial-fast), background var(--motion-effects);
+  transition: transform var(--motion-spatial-fast), background-color var(--motion-spatial-fast);
 }
 
 button:hover {
@@ -245,6 +258,8 @@ button:hover {
 
 button:active {
   transform: scale(0.96);
+  background: var(--surface-container-high);
+  transition: transform 100ms, background-color 100ms;
 }
 
 button:disabled {
@@ -261,6 +276,7 @@ button.primary {
   color: var(--on-tertiary-container);
   border-radius: var(--radius-commit);
   font-weight: 700;
+  transition: transform var(--motion-spatial-fast), filter var(--motion-spatial-fast);
 }
 
 button.primary:hover {
@@ -268,16 +284,31 @@ button.primary:hover {
   filter: brightness(0.97);
 }
 
+button.primary:active {
+  background: var(--tertiary-container);
+  filter: brightness(0.9);
+  transition: transform 100ms, filter 100ms;
+}
+
 button.delete {
   border-color: transparent;
   background: none;
   color: var(--on-surface-variant);
   font-weight: 500;
+  transition: transform var(--motion-spatial-fast), background-color var(--motion-spatial-fast),
+    color var(--motion-spatial-fast);
 }
 
 button.delete:hover {
   color: var(--on-error-container);
   background: var(--error-container);
+}
+
+button.delete:active {
+  color: var(--on-error-container);
+  background: var(--error-container);
+  filter: brightness(0.93);
+  transition: transform 100ms, filter 100ms;
 }
 
 /* Note titles are what the user wrote — Fraunces, ink, like a wikilink
@@ -446,9 +477,21 @@ button.delete:hover {
   padding: 0;
 }
 
+/* Design notes §6.2 "Search": results replace on a 120ms crossfade.
+   The list is fully replaced on every query (search.js has no per-item
+   diffing), so there's no old/new pair to cross-fade between — this
+   approximates it as a fade-in on each new row, which animates
+   automatically on insertion with no JS changes needed. */
+@keyframes search-result-in {
+  from {
+    opacity: 0;
+  }
+}
+
 .search-view li {
   padding: var(--gap-tight) 0;
   border-bottom: 1px solid var(--outline-variant);
+  animation: search-result-in 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .result-snippet {
@@ -478,11 +521,17 @@ button.delete:hover {
   padding: 0.25rem 0.75rem;
   min-height: unset;
   cursor: pointer;
-  transition: transform var(--motion-spatial-fast);
+  transition: transform var(--motion-spatial-fast), filter var(--motion-spatial-fast);
 }
 
 .tag-chip:hover {
   filter: brightness(0.97);
+}
+
+.tag-chip:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+  transition: transform 100ms, filter 100ms;
 }
 
 .tag-count {
