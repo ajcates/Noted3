@@ -362,9 +362,22 @@ button.delete:active {
   color: var(--on-surface-variant);
 }
 
-.note-list .empty {
+/* Empty states (design notes §7 calls these out as still-undesigned —
+   this is a plain-CSS placeholder, not the fuller pass §7 asks for).
+   A quiet dashed card rather than bare gray text, so "nothing here yet"
+   reads as a state of the app rather than a layout gap. */
+.note-list .empty,
+.search-view .empty,
+.tag-browser .empty {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.05rem;
   color: var(--on-surface-variant);
-  padding: var(--gap-section) 0;
+  text-align: center;
+  padding: 2.5rem var(--card-padding);
+  margin-top: var(--gap-section);
+  border: 1px dashed var(--outline-variant);
+  border-radius: var(--radius-xl);
 }
 
 .note-editor {
@@ -540,8 +553,3 @@ button.delete:active {
   color: var(--on-surface-variant);
 }
 
-.search-view .empty,
-.tag-browser .empty {
-  color: var(--on-surface-variant);
-  padding: var(--gap-section) 0;
-}
