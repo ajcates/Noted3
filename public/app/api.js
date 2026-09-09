@@ -26,11 +26,11 @@ export class ApiError extends Error {
 }
 
 /**
- * @typedef {{ filename: string, title: string, tags: string[], updated: string }} NoteSummary
+ * @typedef {{ filename: string, title: string, tags: string[], updated: string, snippet: string, backlinkCount: number }} NoteSummary
  * @typedef {{ target: string, resolved: boolean, filename: string | null, title: string | null }} OutgoingLink
  * @typedef {NoteSummary & { created: string, body: string, links: OutgoingLink[], html: string }} NoteDetail
  * @typedef {{ filename: string, title: string, snippet: string }} Backlink
- * @typedef {NoteSummary & { snippet: string }} SearchResult
+ * @typedef {NoteSummary} SearchResult
  * @typedef {{ tag: string, count: number }} TagCount
  */
 

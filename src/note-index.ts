@@ -29,7 +29,7 @@ import { listNoteFiles } from "./file-store.ts";
 import { ensureExt, filenameToTitle, slugify } from "./filename.ts";
 import { normalizeFrontmatter, parseNote } from "./frontmatter.ts";
 import { extractWikilinkTargets } from "./markdown.ts";
-import { searchNotes } from "./search.ts";
+import { firstLine, searchNotes } from "./search.ts";
 
 interface IndexEntry {
   readonly filename: Filename;
@@ -120,6 +120,8 @@ export class NoteIndex {
         title: e.frontmatter.title,
         tags: e.frontmatter.tags,
         updated: e.frontmatter.updated,
+        snippet: firstLine(e.body),
+        backlinkCount: this.backlinkFilenames(e.filename).length,
       }))
       .sort((a, b) => b.updated.localeCompare(a.updated));
   }
@@ -185,6 +187,7 @@ export class NoteIndex {
         tags: e.frontmatter.tags,
         updated: e.frontmatter.updated,
         body: e.body,
+        backlinkCount: this.backlinkFilenames(e.filename).length,
       })),
       query,
     );

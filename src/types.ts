@@ -42,6 +42,10 @@ export interface NoteSummary {
   readonly title: string;
   readonly tags: readonly string[];
   readonly updated: string;
+  /** First non-blank line of the body, for the note-list snippet card. */
+  readonly snippet: string;
+  /** Count only — from the index's backlink graph, no extra disk I/O. */
+  readonly backlinkCount: number;
 }
 
 /** One `[[wikilink]]` found in a note body, with its resolution against the index. */
@@ -64,7 +68,11 @@ export interface Backlink {
   readonly snippet: string;
 }
 
-/** One hit from `GET /api/search?q=` — a summary plus a match-context snippet. */
+/**
+ * One hit from `GET /api/search?q=` — a summary whose `snippet` is a
+ * match-context excerpt (not the first-line preview `NoteSummary.snippet`
+ * otherwise means), because a search result should show *why* it matched.
+ */
 export interface SearchResult extends NoteSummary {
   readonly snippet: string;
 }

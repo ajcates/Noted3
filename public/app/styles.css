@@ -174,11 +174,28 @@ app-shell {
   margin-bottom: var(--gap-section);
 }
 
-.shell-header h1 {
+.shell-header .wordmark {
+  margin: 0;
+}
+
+.shell-header .wordmark h1 {
   font-size: 1.4rem;
   font-style: italic;
   font-weight: 500;
   color: var(--primary);
+}
+
+/* "Scale before identity" (design notes §4.1): the note count reads before
+   the wordmark, in the app's structural-punctuation register (ember mono
+   uppercase — the same one section rails and tag counts use). */
+.shell-header .kicker {
+  margin: 0;
+  font-family: var(--font-source);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tertiary);
 }
 
 .shell-header nav {
@@ -249,7 +266,8 @@ button {
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   cursor: pointer;
-  transition: transform var(--motion-spatial-fast), background-color var(--motion-spatial-fast);
+  transition: transform var(--motion-spatial-fast), background-color
+    var(--motion-spatial-fast);
 }
 
 button:hover {
@@ -276,7 +294,8 @@ button.primary {
   color: var(--on-tertiary-container);
   border-radius: var(--radius-commit);
   font-weight: 700;
-  transition: transform var(--motion-spatial-fast), filter var(--motion-spatial-fast);
+  transition: transform var(--motion-spatial-fast), filter
+    var(--motion-spatial-fast);
 }
 
 button.primary:hover {
@@ -295,7 +314,8 @@ button.delete {
   background: none;
   color: var(--on-surface-variant);
   font-weight: 500;
-  transition: transform var(--motion-spatial-fast), background-color var(--motion-spatial-fast),
+  transition: transform var(--motion-spatial-fast), background-color
+    var(--motion-spatial-fast),
     color var(--motion-spatial-fast);
 }
 
@@ -342,24 +362,78 @@ button.delete:active {
   gap: var(--gap-cards);
 }
 
-.note-list li {
+/* Snippet card (design notes §4.4): title, excerpt, then a footer of tag
+   chips + a backlink-count chip on one side and a timestamp on the other. */
+.note-list li.note-card {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: var(--gap-tight);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
   padding: var(--card-padding);
+  padding-right: 5.5rem; /* room for the absolutely-positioned delete button */
   background: var(--surface-container-low);
   border-radius: var(--radius-xl);
 }
 
 .note-list li .title {
-  flex: 1;
   text-align: left;
 }
 
-.note-list .tags {
+.note-list .snippet {
+  margin: 0;
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
   color: var(--on-surface-variant);
+  /* Three-line excerpt (design notes §4.4) — a live standard despite the
+     -webkit- prefix; supported in every browser this app targets. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-list footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  width: 100%;
+}
+
+.note-list footer .chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Shared by the note-list snippet card and search results — both show the
+   same "N backlinks" relationship chip and mono timestamp (design notes
+   §4.4, §4.15). */
+.chip.relationship {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full);
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+.stamp {
+  font-family: var(--font-source);
+  font-size: 0.72rem;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+}
+
+.note-list li.note-card .delete {
+  position: absolute;
+  top: var(--card-padding);
+  right: var(--card-padding);
 }
 
 /* Empty states (design notes §7 calls these out as still-undesigned —
@@ -421,6 +495,42 @@ button.delete:active {
 
 .note-editor .cm-host .cm-editor {
   max-height: 60vh;
+}
+
+/* Wikilink autocomplete (design notes §4.9): a well-surface list, 28px
+   radius, first/selected match in ink container, the "Create …" row in
+   ink text. CodeMirror's own classes — this popup isn't a component this
+   app renders, so it can't be styled via a class in note-editor.js. */
+.cm-tooltip.cm-tooltip-autocomplete {
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--surface-container-lowest);
+}
+
+.cm-tooltip-autocomplete > ul {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  max-height: 15rem;
+}
+
+.cm-tooltip-autocomplete li {
+  padding: 0.5rem 0.9rem !important;
+  color: var(--on-surface);
+}
+
+.cm-tooltip-autocomplete li[aria-selected] {
+  background: var(--primary-container) !important;
+  color: var(--on-primary-container) !important;
+}
+
+.cm-tooltip-autocomplete li:has(.cm-completionIcon-keyword) {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.cm-tooltip-autocomplete .cm-completionIcon {
+  display: none; /* CM's default icon glyphs don't exist in this app's type system */
 }
 
 .note-editor .actions {
@@ -508,9 +618,25 @@ button.delete:active {
 }
 
 .result-snippet {
-  margin: 0.2rem 0 0;
+  margin: 0.2rem 0 0.4rem;
   font-size: 0.85rem;
   color: var(--on-surface-variant);
+}
+
+/* Matched spans (design notes §4.15): ink-container highlight, not a hue on
+   a hue — plain background + the surface's own text color, no bold/italic
+   fighting the surrounding type. */
+.search-view mark {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border-radius: var(--radius-xs);
+  padding: 0 0.15em;
+}
+
+.search-view footer {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
 }
 
 .tag-browser li {
@@ -534,7 +660,8 @@ button.delete:active {
   padding: 0.25rem 0.75rem;
   min-height: unset;
   cursor: pointer;
-  transition: transform var(--motion-spatial-fast), filter var(--motion-spatial-fast);
+  transition: transform var(--motion-spatial-fast), filter
+    var(--motion-spatial-fast);
 }
 
 .tag-chip:hover {
@@ -552,4 +679,3 @@ button.delete:active {
   font-size: 0.8rem;
   color: var(--on-surface-variant);
 }
-

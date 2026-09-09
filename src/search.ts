@@ -15,6 +15,8 @@ export interface SearchableNote {
   readonly tags: readonly string[];
   readonly updated: string;
   readonly body: string;
+  /** From the index's backlink graph — passed in, not computed here. */
+  readonly backlinkCount: number;
 }
 
 export function searchNotes(
@@ -37,6 +39,7 @@ export function searchNotes(
         title: note.title,
         tags: note.tags,
         updated: note.updated,
+        backlinkCount: note.backlinkCount,
         snippet: bodyIndex >= 0
           ? excerpt(note.body, bodyIndex, query.length)
           : firstLine(note.body),
@@ -60,7 +63,8 @@ function excerpt(body: string, matchAt: number, matchLen: number): string {
   return `${start > 0 ? "…" : ""}${slice}${end < body.length ? "…" : ""}`;
 }
 
-function firstLine(body: string): string {
+/** Also used by `NoteIndex.list()` for the note-list snippet card. */
+export function firstLine(body: string): string {
   const line = body.split(/\r?\n/).find((l) => l.trim() !== "") ?? "";
   return line.length > 140 ? `${line.slice(0, 139)}…` : line;
 }

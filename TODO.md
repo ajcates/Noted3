@@ -9,13 +9,13 @@ first) per `notes/development.md` §5 — they are not deleted.
 Decided 2026-09-09 (`roadmap.md` M6, `ISSUES.md`): the SW does its own
 authenticated fetch on `sync`, reading the token from IndexedDB. Build
 implications: SW registers as `{ type: "module" }`; the Write Queue lives in
-IndexedDB, not memory; the drain function is one implementation shared by
-the SW's `sync` handler and a page-side `online`/boot fallback (Background
-Sync is Chromium-only).
+IndexedDB, not memory; the drain function is one implementation shared by the
+SW's `sync` handler and a page-side `online`/boot fallback (Background Sync is
+Chromium-only).
 
-Still open: the conflict-resolution UI (`spec.md` §11) wants its own design
-pass before being built, not an inline prompt bolted on — flag before
-starting that task specifically, not the whole milestone.
+Still open: the conflict-resolution UI (`spec.md` §11) wants its own design pass
+before being built, not an inline prompt bolted on — flag before starting that
+task specifically, not the whole milestone.
 
 - [x] `manifest.webmanifest` + icons + `display: standalone` — see `roadmap.md`
       M6 for the auth-gating bug this caught and fixed in `spec.md` first
@@ -23,39 +23,73 @@ starting that task specifically, not the whole milestone.
 - [ ] Write Queue (IndexedDB-backed) — durable pending-mutation log
 - [ ] Service Worker (module worker) — precache app shell (incl. vendored
       fonts), SWR for API GETs, cache-first for static assets
-- [ ] Sync Manager — the shared drain function; wire it to the SW's `sync`
-      event and the page-side fallback
+- [ ] Sync Manager — the shared drain function; wire it to the SW's `sync` event
+      and the page-side fallback
 - [ ] Conflict handling — `updated`-timestamp check, keep-mine/keep-server's UI
 - [ ] Playwright e2e: offline edit → reconnect → sync, then a forced conflict
 
 ## Done
+
+### 2026-09-09 — Design fidelity pass: checklist + close the real gaps it found
+
+- [x] **`notes/design-fidelity-checklist.md`** (new) — audited the running app
+      against the actual criteria in `Noted Design Notes.dc.html` §3–4 item by
+      item, not from memory. Distinguishes real gaps from "needs a feature this
+      pass didn't build" (sort button, folders, format menu, tag editing, etc.)
+      so the checklist doesn't quietly become a todo list for M8-sized work.
+- [x] **Snippet card** (§4.4, the list's core unit) — added `snippet` and
+      `backlinkCount` to `NoteSummary`/`GET /api/notes` (and `SearchResult`,
+      `NoteDetail`), reusing `search.ts`'s existing `firstLine()` rather than a
+      second implementation; `backlinkCount` reads the index's already-derived
+      backlink graph, so no new disk I/O. Note list now shows a real excerpt,
+      clickable tag chips, a "N backlinks" chip, and a `<time>` timestamp
+      instead of a comma-joined tag string.
+- [x] **Search results** (§4.15) — matched-text highlighting via `<mark>`
+      (title + snippet), plus the same relationship-chip/timestamp treatment as
+      the snippet card.
+- [x] **Masthead kicker** (§4.1) — ember mono note count above the Fraunces
+      wordmark, "scale before identity," in an `<hgroup>`.
+- [x] **Wikilink autocomplete popup** (§4.9) — restyled CodeMirror's own tooltip
+      classes (well-surface, 28px radius, ink-container first match, ink "Create
+      …" row); verified via computed style in a real browser, since CodeMirror
+      injects its own theme and a couple of overrides needed `!important` to
+      actually win.
+- [x] Semantic-HTML pass alongside the above: native `<search>` landmark
+      (search-view), `<time datetime>` for every timestamp, `aria-label` on the
+      title/search inputs (previously placeholder-only), `<hgroup>` for the
+      kicker+wordmark pair.
+- [x] Verified: `deno check`/`lint`/`fmt` clean, all 21 tests green (re-ran the
+      browser trio twice after one sandbox-flake retry), and every visual change
+      screenshotted live (light + dark) rather than trusted from source.
+- **Real gap found, not fixed**: no UI exists to edit a note's tags at all —
+  logged in `ISSUES.md` as a feature decision, not a styling fix.
 
 ### 2026-09-09 — Pre-M6: fixed the two risks the M5 review surfaced
 
 - [x] **Vendored fonts** — `scripts/vendor-fonts.ts` (new, follows the
       `vendor-codemirror.ts` pattern) fetches the latin subset of Fraunces/
       Manrope/IBM Plex Mono from Google's `css2` API once and writes 5 woff2
-      files + a generated `fonts.css` into `public/vendor/fonts/`;
-      `index.html` links that instead of the Google Fonts `<link>`. Verified
-      via Playwright: zero non-localhost requests, all three families report
-      `loaded`, screenshot pixel-identical to the CDN version.
+      files + a generated `fonts.css` into `public/vendor/fonts/`; `index.html`
+      links that instead of the Google Fonts `<link>`. Verified via Playwright:
+      zero non-localhost requests, all three families report `loaded`,
+      screenshot pixel-identical to the CDN version.
 - [x] **Token moved to IndexedDB** — new `public/app/token-store.js`
       (`getToken`/`setToken`, now async); `api.js` delegates to it,
       `app-shell.js`'s token prefill/change-handler updated to await it. The
-      three Playwright tests that seeded `localStorage` directly
-      (`client-crud`, `backlinks-panel`, `wikilink-autocomplete`) now seed
-      IndexedDB via a real page + reload instead (dynamic-imports the actual
-      `token-store.js`, not a duplicated inline copy of its logic).
+      three Playwright tests that seeded `localStorage` directly (`client-crud`,
+      `backlinks-panel`, `wikilink-autocomplete`) now seed IndexedDB via a real
+      page + reload instead (dynamic-imports the actual `token-store.js`, not a
+      duplicated inline copy of its logic).
 - [x] Installed Google Chrome in this environment to actually run the
-      `channel: "chrome"` Playwright tests instead of trusting the diff —
-      21/21 green, including all three browser tests exercising the new
-      token storage end-to-end (create/edit/delete, backlinks nav, wikilink
-      autocomplete all still authenticate correctly).
-- [x] Docs caught up: `ISSUES.md` (both entries closed, with what's still
-      open), `roadmap.md` M6, `system-overview.md`'s client module map (new
-      files, corrected two stale lines found along the way).
-- **Still open**: which side of the Service Worker boundary actually makes
-  the authenticated retry — `ISSUES.md`, pre-M6.
+      `channel: "chrome"` Playwright tests instead of trusting the diff — 21/21
+      green, including all three browser tests exercising the new token storage
+      end-to-end (create/edit/delete, backlinks nav, wikilink autocomplete all
+      still authenticate correctly).
+- [x] Docs caught up: `ISSUES.md` (both entries closed, with what's still open),
+      `roadmap.md` M6, `system-overview.md`'s client module map (new files,
+      corrected two stale lines found along the way).
+- **Still open**: which side of the Service Worker boundary actually makes the
+  authenticated retry — `ISSUES.md`, pre-M6.
 
 ### 2026-09-09 — M5: Design system integration (mostly done — see roadmap.md for what's still open and why)
 
@@ -65,8 +99,8 @@ starting that task specifically, not the whole milestone.
       `notes/mobile-app-design-project/.../Noted Design Notes.dc.html`
 - [x] Applied to every real component: note cards, tag chips (ember), masthead/
       nav, editor surface, backlinks panel (moss), search; detokenized
-      `codemirror-setup.js`'s wikilink/quote/list colors along the way
-      (predated M5, still hardcoded hex)
+      `codemirror-setup.js`'s wikilink/quote/list colors along the way (predated
+      M5, still hardcoded hex)
 - [x] Press feedback (design notes §6.2) done properly — scale 0.96 + a
       surface-step/brightness shift over 100ms in, releasing on spatial-fast;
       found and fixed a real bug where the generic `button:active` rule was
@@ -76,18 +110,18 @@ starting that task specifically, not the whole milestone.
       now zeroes `animation-duration` too, not just `transition-duration`
 - [x] Empty states (note list/tags/search) — quiet dashed card + Fraunces-
       italic copy instead of bare gray text
-- [x] Verified live: installed Deno (wasn't present), ran the dev server,
-      drove it with Playwright against the vendored Chromium, screenshotted
-      note list/editor/backlinks/tags/search in both themes plus press states
-- **Still open** (see `roadmap.md` M5 for the item-by-item breakdown): the
-  rest of the element catalogue that needs features from other milestones
-  (sort button, folder row, format pop menu), the asymmetric-pill/notched-card
-  shapes (plain radii only so far), and the 7 of 8 missing states that need
+- [x] Verified live: installed Deno (wasn't present), ran the dev server, drove
+      it with Playwright against the vendored Chromium, screenshotted note
+      list/editor/backlinks/tags/search in both themes plus press states
+- **Still open** (see `roadmap.md` M5 for the item-by-item breakdown): the rest
+  of the element catalogue that needs features from other milestones (sort
+  button, folder row, format pop menu), the asymmetric-pill/notched-card shapes
+  (plain radii only so far), and the 7 of 8 missing states that need
   sync/AI/snapshots/folders to exist first
 - **New risks found, not yet fixed** — logged in `ISSUES.md` and `roadmap.md`
-  M6: the Google Fonts runtime dependency this introduced, and a
-  pre-existing Service-Worker/localStorage conflict this surfaced while
-  reviewing M6's design ahead of time
+  M6: the Google Fonts runtime dependency this introduced, and a pre-existing
+  Service-Worker/localStorage conflict this surfaced while reviewing M6's design
+  ahead of time
 
 ### 2026-09-06 — Review + micro-refactor (post-M4)
 

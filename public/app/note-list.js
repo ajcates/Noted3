@@ -9,7 +9,7 @@
  *   - `note-delete` — `detail: { filename }`
  */
 
-import { el, emit } from "./ui.js";
+import { el, emit, formatStamp } from "./ui.js";
 
 /** @typedef {import("./api.js").NoteSummary} NoteSummary */
 
@@ -45,17 +45,51 @@ export class NoteList extends HTMLElement {
     );
   }
 
-  /** @param {NoteSummary} note */
+  /**
+   * A snippet card (design notes §4.4): title, a short excerpt, then a
+   * footer of tag chips, a backlink-count chip, and a timestamp.
+   * @param {NoteSummary} note
+   */
   #renderItem(note) {
     return el(
       "li",
-      { dataset: { filename: note.filename } },
+      { class: "note-card", dataset: { filename: note.filename } },
       el("button", {
         class: "title",
         textContent: note.title,
         onclick: () => emit(this, "note-open", { filename: note.filename }),
       }),
-      el("span", { class: "tags", textContent: note.tags.join(", ") }),
+      note.snippet
+        ? el("p", { class: "snippet", textContent: note.snippet })
+        : null,
+      el(
+        "footer",
+        {},
+        el(
+          "span",
+          { class: "chips" },
+          ...note.tags.map((tag) =>
+            el("button", {
+              class: "tag-chip",
+              textContent: `#${tag}`,
+              onclick: () => emit(this, "tag-open", { tag }),
+            })
+          ),
+          note.backlinkCount > 0
+            ? el("span", {
+              class: "chip relationship",
+              textContent: `${note.backlinkCount} backlink${
+                note.backlinkCount === 1 ? "" : "s"
+              }`,
+            })
+            : null,
+        ),
+        el("time", {
+          class: "stamp",
+          dateTime: note.updated,
+          textContent: formatStamp(note.updated),
+        }),
+      ),
       el("button", {
         class: "delete",
         textContent: "Delete",

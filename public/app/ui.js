@@ -57,3 +57,22 @@ export function el(tag, props = {}, ...children) {
 export function emit(node, type, detail) {
   node.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }
+
+/**
+ * Format an ISO timestamp for display — short, per the design's "mono
+ * timestamp" (`Noted Design Notes.dc.html` §4.4). Absolute, not relative: a
+ * relative "3 days ago" would need to keep re-rendering to stay true, which
+ * no view here does.
+ * @param {string} iso
+ * @returns {string}
+ */
+export function formatStamp(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: sameYear ? undefined : "numeric",
+  }).format(date);
+}

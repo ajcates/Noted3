@@ -25,6 +25,7 @@ import {
   writeNoteFile,
 } from "./file-store.ts";
 import { filenameToTitle, parseFilename, stripExt } from "./filename.ts";
+import { firstLine } from "./search.ts";
 import {
   json,
   optionalString,
@@ -253,6 +254,8 @@ function buildDetail(
     tags: frontmatter.tags,
     created: frontmatter.created,
     updated: frontmatter.updated,
+    snippet: firstLine(body),
+    backlinkCount: index.backlinkFilenames(filename).length,
     body,
     links: index.outgoingLinksFor(body),
     html: renderMarkdown(body, (target) => index.resolve(target)),

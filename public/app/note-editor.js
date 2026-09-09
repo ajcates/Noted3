@@ -79,6 +79,7 @@ export class NoteEditor extends HTMLElement {
       class: "title",
       type: "text",
       placeholder: "Title",
+      ariaLabel: "Title",
       value: note?.title ?? "",
     }));
 

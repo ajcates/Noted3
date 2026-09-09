@@ -28,6 +28,9 @@ const NAV = [["Notes", "#/"], ["Search", "#/search"], ["Tags", "#/tags"]];
 export class AppShell extends HTMLElement {
   #main = el("main");
   #status = el("div", { class: "shell-status" });
+  /** Ember mono kicker above the wordmark (design notes §4.1) — "scale
+   * before identity": the note count, updated wherever the title cache is. */
+  #kicker = el("p", { class: "kicker" });
   /** @type {HTMLInputElement} */
   #tokenInput = /** @type {HTMLInputElement} */ (el("input", {
     type: "password",
@@ -85,7 +88,14 @@ export class AppShell extends HTMLElement {
     const header = el(
       "header",
       { class: "shell-header" },
-      el("h1", { textContent: "noted" }),
+      el(
+        "hgroup",
+        { class: "wordmark" },
+        this.#kicker,
+        el("h1", {
+          textContent: "noted",
+        }),
+      ),
       el(
         "nav",
         {},
@@ -178,6 +188,8 @@ export class AppShell extends HTMLElement {
   #setTitles(summaries) {
     this.#noteTitles = summaries.map((s) => s.title);
     this.#titlesLoaded = true;
+    const count = summaries.length;
+    this.#kicker.textContent = `${count} note${count === 1 ? "" : "s"}`;
   }
 
   /** @param {HTMLElement} view */
