@@ -51,12 +51,12 @@ const highlightStyle = HighlightStyle.define([
   {
     tag: [t.monospace],
     fontFamily: "ui-monospace, monospace",
-    background: "#00000010",
+    background: "var(--surface-container-highest)",
   },
-  { tag: t.link, color: "#1a56db" },
-  { tag: t.url, color: "#1a56db" },
-  { tag: t.quote, color: "#555", fontStyle: "italic" },
-  { tag: t.list, color: "#555" },
+  { tag: t.link, color: "var(--primary)" },
+  { tag: t.url, color: "var(--primary)" },
+  { tag: t.quote, color: "var(--on-surface-variant)", fontStyle: "italic" },
+  { tag: t.list, color: "var(--on-surface-variant)" },
 ]);
 
 /**
@@ -242,17 +242,16 @@ export function createMarkdownEditor(opts) {
         EditorView.theme({
           "&": {
             fontSize: "15px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
+            color: "var(--on-surface)",
           },
-          "&.cm-focused": { outline: "2px solid #1a56db55" },
+          "&.cm-focused": { outline: "2px solid var(--primary)" },
           ".cm-content": {
-            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            fontFamily: "var(--font-source)",
             padding: "0.75rem",
             minHeight: "18rem",
           },
           ".cm-md-mark": { opacity: "0.4" },
-          ".cm-wikilink": { color: "#1a56db" },
+          ".cm-wikilink": { color: "var(--primary)" },
         }),
       ],
     }),
