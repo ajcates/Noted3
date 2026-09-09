@@ -6,15 +6,13 @@ first) per `notes/development.md` §5 — they are not deleted.
 
 ## M6 — PWA & offline-first (next)
 
-Two design questions from `roadmap.md` M6 to resolve before writing the Write
-Queue or Service Worker — not implementation tasks yet, decisions:
+One design question from `roadmap.md` M6 still to resolve before writing the
+Write Queue or Service Worker:
 
-- [ ] Decide where the authenticated retry runs: SW reads a token moved to
-      IndexedDB, or SW's `sync` just wakes a page context that owns the fetch
-      (`ISSUES.md` 2026-09-09)
-- [ ] Vendor Fraunces/Manrope/IBM Plex Mono locally (`public/vendor/fonts/`,
-      `@font-face`) instead of the Google Fonts `<link>` — same pattern as
-      CodeMirror vendoring (`ISSUES.md` 2026-09-09)
+- [ ] Decide where the authenticated retry runs: does the Service Worker do
+      its own fetch (now possible — the token moved to IndexedDB), or does
+      `sync` just wake a page context that owns the fetch? (`ISSUES.md`,
+      2026-09-09, Open)
 
 Then the milestone itself:
 
@@ -28,6 +26,33 @@ Then the milestone itself:
 - [ ] Playwright e2e: offline edit → reconnect → sync, then a forced conflict
 
 ## Done
+
+### 2026-09-09 — Pre-M6: fixed the two risks the M5 review surfaced
+
+- [x] **Vendored fonts** — `scripts/vendor-fonts.ts` (new, follows the
+      `vendor-codemirror.ts` pattern) fetches the latin subset of Fraunces/
+      Manrope/IBM Plex Mono from Google's `css2` API once and writes 5 woff2
+      files + a generated `fonts.css` into `public/vendor/fonts/`;
+      `index.html` links that instead of the Google Fonts `<link>`. Verified
+      via Playwright: zero non-localhost requests, all three families report
+      `loaded`, screenshot pixel-identical to the CDN version.
+- [x] **Token moved to IndexedDB** — new `public/app/token-store.js`
+      (`getToken`/`setToken`, now async); `api.js` delegates to it,
+      `app-shell.js`'s token prefill/change-handler updated to await it. The
+      three Playwright tests that seeded `localStorage` directly
+      (`client-crud`, `backlinks-panel`, `wikilink-autocomplete`) now seed
+      IndexedDB via a real page + reload instead (dynamic-imports the actual
+      `token-store.js`, not a duplicated inline copy of its logic).
+- [x] Installed Google Chrome in this environment to actually run the
+      `channel: "chrome"` Playwright tests instead of trusting the diff —
+      21/21 green, including all three browser tests exercising the new
+      token storage end-to-end (create/edit/delete, backlinks nav, wikilink
+      autocomplete all still authenticate correctly).
+- [x] Docs caught up: `ISSUES.md` (both entries closed, with what's still
+      open), `roadmap.md` M6, `system-overview.md`'s client module map (new
+      files, corrected two stale lines found along the way).
+- **Still open**: which side of the Service Worker boundary actually makes
+  the authenticated retry — `ISSUES.md`, pre-M6.
 
 ### 2026-09-09 — M5: Design system integration (mostly done — see roadmap.md for what's still open and why)
 

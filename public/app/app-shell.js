@@ -74,10 +74,10 @@ export class AppShell extends HTMLElement {
 
   #onHashChange = () => this.#route();
 
-  #renderChrome() {
-    this.#tokenInput.value = api.getToken();
-    this.#tokenInput.addEventListener("change", () => {
-      api.setToken(this.#tokenInput.value.trim());
+  async #renderChrome() {
+    this.#tokenInput.value = await api.getToken();
+    this.#tokenInput.addEventListener("change", async () => {
+      await api.setToken(this.#tokenInput.value.trim());
       this.#setStatus("Token saved.", false);
       this.#route();
     });

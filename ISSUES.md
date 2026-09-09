@@ -25,10 +25,11 @@ gaps into `spec.md` §11.
 - 2026-09-05 (M2) — After creating a note the "Created." status flashes and is
   immediately cleared by the route change to the new note. Cosmetic; fix when
   the status/toast UI gets real attention (M5).
-- 2026-09-05 (M2) — Auth token is entered in a plain field and kept in
-  `localStorage`; there's no real "log in" step and no way to clear it from the
-  UI. Acceptable for a single-user home tool; reconsider alongside the auth
-  rework before wider exposure.
+- 2026-09-05 (M2) — Auth token is entered in a plain field with no real
+  "log in" step and no way to clear it from the UI. Acceptable for a
+  single-user home tool; reconsider alongside the auth rework before wider
+  exposure. (Storage moved from `localStorage` to IndexedDB 2026-09-09 —
+  see the closed entry below — but this UX gap is unrelated and still open.)
 - 2026-09-05 (M2) — Playwright e2e depends on a system Chrome install
   (`channel: "chrome"`) since the version-matched browser binary isn't
   downloaded. If Chrome isn't present, run `npx playwright install chromium`.
@@ -66,27 +67,37 @@ gaps into `spec.md` §11.
   the old target (they render as unresolved, not wrong). Self-heals on the next
   boot (`NoteIndex.build` re-reads disk). Left as-is; a proper transaction is a
   bigger change than v1 warrants.
-- 2026-09-09 (M5) — `index.html` loads Fraunces/Manrope/IBM Plex Mono from
-  `fonts.googleapis.com` — a runtime CDN dependency, which is exactly what
-  `techstack.md` vendors CodeMirror locally to avoid ("nothing is fetched from
-  a CDN at runtime"). Not urgent (fallback fonts apply, nothing is broken
-  today) but should be fixed before or during M6: a fully offline first-load
-  currently has no way to fetch these at all, and M7's self-hosted/home-network
-  target may not have a route to Google's CDN either. Fix: vendor the three
-  font files under `public/vendor/fonts/` the same way CodeMirror is vendored,
-  `@font-face` instead of the Google Fonts `<link>`.
-- 2026-09-09 (pre-M6) — `system-overview.md`'s reconnect flow has the Service
-  Worker's `sync` event driving the Sync Manager's drain of the Write Queue,
-  but the auth token lives in `localStorage` (`public/app/api.js`), which a
-  Service Worker's global scope can't read. Undecided which of two fixes M6
-  takes: move the token to IndexedDB so the SW can authenticate its own
-  fetches, or keep the actual fetch page-side and have `sync` just wake a page
-  (`clients.matchAll`/postMessage) rather than run the request itself. Resolve
-  before writing the Write Queue — it changes what the drain function can
-  assume about where it runs.
+- 2026-09-09 (pre-M6) — Moving the token off `localStorage` (see the closed
+  entry below) only fixed *where the token lives*, not *who does the
+  authenticated fetch*. `system-overview.md`'s reconnect flow still has the
+  Service Worker's `sync` event driving the Sync Manager's drain of the Write
+  Queue — still undecided whether the SW does that fetch itself (now
+  possible, since it can reach the token in IndexedDB) or just wakes a page
+  to do it (`clients.matchAll`/postMessage). Resolve before writing the Write
+  Queue — it changes what the drain function can assume about where it runs.
 
 ## Closed
 
 - 2026-09-05 — Deno not installed on the dev machine. **Closed 2026-09-05**:
   installed Deno 2.9.6 via the official install script to
   `C:\Users\ajcates\.deno\bin`.
+- 2026-09-09 (M5) — `index.html` loaded Fraunces/Manrope/IBM Plex Mono from
+  `fonts.googleapis.com` — a runtime CDN dependency, which is exactly what
+  `techstack.md` vendors CodeMirror locally to avoid. **Closed 2026-09-09**:
+  `scripts/vendor-fonts.ts` vendors the latin subset of all three (5 files,
+  ~200KB) into `public/vendor/fonts/`; `index.html` now links a local
+  `fonts.css` instead. Verified zero non-localhost requests and all three
+  families loading correctly via Playwright. Scope note: latin subset only —
+  a note title in Cyrillic/Vietnamese/Greek falls back to a system font
+  rather than 404ing; re-run the script with more subsets if that bites.
+- 2026-09-09 (pre-M6) — The auth token lived in `localStorage`
+  (`public/app/api.js`), unreachable from a Service Worker's global scope,
+  which M6's Sync Manager would need. **Closed 2026-09-09**: moved to
+  IndexedDB (`public/app/token-store.js`, a small dedicated module so a
+  future Service Worker can import just this, not all of `api.js`).
+  `getToken`/`setToken` are now async; `app-shell.js` and the three Playwright
+  tests that seed the token were updated to match, and all three (previously
+  blocked by no system Chrome in this container) were run for real after
+  installing Google Chrome — 21/21 tests green. The *remaining* half of this
+  problem (does the SW do its own fetch, or wake a page?) is still open —
+  see above.

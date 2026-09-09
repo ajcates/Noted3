@@ -1,0 +1,6 @@
+# Vendored by scripts/vendor-fonts.ts on 2026-09-09 — latin subset of Fraunces, Manrope, IBM Plex Mono
+fraunces-0.woff2
+fraunces-1.woff2
+ibm-plex-mono-2.woff2
+ibm-plex-mono-3.woff2
+manrope-4.woff2

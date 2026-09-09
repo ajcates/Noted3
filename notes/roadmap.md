@@ -70,13 +70,17 @@ One naming note before you start: the `notes/` folder in the project directory i
 
 ## M6 — PWA & offline-first — budget real time here, it's the hardest milestone
 
-**Resolve before writing any code here — both affect the shape of the Write Queue/Sync Manager, not just their internals:**
+**Resolved ahead of time (2026-09-09), so M6 doesn't inherit them — see `ISSUES.md` Closed for detail:**
 
-- **Where does the authenticated retry actually run?** `system-overview.md`'s "Reconnecting" flow reads "Service Worker's `sync` event fires → Sync Manager drains the Write Queue" — but the auth token lives in `localStorage` (`public/app/api.js`), which a Service Worker's global scope cannot read. Either (a) the token moves to IndexedDB (reachable from both the page and the SW) and the SW does the drain itself, or (b) the SW's `sync` event only wakes a page context (via `clients.matchAll`/postMessage or just relying on the page being open) and the actual authenticated `fetch` stays page-side, with `sync` as a nice-to-have rather than the only trigger. Pick one before building the Write Queue — it changes what the Write Queue's drain function is allowed to assume about its execution context. See `ISSUES.md` (2026-09-09).
-- **Fonts won't survive real offline use as shipped.** M5 loads Fraunces/Manrope/IBM Plex Mono from `fonts.googleapis.com` (`index.html`) — a runtime CDN dependency, which is exactly what `techstack.md` vendors CodeMirror locally to avoid ("nothing is fetched from a CDN at runtime"). Vendor the three font files the same way (`public/vendor/fonts/`, `@font-face` instead of the Google Fonts `<link>`) before or during this milestone's Service Worker work — otherwise the precache list has nothing to precache for type, and a fully offline first-load has no custom fonts at all (falls back silently, but it's a real regression from the M5 design pass). See `ISSUES.md` (2026-09-09).
+- ~~Fonts won't survive real offline use~~ — `scripts/vendor-fonts.ts` now vendors Fraunces/Manrope/IBM Plex Mono into `public/vendor/fonts/` (latin subset), `index.html` links a local `fonts.css`. Zero runtime CDN dependency, verified. The Service Worker's precache list (below) should include these files.
+- ~~Auth token was in `localStorage`, unreachable from a Service Worker~~ — moved to IndexedDB (`public/app/token-store.js`). This only fixes *where the token lives*, not *who does the authenticated fetch* — that part is still open, immediately below.
+
+**Still resolve before writing the Write Queue/Sync Manager:**
+
+- **Where does the authenticated retry actually run?** `system-overview.md`'s "Reconnecting" flow reads "Service Worker's `sync` event fires → Sync Manager drains the Write Queue." Now that the token is in IndexedDB, the SW *can* read it — but decide deliberately whether it should: (a) the SW does the drain itself (works even if no tab is open — the actual point of Background Sync), or (b) the SW's `sync` event only wakes a page context (`clients.matchAll`/postMessage) and the fetch stays page-side (simpler, but sync silently doesn't happen with the app fully closed). Pick one before building the Write Queue — it changes what the drain function is allowed to assume about its execution context. See `ISSUES.md` (2026-09-09, Open).
 
 - [ ] `manifest.webmanifest` + icons + `display: standalone`
-- [ ] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell (including vendored fonts, once those exist), stale-while-revalidate for API GETs, cache-first for static assets
+- [ ] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell (including `public/vendor/fonts/`), stale-while-revalidate for API GETs, cache-first for static assets
 - [ ] IndexedDB Cache — direct IndexedDB, no wrapper library (`techstack.md`); note list + recently-opened bodies
 - [ ] Write Queue — durable pending-mutation log, written before any network attempt
 - [ ] Sync Manager — drains the queue on reconnect / background-sync event

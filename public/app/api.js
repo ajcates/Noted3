@@ -4,30 +4,13 @@
  *
  * The one place the client talks to the server — every view goes through
  * these functions, never `fetch` directly. Plain functions, no class needed.
- * The shared auth token (spec.md §11) lives in `localStorage` and is attached
- * to every request here.
+ * The shared auth token (spec.md §11) lives in IndexedDB (`token-store.js`,
+ * not `localStorage` — see that file's header) and is attached to every
+ * request here.
  */
 
-const TOKEN_KEY = "noted.token";
-
-/** @returns {string} the saved bearer token, or `""` if none is set. */
-export function getToken() {
-  try {
-    return localStorage.getItem(TOKEN_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-/** @param {string} token */
-export function setToken(token) {
-  try {
-    localStorage.setItem(TOKEN_KEY, token);
-  } catch {
-    // Private-mode / storage disabled — the app still works for this session
-    // via the in-memory value the caller holds.
-  }
-}
+export { getToken, setToken } from "./token-store.js";
+import { getToken } from "./token-store.js";
 
 export class ApiError extends Error {
   /**
@@ -58,7 +41,7 @@ export class ApiError extends Error {
  */
 async function request(path, init = {}) {
   /** @type {Record<string, string>} */
-  const headers = { authorization: `Bearer ${getToken()}` };
+  const headers = { authorization: `Bearer ${await getToken()}` };
   if (init.body !== undefined) headers["content-type"] = "application/json";
 
   let res;

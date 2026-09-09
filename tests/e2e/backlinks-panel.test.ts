@@ -40,12 +40,17 @@ Deno.test({
     try {
       browser = await chromium.launch({ channel: "chrome" });
       const context = await browser.newContext();
-      await context.addInitScript(
-        (token) => localStorage.setItem("noted.token", token),
-        TOKEN,
-      );
       const page = await context.newPage();
+      // Provide the auth token the way a returning user would have it — the
+      // token lives in IndexedDB (`public/app/token-store.js`), not
+      // `localStorage` (ISSUES.md, 2026-09-09), so it needs a real page/origin
+      // before it can be written; reload so the app boots with it already set.
       await page.goto(base);
+      await page.evaluate(async (token) => {
+        const { setToken } = await import("/app/token-store.js");
+        await setToken(token);
+      }, TOKEN);
+      await page.reload();
 
       // Note A links to B; B does not exist yet.
       await page.getByRole("button", { name: "New note" }).click();

@@ -82,9 +82,11 @@ Served straight from `public/` as ES modules — no bundler, no transpile step.
 | `public/app/backlinks-panel.js` | Backlinks Panel — `<backlinks-panel>`, pure render, emits `note-open` |
 | `public/app/search-view.js` | Search View — `<search-view>`, debounced input, emits `search-query` |
 | `public/app/tag-browser.js` | Tag Browser — `<tag-browser>`, all-tags + per-tag modes |
-| `public/app/api.js` | API Client — the one `fetch` wrapper; token in `localStorage`; `search`/`getTags`/`getNotesByTag` added in M4 |
+| `public/app/api.js` | API Client — the one `fetch` wrapper; delegates token storage to `token-store.js`; `search`/`getTags`/`getNotesByTag` added in M4 |
+| `public/app/token-store.js` | Token Store — the shared auth token, in IndexedDB (not `localStorage` — a Service Worker's global scope can't reach that; `ISSUES.md`, 2026-09-09). A small dedicated module so a future Service Worker can import just this |
 | `public/vendor/codemirror/` | Vendored CM6 ESM bundles (`scripts/vendor-codemirror.ts`, from esm.sh with shared-package externals); import map in `index.html` points bare specifiers here |
-| `public/app/styles.css` | Placeholder styling; replaced by the M5 design-token set |
+| `public/vendor/fonts/` | Vendored Fraunces/Manrope/IBM Plex Mono, latin subset (`scripts/vendor-fonts.ts`) — no runtime CDN dependency, same reasoning as CodeMirror (`ISSUES.md`, 2026-09-09) |
+| `public/app/styles.css` | M5 design-token set (spec.md §12) — color/radius/font/spacing/motion tokens, light + dark via `prefers-color-scheme` |
 
 **Decision (M2):** client code is authored as plain `.js` with `// @ts-check` +
 JSDoc, not `.ts`. It's the only option that is genuinely "no bundler, no build
