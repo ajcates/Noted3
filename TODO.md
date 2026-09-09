@@ -6,22 +6,24 @@ first) per `notes/development.md` §5 — they are not deleted.
 
 ## M6 — PWA & offline-first (next)
 
-One design question from `roadmap.md` M6 still to resolve before writing the
-Write Queue or Service Worker:
+Decided 2026-09-09 (`roadmap.md` M6, `ISSUES.md`): the SW does its own
+authenticated fetch on `sync`, reading the token from IndexedDB. Build
+implications: SW registers as `{ type: "module" }`; the Write Queue lives in
+IndexedDB, not memory; the drain function is one implementation shared by
+the SW's `sync` handler and a page-side `online`/boot fallback (Background
+Sync is Chromium-only).
 
-- [ ] Decide where the authenticated retry runs: does the Service Worker do
-      its own fetch (now possible — the token moved to IndexedDB), or does
-      `sync` just wake a page context that owns the fetch? (`ISSUES.md`,
-      2026-09-09, Open)
-
-Then the milestone itself:
+Still open: the conflict-resolution UI (`spec.md` §11) wants its own design
+pass before being built, not an inline prompt bolted on — flag before
+starting that task specifically, not the whole milestone.
 
 - [ ] `manifest.webmanifest` + icons + `display: standalone`
-- [ ] Service Worker — precache app shell (incl. vendored fonts), SWR for API
-      GETs, cache-first for static assets
 - [ ] IndexedDB Cache — note list + recently-opened bodies
-- [ ] Write Queue — durable pending-mutation log
-- [ ] Sync Manager — drains on reconnect / background-sync
+- [ ] Write Queue (IndexedDB-backed) — durable pending-mutation log
+- [ ] Service Worker (module worker) — precache app shell (incl. vendored
+      fonts), SWR for API GETs, cache-first for static assets
+- [ ] Sync Manager — the shared drain function; wire it to the SW's `sync`
+      event and the page-side fallback
 - [ ] Conflict handling — `updated`-timestamp check, keep-mine/keep-server's UI
 - [ ] Playwright e2e: offline edit → reconnect → sync, then a forced conflict
 

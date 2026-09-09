@@ -75,15 +75,18 @@ One naming note before you start: the `notes/` folder in the project directory i
 - ~~Fonts won't survive real offline use~~ — `scripts/vendor-fonts.ts` now vendors Fraunces/Manrope/IBM Plex Mono into `public/vendor/fonts/` (latin subset), `index.html` links a local `fonts.css`. Zero runtime CDN dependency, verified. The Service Worker's precache list (below) should include these files.
 - ~~Auth token was in `localStorage`, unreachable from a Service Worker~~ — moved to IndexedDB (`public/app/token-store.js`). This only fixes *where the token lives*, not *who does the authenticated fetch* — that part is still open, immediately below.
 
-**Still resolve before writing the Write Queue/Sync Manager:**
+**Decided (2026-09-09) — see `ISSUES.md` for the reasoning:** the Service Worker does its own authenticated fetch on the `sync` event, reading the token from IndexedDB directly (works with no tab open, which is the actual point of Background Sync). Two build implications that follow from it:
 
-- **Where does the authenticated retry actually run?** `system-overview.md`'s "Reconnecting" flow reads "Service Worker's `sync` event fires → Sync Manager drains the Write Queue." Now that the token is in IndexedDB, the SW *can* read it — but decide deliberately whether it should: (a) the SW does the drain itself (works even if no tab is open — the actual point of Background Sync), or (b) the SW's `sync` event only wakes a page context (`clients.matchAll`/postMessage) and the fetch stays page-side (simpler, but sync silently doesn't happen with the app fully closed). Pick one before building the Write Queue — it changes what the drain function is allowed to assume about its execution context. See `ISSUES.md` (2026-09-09, Open).
+- The SW must be registered `{ type: "module" }` so it can `import` `token-store.js`. Background Sync is Chromium-only — write the drain logic as **one function** callable from either the SW's `sync` handler or a page's `online` listener/boot check (spec.md §7's "retry-on-reconnect fallback" for Safari/Firefox), not two implementations.
+- The Write Queue's log lives in IndexedDB, not an in-memory array — it has to survive both a page reload and the SW being terminated/restarted between `sync` events.
 
-- [ ] `manifest.webmanifest` + icons + `display: standalone`
-- [ ] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell (including `public/vendor/fonts/`), stale-while-revalidate for API GETs, cache-first for static assets
+Build order (bottom-up: the two IndexedDB-backed data structures before the Service Worker that ties them together, per this file's own "leave yourself something to poke at" rule):
+
+- [ ] `manifest.webmanifest` + icons + `display: standalone` — independent, do anytime
 - [ ] IndexedDB Cache — direct IndexedDB, no wrapper library (`techstack.md`); note list + recently-opened bodies
-- [ ] Write Queue — durable pending-mutation log, written before any network attempt
-- [ ] Sync Manager — drains the queue on reconnect / background-sync event
+- [ ] Write Queue — durable pending-mutation log in IndexedDB, written before any network attempt
+- [ ] Service Worker — hand-written, no Workbox (`techstack.md`); registered as a module worker; precache the app shell (including `public/vendor/fonts/`), stale-while-revalidate for API GETs, cache-first for static assets
+- [ ] Sync Manager — one drain function, called from the SW's `sync` event where supported and from a page-side `online` listener + boot check as the fallback
 - [ ] Conflict handling — `updated`-timestamp check on replay; "keep mine / keep server's" UI, not a silent overwrite
 - [ ] Playwright e2e test, deliberately: simulate offline → edit a note → reconnect → confirm sync, then force a conflict and confirm the prompt appears
 

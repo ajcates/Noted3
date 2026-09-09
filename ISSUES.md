@@ -67,14 +67,6 @@ gaps into `spec.md` §11.
   the old target (they render as unresolved, not wrong). Self-heals on the next
   boot (`NoteIndex.build` re-reads disk). Left as-is; a proper transaction is a
   bigger change than v1 warrants.
-- 2026-09-09 (pre-M6) — Moving the token off `localStorage` (see the closed
-  entry below) only fixed *where the token lives*, not *who does the
-  authenticated fetch*. `system-overview.md`'s reconnect flow still has the
-  Service Worker's `sync` event driving the Sync Manager's drain of the Write
-  Queue — still undecided whether the SW does that fetch itself (now
-  possible, since it can reach the token in IndexedDB) or just wakes a page
-  to do it (`clients.matchAll`/postMessage). Resolve before writing the Write
-  Queue — it changes what the drain function can assume about where it runs.
 
 ## Closed
 
@@ -99,5 +91,21 @@ gaps into `spec.md` §11.
   tests that seed the token were updated to match, and all three (previously
   blocked by no system Chrome in this container) were run for real after
   installing Google Chrome — 21/21 tests green. The *remaining* half of this
-  problem (does the SW do its own fetch, or wake a page?) is still open —
-  see above.
+  problem — does the SW do its own fetch, or wake a page? — is decided below.
+- 2026-09-09 (pre-M6) — Decided: the Service Worker does its own authenticated
+  fetch on the `sync` event, reading the token from IndexedDB
+  (`token-store.js`) directly — this is the actual point of Background Sync
+  (it works with no tab open), and the token move above made it possible.
+  Two implications for the Write Queue/Sync Manager build in M6:
+  - The SW needs `import`ing `token-store.js`, so it must be registered as a
+    module worker (`{ type: "module" }`). Background Sync itself is
+    Chromium-only (not Safari, not Firefox) — spec.md §7 already calls for a
+    "retry-on-reconnect fallback" for that case, and the fix here is to write
+    the actual drain logic as one function usable from *either* context (SW
+    `sync` handler, or a page's `online` listener + a check on boot), not two
+    separate implementations — nothing about it needs to be SW-only now that
+    the token isn't page-only either.
+  - The Write Queue's log itself must live in IndexedDB (not an in-memory
+    array), since it needs to survive both a page reload and the SW's own
+    lifecycle (a worker can be terminated and restarted between `sync`
+    events).
