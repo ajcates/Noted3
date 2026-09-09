@@ -66,6 +66,24 @@ gaps into `spec.md` §11.
   the old target (they render as unresolved, not wrong). Self-heals on the next
   boot (`NoteIndex.build` re-reads disk). Left as-is; a proper transaction is a
   bigger change than v1 warrants.
+- 2026-09-09 (M5) — `index.html` loads Fraunces/Manrope/IBM Plex Mono from
+  `fonts.googleapis.com` — a runtime CDN dependency, which is exactly what
+  `techstack.md` vendors CodeMirror locally to avoid ("nothing is fetched from
+  a CDN at runtime"). Not urgent (fallback fonts apply, nothing is broken
+  today) but should be fixed before or during M6: a fully offline first-load
+  currently has no way to fetch these at all, and M7's self-hosted/home-network
+  target may not have a route to Google's CDN either. Fix: vendor the three
+  font files under `public/vendor/fonts/` the same way CodeMirror is vendored,
+  `@font-face` instead of the Google Fonts `<link>`.
+- 2026-09-09 (pre-M6) — `system-overview.md`'s reconnect flow has the Service
+  Worker's `sync` event driving the Sync Manager's drain of the Write Queue,
+  but the auth token lives in `localStorage` (`public/app/api.js`), which a
+  Service Worker's global scope can't read. Undecided which of two fixes M6
+  takes: move the token to IndexedDB so the SW can authenticate its own
+  fetches, or keep the actual fetch page-side and have `sync` just wake a page
+  (`clients.matchAll`/postMessage) rather than run the request itself. Resolve
+  before writing the Write Queue — it changes what the drain function can
+  assume about where it runs.
 
 ## Closed
 

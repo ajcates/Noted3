@@ -4,16 +4,62 @@ Granular task list, one level finer than `notes/roadmap.md`. Checkbox format
 matches the roadmap. Finished tasks move under a dated `## Done` heading (newest
 first) per `notes/development.md` §5 — they are not deleted.
 
-## M5 — Design system integration (next)
+## M6 — PWA & offline-first (next)
 
-- [ ] Port the Material 3 Expressive token set (spec.md §12) into the real
-      stylesheet — plain CSS custom properties, no preprocessor
-- [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — no
-      hardcoded colours/radii anywhere
-- [ ] Light/dark via `prefers-color-scheme`
-- [ ] Spot-check contrast against real note content
+Two design questions from `roadmap.md` M6 to resolve before writing the Write
+Queue or Service Worker — not implementation tasks yet, decisions:
+
+- [ ] Decide where the authenticated retry runs: SW reads a token moved to
+      IndexedDB, or SW's `sync` just wakes a page context that owns the fetch
+      (`ISSUES.md` 2026-09-09)
+- [ ] Vendor Fraunces/Manrope/IBM Plex Mono locally (`public/vendor/fonts/`,
+      `@font-face`) instead of the Google Fonts `<link>` — same pattern as
+      CodeMirror vendoring (`ISSUES.md` 2026-09-09)
+
+Then the milestone itself:
+
+- [ ] `manifest.webmanifest` + icons + `display: standalone`
+- [ ] Service Worker — precache app shell (incl. vendored fonts), SWR for API
+      GETs, cache-first for static assets
+- [ ] IndexedDB Cache — note list + recently-opened bodies
+- [ ] Write Queue — durable pending-mutation log
+- [ ] Sync Manager — drains on reconnect / background-sync
+- [ ] Conflict handling — `updated`-timestamp check, keep-mine/keep-server's UI
+- [ ] Playwright e2e: offline edit → reconnect → sync, then a forced conflict
 
 ## Done
+
+### 2026-09-09 — M5: Design system integration (mostly done — see roadmap.md for what's still open and why)
+
+- [x] Full Material 3 Expressive token set (color/radius/font/spacing/motion)
+      ported into `public/app/styles.css` `:root`, light + dark via
+      `prefers-color-scheme` — sourced from `noted-field-guide.html` +
+      `notes/mobile-app-design-project/.../Noted Design Notes.dc.html`
+- [x] Applied to every real component: note cards, tag chips (ember), masthead/
+      nav, editor surface, backlinks panel (moss), search; detokenized
+      `codemirror-setup.js`'s wikilink/quote/list colors along the way
+      (predated M5, still hardcoded hex)
+- [x] Press feedback (design notes §6.2) done properly — scale 0.96 + a
+      surface-step/brightness shift over 100ms in, releasing on spatial-fast;
+      found and fixed a real bug where the generic `button:active` rule was
+      winning a specificity tie over `.primary`/`.delete`/`.tag-chip` and
+      showing the wrong press color
+- [x] Search results get their 120ms crossfade (§6.2); `prefers-reduced-motion`
+      now zeroes `animation-duration` too, not just `transition-duration`
+- [x] Empty states (note list/tags/search) — quiet dashed card + Fraunces-
+      italic copy instead of bare gray text
+- [x] Verified live: installed Deno (wasn't present), ran the dev server,
+      drove it with Playwright against the vendored Chromium, screenshotted
+      note list/editor/backlinks/tags/search in both themes plus press states
+- **Still open** (see `roadmap.md` M5 for the item-by-item breakdown): the
+  rest of the element catalogue that needs features from other milestones
+  (sort button, folder row, format pop menu), the asymmetric-pill/notched-card
+  shapes (plain radii only so far), and the 7 of 8 missing states that need
+  sync/AI/snapshots/folders to exist first
+- **New risks found, not yet fixed** — logged in `ISSUES.md` and `roadmap.md`
+  M6: the Google Fonts runtime dependency this introduced, and a
+  pre-existing Service-Worker/localStorage conflict this surfaced while
+  reviewing M6's design ahead of time
 
 ### 2026-09-06 — Review + micro-refactor (post-M4)
 

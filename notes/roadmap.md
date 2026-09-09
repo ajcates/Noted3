@@ -66,12 +66,17 @@ One naming note before you start: the `notes/` folder in the project directory i
 - [ ] Before calling this milestone done, design the states the notes call out as missing (§7): empty vault / empty tag ⚠️ (see below — a CSS-only placeholder, not the real design pass §7 asks for), index-rebuilding ❌, server-unreachable ❌, sync-conflict banner ❌, keyboard-up editor at its smallest height ❌, sort sheet ❌, long-press note menu ❌, name-this-snapshot sheet ❌ (the eight ❌ items all belong to features — sync, AI, folders/sort, snapshots — that don't exist yet; this stays open until they're built or someone does the real design pass ahead of that). _2026-09-09:_ gave empty note-list/tags/search a token-styled quiet dashed card + Fraunces-italic message instead of bare gray text — real content now, not just a design placeholder, but still just a plain-CSS stand-in for whatever the actual empty-state design turns out to be.
 - [x] Spot-check contrast against real note content, not just the palette swatches. _Done 2026-09-09:_ real notes with tags and a wikilink, screenshotted in light + dark via a throwaway Playwright driver (no project skill for running this app existed yet — worth a `/run-skill-generator` pass later).
 
-**Open decision surfaced by the design bundle:** three of the nine mocked screens design features with no home yet in `spec.md`'s v1 scope — undo/redo + Snapshot + Version History (§4.11–4.12, screen 1f), an AI edit panel for one note and for a bulk selection (§4.13–4.14, screens 1g/1h), and a folder-view note list (§4.5, screen 1i — folders are explicitly deferred to v2 in spec.md §9). Decide whether these get their own milestone (see **v2 candidates** below for what's already mocked) or get cut before implementation — don't build them just because they're drawn.
+**Open decision surfaced by the design bundle:** three of the nine mocked screens design features that were v1 non-goals — undo/redo + Snapshot + Version History (§4.11–4.12, screen 1f), an AI edit panel for one note and for a bulk selection (§4.13–4.14, screens 1g/1h), and a folder-view note list (§4.5, screen 1i). `spec.md` now fully specs all three as v1.1 (§4.1–§4.2, §5.1–§5.2, §6.1–§6.3) and **M8** below positions them in build order — but scoping them isn't the same as deciding to build them. That decision — go, or cut and leave the design as reference-only — is still open.
 
 ## M6 — PWA & offline-first — budget real time here, it's the hardest milestone
 
+**Resolve before writing any code here — both affect the shape of the Write Queue/Sync Manager, not just their internals:**
+
+- **Where does the authenticated retry actually run?** `system-overview.md`'s "Reconnecting" flow reads "Service Worker's `sync` event fires → Sync Manager drains the Write Queue" — but the auth token lives in `localStorage` (`public/app/api.js`), which a Service Worker's global scope cannot read. Either (a) the token moves to IndexedDB (reachable from both the page and the SW) and the SW does the drain itself, or (b) the SW's `sync` event only wakes a page context (via `clients.matchAll`/postMessage or just relying on the page being open) and the actual authenticated `fetch` stays page-side, with `sync` as a nice-to-have rather than the only trigger. Pick one before building the Write Queue — it changes what the Write Queue's drain function is allowed to assume about its execution context. See `ISSUES.md` (2026-09-09).
+- **Fonts won't survive real offline use as shipped.** M5 loads Fraunces/Manrope/IBM Plex Mono from `fonts.googleapis.com` (`index.html`) — a runtime CDN dependency, which is exactly what `techstack.md` vendors CodeMirror locally to avoid ("nothing is fetched from a CDN at runtime"). Vendor the three font files the same way (`public/vendor/fonts/`, `@font-face` instead of the Google Fonts `<link>`) before or during this milestone's Service Worker work — otherwise the precache list has nothing to precache for type, and a fully offline first-load has no custom fonts at all (falls back silently, but it's a real regression from the M5 design pass). See `ISSUES.md` (2026-09-09).
+
 - [ ] `manifest.webmanifest` + icons + `display: standalone`
-- [ ] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell, stale-while-revalidate for API GETs, cache-first for static assets
+- [ ] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell (including vendored fonts, once those exist), stale-while-revalidate for API GETs, cache-first for static assets
 - [ ] IndexedDB Cache — direct IndexedDB, no wrapper library (`techstack.md`); note list + recently-opened bodies
 - [ ] Write Queue — durable pending-mutation log, written before any network attempt
 - [ ] Sync Manager — drains the queue on reconnect / background-sync event
@@ -80,16 +85,28 @@ One naming note before you start: the `notes/` folder in the project directory i
 
 **Open decision to make here:** the conflict-resolution UI (spec.md §11) deserves its own quick design pass before you build it, not just an inline prompt bolted on.
 
+**Also worth a glance before this milestone:** the In-Memory Index has no file watcher (`ISSUES.md`, 2026-09-06) — fine for a single client, but M6 is explicitly building for multiple devices writing to the same vault while one was offline, which is exactly the scenario that makes index staleness more likely to actually bite. Not a blocker, just don't be surprised by it.
+
 ## M7 — Deploy
 
 - [ ] Reverse proxy — Caddy, only if this leaves `localhost` (`techstack.md`), for automatic HTTPS
 - [ ] Process supervisor — systemd unit, or a restart-on-crash wrapper if running under Termux
-- [ ] Point `NOTES_DIR` at your real notes; settle on a backup strategy (git, or a plain periodic copy)
-- [ ] Confirm home-screen install actually works over HTTPS from your phone
+- [ ] Confirm home-screen install actually works over HTTPS from your phone, and confirm offline (M6) actually holds up over a real network — do this against the dev vault first
+- [ ] Point `NOTES_DIR` at your real notes only once the above is confirmed working; settle on a backup strategy (git, or a plain periodic copy) — pointing at real data before the deploy is proven is more risk than the extra round trip costs
 - [ ] `deno test` (and the Playwright suite) green locally before this milestone is called done — there's no CI pipeline for a solo project (`techstack.md`), so this check is the gate
+
+**This completes v1** (spec.md §10) — wikilinks, backlinks, tags, search, the real editor, the design system, offline-first, and a real deployment. M8 below is scoped, not scheduled: don't start it as a continuation of momentum out of M7 without deciding to.
+
+## M8 — v1.1: folders, version history, AI edit panels — not scheduled, needs a go/no-go first
+
+Fully specced (`spec.md` §4.1–§4.2, §5.1–§5.2, §6.1–§6.3, added 2026-09-09) from the mobile design bundle in `notes/mobile-app-design-project/`, but this is a real scope change, not a continuation of M5's styling work — it reverses two things v1 shipped as explicit non-goals (folders, version history beyond mtimes) and adds a new one (an optional Anthropic API dependency, `spec.md` §9). The open decision flagged back in M5 hasn't been made: build it, or cut it and leave the design bundle as reference-only. If it's a go, suggested internal order (each is independently useful, so this isn't a hard dependency chain, just a sensible sequence):
+
+1. **Folders** (§4.1) — pure path-handling change to the existing File Store/index, no new UI chrome beyond what note-list grouping needs. Lowest risk, most self-contained.
+2. **Version history & snapshots** (§4.2, §5.1, §6.1–6.2) — new on-disk storage (`.noted/versions/`) and new endpoints, but no external dependency. Do this before AI panels: the AI apply flow (§5.2) *requires* the snapshot mechanism to already exist ("every apply writes a version" is a hard dependency, not a nice-to-have).
+3. **AI edit panels** (§5.2, §6.3) — depends on (2), and is the only piece with an external network/cost dependency (`ANTHROPIC_API_KEY`, spec.md §3/§9). Do this last so a go/no-go on the AI-specific privacy tradeoff doesn't block the other two.
+
+**Watch for before starting:** version storage under `NOTES_DIR/.noted/` (§4.2) will interact with whatever M7 backup strategy got chosen — confirm it either backs that up too (probably right, it's real history) or explicitly excludes it, don't leave it undecided.
 
 ## v2 candidates — not scheduled, don't build early
 
-Folders/nested organization, image attachments, a real full-text search index, note templates, git-backed history or export/import. Revisit only once v1 has survived actual daily use — see spec.md §9 for why these are explicitly out of scope for now.
-
-**Now also mocked (design only) in `notes/mobile-app-design-project/`:** version history/snapshots and an AI edit panel — single-note and bulk-across-selection (`Noted Design Notes.dc.html` §4.11–4.14, screens 1f/1g/1h of `Noted Mobile v1.dc.html`). A design exists; a spec does not — these need a `spec.md` pass (data model, server endpoints, how "keep mine/keep theirs" interacts with the M6 sync conflict UI) before they're buildable, not just a CSS port.
+Image attachments, a real full-text search index, note templates, export/import. Revisit only once v1 has survived actual daily use — see spec.md §9 for why these are explicitly out of scope for now.
