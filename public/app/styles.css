@@ -178,11 +178,14 @@ main {
   gap: 0.5rem;
 }
 
+/* Mirrored squircle (field-guide §3.3): adjacent icon buttons alternate
+   which diagonal is more rounded, so a row of them reads as a rhythm
+   instead of a strip of identical circles. */
 .icon-btn {
   width: 2.4rem;
   height: 2.4rem;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: 0.85rem 1.4rem 0.85rem 1.4rem;
   border: none;
   background: var(--surface-container-high);
   color: var(--on-surface);
@@ -193,6 +196,10 @@ main {
   line-height: 1;
   text-decoration: none;
   cursor: pointer;
+}
+
+.icon-btn:nth-of-type(even) {
+  border-radius: 1.4rem 0.85rem 1.4rem 0.85rem;
 }
 
 .icon-btn.active {
@@ -333,14 +340,24 @@ button.text-action.delete:hover {
   padding: 0.5rem 1.1rem 1.1rem;
 }
 
+/* Notched card family (field-guide §3.3): one corner drops from --radius-lg
+   to --radius-sm. The notch alternates corners card-to-card so a scrolling
+   list reads with a little variety without changing the row structure. */
 .note-card {
   display: block;
   width: 100%;
   text-align: left;
   background: var(--surface-container-low);
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg) var(--radius-sm) var(--radius-lg)
+    var(--radius-lg);
   padding: 1rem 1.1rem;
+}
+
+.card-list > :nth-child(even) .note-card,
+.card-list > .note-card:nth-of-type(even) {
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg)
+    var(--radius-sm);
 }
 
 .note-card h4 {
@@ -405,12 +422,17 @@ button.text-action.delete:hover {
   gap: 0.6rem;
 }
 
+/* Asymmetric commit pill (field-guide §3.3): the flat end (--radius-md)
+   points back at the content it acts on — the list to its left — the round
+   end (full pill) points out toward the edge. The one committing action per
+   screen gets this shape; every other button stays a plain pill. */
 .fab-new {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.2rem;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md) var(--radius-full) var(--radius-full)
+    var(--radius-md);
   border: none;
   background: var(--tertiary-container);
   color: var(--on-tertiary-container);
