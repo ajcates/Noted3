@@ -74,6 +74,30 @@ export function formatStamp(iso) {
 }
 
 /**
+ * The docked bottom bar + FAB shared by every browsing view (Note List,
+ * Search, Tag Browser): a Tags shortcut on the left, the one committing
+ * action ("New note") on the right. `target` is whatever should carry the
+ * emitted `note-new` event (usually `this`).
+ * @param {EventTarget} target
+ */
+export function renderToolbar(target) {
+  return el(
+    "div",
+    { class: "toolbar" },
+    el(
+      "nav",
+      {},
+      el("a", { class: "icon-btn", href: "#/tags", textContent: "#" }),
+    ),
+    el("button", {
+      class: "fab-new",
+      textContent: "✎ New note",
+      onclick: () => emit(target, "note-new"),
+    }),
+  );
+}
+
+/**
  * The shared note-card look (design-checklist.md `1a`/field-guide
  * `.note-card`): Fraunces title, plain-text excerpt, a tag chip + backlink
  * chip, and a mono updated stamp. Used by the Note List and the Tag Browser's

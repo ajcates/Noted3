@@ -8,7 +8,7 @@
  *     `note-open`, "All tags" emits `tags-all`
  */
 
-import { el, emit, renderNoteCard } from "./ui.js";
+import { el, emit, renderNoteCard, renderToolbar } from "./ui.js";
 
 /** @typedef {import("./api.js").TagCount} TagCount */
 /** @typedef {import("./api.js").NoteSummary} NoteSummary */
@@ -43,6 +43,7 @@ export class TagBrowser extends HTMLElement {
       ...(this.#view.kind === "all"
         ? this.#renderAll(this.#view.tags)
         : this.#renderOne(this.#view.tag, this.#view.notes)),
+      renderToolbar(this),
     );
   }
 

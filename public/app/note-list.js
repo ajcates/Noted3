@@ -9,7 +9,7 @@
  *   - `note-delete` — `detail: { filename }`
  */
 
-import { el, emit, renderNoteCard } from "./ui.js";
+import { el, emit, renderNoteCard, renderToolbar } from "./ui.js";
 
 /** @typedef {import("./api.js").NoteSummary} NoteSummary */
 
@@ -41,20 +41,7 @@ export class NoteList extends HTMLElement {
           { class: "card-list" },
           ...this.#notes.map((n) => this.#renderItem(n)),
         ),
-      el(
-        "div",
-        { class: "toolbar" },
-        el(
-          "nav",
-          {},
-          el("a", { class: "icon-btn", href: "#/tags", textContent: "#" }),
-        ),
-        el("button", {
-          class: "fab-new",
-          textContent: "✎ New note",
-          onclick: () => emit(this, "note-new"),
-        }),
-      ),
+      renderToolbar(this),
     );
   }
 

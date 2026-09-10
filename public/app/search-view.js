@@ -7,7 +7,7 @@
  * A result click emits `note-open` (`detail: { filename }`).
  */
 
-import { el, emit, formatStamp } from "./ui.js";
+import { el, emit, formatStamp, renderToolbar } from "./ui.js";
 
 /** @typedef {import("./api.js").SearchResult} SearchResult */
 
@@ -53,7 +53,7 @@ export class SearchView extends HTMLElement {
     }));
     this.#list = el("div", { class: "card-list" });
 
-    this.replaceChildren(this.#input, this.#list);
+    this.replaceChildren(this.#input, this.#list, renderToolbar(this));
     this.#renderList();
     this.#input.focus();
   }

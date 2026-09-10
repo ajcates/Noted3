@@ -565,10 +565,18 @@ button.text-action.delete:hover {
   border-color: var(--primary);
 }
 
+/* The editor's own docked bar — same sticky/surfaced treatment as .toolbar,
+   carrying Back/Save/Delete instead of a nav cluster + FAB (there's nothing
+   to "create" while already editing one note). */
 .note-editor .actions {
+  position: sticky;
+  bottom: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin: 0 -1.1rem -1.1rem;
+  padding: 0.75rem 1.1rem;
+  background: var(--surface-container-high);
 }
 
 .note-editor .actions .spacer {
