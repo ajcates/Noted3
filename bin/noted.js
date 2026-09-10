@@ -88,13 +88,20 @@ function main() {
   const stateDir = path.join(home, ".noted");
   const publicDir = path.join(PKG_ROOT, "public");
 
+  // `src/config.ts` lets an explicit NOTES_DIR override the caller's cwd as
+  // the vault — mirror that here, or a custom NOTES_DIR gets no read/write
+  // grant at all and every note operation fails with a permission error.
+  const vaultDir = process.env.NOTES_DIR
+    ? path.resolve(process.env.NOTES_DIR)
+    : CALLER_CWD;
+
   const args = [
     "run",
     "--allow-net",
     "--allow-env",
     "--allow-run=git,xdg-open,open,cmd,powershell",
-    `--allow-read=${[CALLER_CWD, publicDir, stateDir].join(",")}`,
-    `--allow-write=${[CALLER_CWD, stateDir].join(",")}`,
+    `--allow-read=${[vaultDir, publicDir, stateDir].join(",")}`,
+    `--allow-write=${[vaultDir, stateDir].join(",")}`,
     path.join(PKG_ROOT, "main.ts"),
   ];
 
