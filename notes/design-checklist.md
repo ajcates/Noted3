@@ -154,8 +154,11 @@ look wrong if wired sloppily.
 - [ ] Section rail text+count always matches the rows below it in the same
       frame
 - [ ] Sync state (ember dot/bar/queued label) shows consistently everywhere
-      a note appears — moot until the offline sync queue (`spec.md` §7) is
-      built
+      a note appears — the offline sync queue (`spec.md` §7) landed in M6,
+      but there's no per-note-card sync-state indicator yet, only a
+      transient app-shell status line ("Saved offline — will sync when back
+      online.", "Offline — showing the cached copy."). Logged in
+      `ISSUES.md` (2026-09-10, M6) rather than left silently "moot".
 - [ ] Ember exclusivity — only one commit-colored button live at a time
 
 ## 5. Motion (Design Notes §6) — not yet applicable

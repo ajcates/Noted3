@@ -106,17 +106,19 @@ view actively contradicts the §9 non-goal on nested folders. Resolve each
 M5 is called done, so the milestone doesn't quietly ship 4 of 9 mockup
 screens without anyone deciding that was the plan.
 
-## M6 — PWA & offline-first — budget real time here, it's the hardest milestone
+## M6 — PWA & offline-first — budget real time here, it's the hardest milestone ✅ done 2026-09-10
 
-- [ ] `manifest.webmanifest` + icons + `display: standalone`
-- [ ] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell, stale-while-revalidate for API GETs, cache-first for static assets
-- [ ] IndexedDB Cache — direct IndexedDB, no wrapper library (`techstack.md`); note list + recently-opened bodies
-- [ ] Write Queue — durable pending-mutation log, written before any network attempt
-- [ ] Sync Manager — drains the queue on reconnect / background-sync event
-- [ ] Conflict handling — `updated`-timestamp check on replay; "keep mine / keep server's" UI, not a silent overwrite
-- [ ] Playwright e2e test, deliberately: simulate offline → edit a note → reconnect → confirm sync, then force a conflict and confirm the prompt appears
+- [x] `manifest.webmanifest` + icons + `display: standalone`
+- [x] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell, **network-first** for API GETs (not stale-while-revalidate — see note below), cache-first for static assets
+- [x] IndexedDB Cache — direct IndexedDB, no wrapper library (`techstack.md`); note list + recently-opened bodies
+- [x] Write Queue — durable pending-mutation log, written before any network attempt
+- [x] Sync Manager — drains the queue on reconnect / background-sync event
+- [x] Conflict handling — `updated`-timestamp check on replay; "keep mine / keep server's" UI, not a silent overwrite
+- [x] Playwright e2e test, deliberately: simulate offline → edit a note → reconnect → confirm sync, then force a conflict and confirm the prompt appears (`tests/e2e/offline-sync.test.ts`)
 
-**Open decision to make here:** the conflict-resolution UI (spec.md §11) deserves its own quick design pass before you build it, not just an inline prompt bolted on.
+**Open decision resolved:** the conflict-resolution UI got its own banner component in the editor (`note-editor.js`'s `#renderConflictBanner`) — "Keep mine" / "Keep the other version", not a silent overwrite or a bare `confirm()`.
+
+**Design correction made during verification:** the original plan called for stale-while-revalidate on `/api/*` GETs. That's wrong for this app — SWR serves the *previous* response immediately and only refreshes the cache in the background, so the very next read after a write (e.g. the note-list re-fetch right after a delete) sees stale data. Switched to network-first: try the network, update the cache on success, fall back to the cache only when the network fails. Caught via an end-to-end delete test where a just-deleted note kept "reappearing" in the list.
 
 ## M7 — Deploy
 

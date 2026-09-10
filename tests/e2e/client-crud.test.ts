@@ -79,7 +79,7 @@ Deno.test({
 
       // --- delete from the list ---
       await page
-        .locator("li", { hasText: "Trip Plan" })
+        .locator('[data-filename="trip-plan.md"]')
         .getByRole("button", { name: "Delete" })
         .click();
       await page.getByRole("button", { name: "Trip Plan" }).waitFor({

@@ -18,8 +18,6 @@ gaps into `spec.md` §11.
 - 2026-09-05 — Auth is a plaintext shared token, checked with a length-constant
   compare (`src/auth.ts`, `spec.md` §11). Accepted for home-network v1; revisit
   before any wider exposure (needs TLS + something better than a static token).
-- 2026-09-05 — Conflict-resolution UX (`spec.md` §7, §11) needs its own design
-  pass before M6.
 - 2026-09-05 — Existing-notes migration: frontmatter parser now tolerates
   missing/partial/malformed frontmatter and backfills on read; still needs a
   check against a real pre-existing vault's frontmatter shape before M7
@@ -72,6 +70,29 @@ gaps into `spec.md` §11.
   the old target (they render as unresolved, not wrong). Self-heals on the next
   boot (`NoteIndex.build` re-reads disk). Left as-is; a proper transaction is a
   bigger change than v1 warrants.
+- 2026-09-10 (M6) — A note created while offline has no filename yet to key an
+  IndexedDB Cache write against, so it doesn't appear in the note list until the
+  Write Queue drains and the create actually lands server-side (the status line
+  does say "Saved offline — will create when back online." so it isn't silent).
+  Acceptable for v1; revisit with a client-generated temp id if offline note
+  creation turns out to be common in daily use.
+- 2026-09-10 (M6) — Deletes don't participate in the conflict flow (`spec.md` §7
+  covers edits, not deletes): a queued delete always wins over a concurrent
+  server-side edit of the same note, with no "someone changed this before you
+  deleted it" prompt. Matches the spec as written; worth a look if it causes a
+  surprise in daily use.
+- 2026-09-10 (M6) — Background Sync (`registration.sync.register()`) is
+  best-effort and not universally supported (notably no Safari/iOS); the
+  `online` window event is the cross-browser fallback already wired in
+  `sync-manager.js`, so sync still happens on reconnect everywhere, just not
+  always the instant the OS wakes the service worker in the background.
+- 2026-09-10 (M6) — No per-note-card sync-state indicator (`design-checklist.md`
+  §4 calls for an "ember dot/bar/queued label" wherever a note appears). Right
+  now a queued/offline write only surfaces as a transient app-shell status line,
+  not a persistent per-note badge — a note sitting in the Write Queue looks
+  identical to a fully-synced one in the list. Worth a small follow-up pass
+  (Write Queue already exposes `list()`, keyed by filename) rather than
+  reopening the whole milestone for it.
 
 ## Closed
 
@@ -85,3 +106,7 @@ gaps into `spec.md` §11.
   with a `ConflictResponse` (the server's current copy) instead of overwriting.
   Omitting it still force-overwrites (back-compat) — nothing client-side sends
   it yet until the Sync Manager (M6) is wired up.
+- 2026-09-05 — Conflict-resolution UX (`spec.md` §7, §11) needs its own design
+  pass before M6. **Closed 2026-09-10**: built as a banner over the editor
+  (`note-editor.js`'s `#renderConflictBanner`) — "Keep mine" / "Keep the other
+  version", not a silent overwrite or a bare `confirm()`.

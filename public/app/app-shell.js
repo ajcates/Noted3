@@ -166,7 +166,19 @@ export class AppShell extends HTMLElement {
     else location.hash = hash;
   }
 
+  /** Bumped on every `#route()` call; an in-flight call whose generation has
+   * fallen behind the latest one discards its result instead of showing it.
+   * Without this, two overlapping routes (e.g. a hash change immediately
+   * followed by a write that also re-routes) can resolve out of order and
+   * the *older* one's stale data clobbers the newer one's — caught during
+   * M6 testing: Back → Delete in quick succession could leave a just-
+   * deleted note "reappearing" in the list. */
+  #routeGen = 0;
+
   async #route() {
+    const gen = ++this.#routeGen;
+    const stale = () => gen !== this.#routeGen;
+
     this.#setStatus("", false);
     this.#updateNavActive();
     const hash = location.hash.replace(/^#/, "");
@@ -174,6 +186,7 @@ export class AppShell extends HTMLElement {
     try {
       if (hash === "/new") {
         await this.#ensureTitles();
+        if (stale()) return;
         this.#show(makeEditor(null, [], this.#noteTitles));
         return;
       }
@@ -183,6 +196,7 @@ export class AppShell extends HTMLElement {
         const filename = decodeURIComponent(noteMatch[1] ?? "");
         await this.#ensureTitles();
         const { note, backlinks, offline } = await this.#loadNote(filename);
+        if (stale()) return;
         const editor = makeEditor(note, backlinks, this.#noteTitles);
         editor.conflict = this.#sync.getConflict(filename);
         this.#show(editor);
@@ -197,7 +211,9 @@ export class AppShell extends HTMLElement {
         view.query = this.#searchQuery;
         this.#show(view);
         if (this.#searchQuery.trim() !== "") {
-          view.results = await api.search(this.#searchQuery);
+          const results = await api.search(this.#searchQuery);
+          if (stale()) return;
+          view.results = results;
         }
         return;
       }
@@ -205,28 +221,33 @@ export class AppShell extends HTMLElement {
       const tagMatch = /^\/tags\/(.+)$/.exec(hash);
       if (tagMatch) {
         const tag = decodeURIComponent(tagMatch[1] ?? "");
+        const notes = await api.getNotesByTag(tag);
+        if (stale()) return;
         const view = new TagBrowser();
-        view.forTag = { tag, notes: await api.getNotesByTag(tag) };
+        view.forTag = { tag, notes };
         this.#show(view);
         return;
       }
 
       if (hash === "/tags") {
+        const tags = await api.getTags();
+        if (stale()) return;
         const view = new TagBrowser();
-        view.tags = await api.getTags();
+        view.tags = tags;
         this.#show(view);
         return;
       }
 
       // default: the note list
       const { summaries, offline } = await this.#loadNoteList();
+      if (stale()) return;
       this.#setTitles(summaries);
       const list = new NoteList();
       list.notes = summaries;
       this.#show(list);
       if (offline) this.#setStatus("Offline — showing the cached copy.", false);
     } catch (err) {
-      this.#reportError(err);
+      if (!stale()) this.#reportError(err);
     }
   }
 
@@ -395,7 +416,11 @@ export class AppShell extends HTMLElement {
       await writeQueue.enqueue({ op: "delete", filename });
       await idbCache.deleteNote(filename);
       this.#titlesLoaded = false; // set shrank; refresh lazily on next need
-      this.#sync.drain();
+      // Awaited, unlike a plain "kick": the very next step re-lists notes
+      // from the network (if online) — without waiting here, that re-fetch
+      // can race the queued delete and still show the note that was just
+      // "deleted".
+      await this.#sync.drain();
       this.#sync.requestBackgroundSync();
       this.#setStatus("Deleted.", false);
       this.#go(afterHash);

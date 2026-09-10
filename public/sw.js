@@ -12,11 +12,12 @@
  * It:
  *   - precaches the app shell on install;
  *   - cache-first for same-origin static assets;
- *   - stale-while-revalidate for `GET /api/*` (serves the cached copy
- *     instantly if there is one, refetches in the background either way —
- *     this is a speed/resilience layer over the network, not the offline
- *     guarantee itself, which is the IndexedDB Cache's job at the app
- *     layer, per system-overview.md's data-flow section);
+ *   - network-first for `GET /api/*` (always tries the network so reads see
+ *     the latest state — e.g. the list right after a delete — and only
+ *     falls back to the cached copy if the network fails; this is a
+ *     resilience layer over the network, not the offline guarantee itself,
+ *     which is the IndexedDB Cache's job at the app layer, per
+ *     system-overview.md's data-flow section);
  *   - non-GET `/api/*` requests always go straight to the network untouched
  *     — the client's Write Queue owns their durability, not this cache;
  *   - cross-origin requests (Google Fonts) pass through, uncached, to keep
@@ -107,7 +108,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return; // writes always go straight to the network
 
   if (url.pathname.startsWith("/api/")) {
-    event.respondWith(staleWhileRevalidate(req));
+    event.respondWith(networkFirst(req));
   } else {
     event.respondWith(cacheFirst(req));
   }
@@ -124,25 +125,20 @@ async function cacheFirst(req) {
 }
 
 /** @param {Request} req */
-async function staleWhileRevalidate(req) {
+async function networkFirst(req) {
   const cache = await caches.open(API_CACHE);
-  const cached = await cache.match(req);
-  const network = fetch(req)
-    .then((res) => {
-      if (res.ok) cache.put(req, res.clone());
-      return res;
-    })
-    .catch(() => null);
-  if (cached) {
-    network.catch(() => {}); // refresh in the background, ignore failures
-    return cached;
+  try {
+    const res = await fetch(req);
+    if (res.ok) cache.put(req, res.clone());
+    return res;
+  } catch {
+    const cached = await cache.match(req);
+    if (cached) return cached;
+    return new Response(
+      JSON.stringify({ error: "offline, nothing cached" }),
+      { status: 503, headers: { "content-type": "application/json" } },
+    );
   }
-  const fresh = await network;
-  if (fresh) return fresh;
-  return new Response(JSON.stringify({ error: "offline, nothing cached" }), {
-    status: 503,
-    headers: { "content-type": "application/json" },
-  });
 }
 
 self.addEventListener("sync", (event) => {
