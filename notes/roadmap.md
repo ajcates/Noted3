@@ -64,25 +64,31 @@ checklist's §1 (foundations) and the note-list/search/tag-view/editor rows
 of its §2–§3 — the four screens the mockups and the current spec actually
 agree are in scope.
 
-- [ ] Port the OKLCH token set (spec.md §12; full values in
+- [x] Port the OKLCH token set (spec.md §12; full values in
       `notes/design-checklist.md` §1) into the app's real stylesheet — plain
       CSS custom properties, no preprocessor, no CSS-in-JS (`techstack.md`)
-- [ ] Load Fraunces / Manrope / IBM Plex Mono and assign them by
+      — done 2026-09-10, straight from `notes/noted-field-guide.html`
+- [x] Load Fraunces / Manrope / IBM Plex Mono and assign them by
       jurisdiction (titles / chrome / filenames+metadata — design-checklist
-      §1) instead of the current `system-ui` default
-- [ ] Build the shape system as reusable CSS (mirrored squircle buttons,
-      notched snippet card, pill, asymmetric commit pill) — never a
-      hardcoded color/radius on a one-off element
-- [ ] Restyle the four in-scope views against `design-checklist.md` §2–§3:
-      note list (`1a`: card shape, tag + backlink chips, unsynced dot),
-      search (`1d`: scope chips, match-count/timing line, highlighted
-      spans), tag browser (`1j`: A–Z index, expander-vs-row-navigates
-      split), editor (`1c`: format pop-menu, undo/redo controls — Snapshot
-      itself is out, see below)
-- [ ] Docked bottom bar + FAB, replacing the current inline buttons
-- [ ] Light/dark via `prefers-color-scheme`
+      §1) instead of the current `system-ui` default — done 2026-09-10
+- [ ] Build the *full* shape system as reusable CSS — plain pills/circles are
+      in place (chips, buttons, the FAB), but the mirrored squircle icon
+      buttons (16/26px alternating), the notched snippet card, and the
+      asymmetric commit pill (flat end toward its content) still aren't
+- [x] Restyle note list (`1a`: card shape, tag + backlink chip, mono stamp —
+      done 2026-09-10, using new `excerpt`/`backlinkCount` fields on
+      `NoteSummary`), search (`1d`: pill field + result cards — done; scope
+      chips and highlighted match spans still open), tag browser (`1j`: pill
+      rows — done; A–Z index and the expander-vs-row-navigates split still
+      open)
+- [ ] Editor (`1c`): format pop-menu and undo/redo controls — still nothing
+      beyond CodeMirror's built-in keybindings (Snapshot itself is out, see
+      below)
+- [x] Docked bottom bar + FAB on the note list (done 2026-09-10) — [ ] still
+      needs to replace the inline actions on search/tags/editor too
+- [x] Light/dark via `prefers-color-scheme` — done 2026-09-10
 - [ ] Spot-check contrast against real note content, not just the palette
-      swatches
+      swatches — eyeballed via screenshots so far, not computed ratios
 
 **Open decisions to make here** (`design-checklist.md` §0): the mockup bundle
 also covers Settings, Version history, an AI edit panel (single + bulk),

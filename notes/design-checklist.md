@@ -10,11 +10,12 @@ of M5 and whenever a mockup screen gets built.
 **Context**: the mockups are a native-Android M3 Expressive design (dark
 theme, OKLCH tokens, spring motion). The shipped app is a browser PWA
 (`spec.md` §3) — pixel-for-pixel Android chrome isn't the goal, faithful
-translation of the same tokens/shapes/hierarchy to the web is. `styles.css`
-currently says as much: *"Minimal M2 styling — legibility only... nothing
-here is meant to survive [M5]."* So the honest answer as of this pass is
-**nothing below is done yet** — this checklist exists to make M5 (and
-whatever comes after it) concrete and trackable, not to report a surprise.
+translation of the same tokens/shapes/hierarchy to the web is.
+
+**2026-09-10 update**: M5's first pass landed — tokens, fonts, and the
+note-list/search/tag-browser/editor restyle (see `TODO.md`'s dated entry).
+What's still open is called out inline below rather than moved to a separate
+revisions log, so this file stays the single current-status view.
 
 ## 0. Scope mismatches to resolve before checking these off as "todo, in scope"
 
@@ -44,86 +45,90 @@ chips, toolbar, FAB."
 
 ## 1. Foundations (`spec.md` §12, Design Notes §3)
 
-- [ ] OKLCH token set defined as CSS custom properties — ink / ink-container,
-      moss, ember / ember-container, the 11→16→19→27% surface ladder, the
-      93/85/78/70% text ramp, diff-red. `styles.css` currently hardcodes
-      one-off hex values (`#1a56db`, `#fafafa`, `#ccc`, …) with no tokens.
-- [ ] Dark theme via `prefers-color-scheme` (also `TODO.md` M5 item) — not
-      started; there is currently exactly one (light) palette.
-- [ ] Light theme derived from the same tokens (mockups are dark-only, but
-      §12's "system/light/dark" switch in `1e` implies a light ramp exists
-      too) — undecided/not started.
-- [ ] Type families loaded and assigned by jurisdiction: **Fraunces** for
-      note titles/screen titles, **Manrope** for chrome, **IBM Plex Mono**
-      for filenames/timestamps/counts — `index.html` loads no web fonts;
-      body is `system-ui, sans-serif`, editor textarea is
-      `ui-monospace, monospace`. No jurisdiction split exists yet.
-- [ ] Shape system: mirrored squircle icon buttons (16/26 px, alternating),
-      notched card family (28 px + one 12 px notch), pill (999 px) for
-      filters/search, asymmetric pill for commit actions, cookie clip-path
-      for the format badge / AI avatar — current buttons/cards are plain
-      4 px-radius rectangles (`button`, `.tag-chip` in `styles.css`).
+- [x] OKLCH token set defined as CSS custom properties — done 2026-09-10,
+      ported verbatim from `notes/noted-field-guide.html`: the M3 role
+      system (primary/secondary/tertiary + on-/-container), the
+      surface-container ladder, `on-surface`/`on-surface-variant`, error.
+      Uses the field guide's own role names, not the newer mockup bundle's
+      ink/moss/ember-container naming — same colors, `spec.md`§12's
+      authoritative token file.
+- [x] Dark theme via `prefers-color-scheme` — done 2026-09-10, light is the
+      `:root` default per the field guide's own pattern.
+- [x] Light theme derived from the same tokens — done 2026-09-10 (it's the
+      default; the field guide's seeds already work for both).
+- [x] Type families loaded and assigned by jurisdiction — done 2026-09-10:
+      Fraunces (`--font-display`) for titles, Manrope (`--font-body`) for
+      chrome/body, IBM Plex Mono (`--font-source`) for
+      filenames/timestamps/counts.
+- [ ] Shape system: **partial**. Pill (999px) is in place for chips, buttons,
+      the search field, and the FAB. Still missing: mirrored squircle icon
+      buttons (16/26 px, alternating — current icon buttons are plain
+      circles), the notched card family (28 px + one 12 px notch — current
+      note cards use a uniform `--radius-lg`), the asymmetric commit pill
+      (flat end toward its content), cookie clip-path (moot until the
+      format badge/AI avatar exist, §0).
 - [ ] Spacing/density scale (18–20 px gutter, 120 px snippet-card row, 58 px
       folder row, 52 px tag row, 44 px minimum tap target, 74 px format
-      cell) — not audited; current layout uses ad-hoc `rem` gaps.
+      cell) — not audited; current layout uses ad-hoc `rem` gaps that read
+      reasonably in the 2026-09-10 screenshots but haven't been measured
+      against these exact numbers.
 - [ ] Iconography set (⌕ search, ⇅ sort, ◎ view mode, ⏱ snapshot, ↶↷
-      undo/redo, ✦ AI, ▾/› expanders/drill-in) — none in use; all controls
-      are plain text buttons ("New", "Delete", "Save").
+      undo/redo, ✦ AI, ▾/› expanders/drill-in) — `⌕`/`#` now used for the
+      topbar nav icons (2026-09-10); sort/view-mode/snapshot/undo-redo/AI
+      glyphs still don't exist because the features behind them don't.
 
 ## 2. Screen-by-screen (mockup id → app view)
 
 | # | Mockup screen | App view | Status | Gap |
 |---|---|---|---|---|
-| `1a` | Note list — snippet cards | `note-list.js` | 🟡 functional, unstyled | No card shape/shadow-free elevation, no tag chip + backlink-count chip footer, no unsynced dot, no sort button, no view-mode switcher, no docked bottom bar / FAB "New" |
-| `1c` | Editor — format menu, undo/redo, snapshot | `note-editor.js` + `codemirror-setup.js` | 🟡 partial | Syntax de-emphasis + wikilink autocomplete done (M4). Missing: Format pop-menu (Bold/Italic/Strike/H2/List/Quote grid + Wikilink/Tag/Code pill row), visible undo/redo controls, Snapshot action (blocked on §0) |
-| `1d` | Search — scope chips, matched spans | `search-view.js` | 🟡 functional, unstyled | No scope chips (Everything/Titles/Tags/Links — API doesn't distinguish these yet either), no match-count/timing line, no highlighted match spans, no "create missing note" affordance |
+| `1a` | Note list — snippet cards | `note-list.js` | 🟡 styled, feature-partial | Card shape/tokens/tag chip/backlink-count chip/mono stamp done (2026-09-10, real data via `NoteSummary.excerpt`/`.backlinkCount`); docked toolbar + FAB "New" done. Still missing: unsynced dot (no sync layer yet), sort button, view-mode switcher |
+| `1c` | Editor — format menu, undo/redo, snapshot | `note-editor.js` + `codemirror-setup.js` | 🟡 partial | Syntax de-emphasis + wikilink autocomplete done (M4); title/actions/backlinks restyled and CodeMirror theme moved to tokens (2026-09-10). Still missing: Format pop-menu, visible undo/redo controls, Snapshot action (blocked on §0) |
+| `1d` | Search — scope chips, matched spans | `search-view.js` | 🟡 styled, feature-partial | Pill search field + result cards (title/excerpt/tag chip/stamp) done (2026-09-10). Still missing: scope chips (Everything/Titles/Tags/Links — API doesn't distinguish these either), match-count/timing line, highlighted match spans, "create missing note" affordance |
 | `1e` | Settings | *none* | ⬜ not applicable to M5 | Blocked on §0 — no spec, no endpoint, no view |
 | `1f` | Version history | *none* | ⬜ not applicable to M5 | Blocked on §0 — no versioning API |
 | `1g` | AI edit panel — single note | *none* | ⬜ not applicable to M5 | Blocked on §0 — no AI integration |
 | `1h` | AI edit panel — bulk | *none* | ⬜ not applicable to M5 | Blocked on §0 — no AI integration |
 | `1i` | Note list — folder view | *none* | ⬜ not applicable to M5 | Blocked on §0 — contradicts `spec.md` §9 non-goal |
-| `1j` | Note list — tag view w/ expanders | `tag-browser.js` | 🟡 partial | Flat tag→notes list exists (M4). Missing: A–Z jump index, expander-vs-row-navigates split (tapping a tag currently just navigates), card surface + 3-child preview + "N more" overflow row |
+| `1j` | Note list — tag view w/ expanders | `tag-browser.js` | 🟡 styled, feature-partial | Pill rows with ember `#` mark done (2026-09-10); per-tag note list now uses the same restyled card. Still missing: A–Z jump index, expander-vs-row-navigates split (tapping a tag still just navigates), the 3-child preview + "N more" overflow row |
 
 Legend: ⬜ not started · 🟡 partial/unstyled · ✅ matches mockup
 
 ## 3. Element catalogue (Design Notes §4) — components in scope for M5
 
-- [ ] **Masthead** — ember mono kicker ("vault · N notes") over Fraunces
-      italic wordmark + settings squircle (root); collapses to back-squircle
-      + two-line identity block on sub-screens. Not built — current header
-      is a plain `<h1>` + nav links (`app-shell.js` `.shell-header`).
-- [ ] **Search field + sort button** — full pill field with detached 46 px
-      two-line sort button (glyph + mono key label). Not built — current
-      search is a bare `<input type="search">`; no sort exists in the API
-      or UI at all.
-- [ ] **Section rail + view-mode switcher** — ember mono uppercase rail
-      sharing its line with an ◎-glyph mode pill. Not built — no concept of
+- [ ] **Masthead** — **partial** (2026-09-10): Fraunces italic wordmark +
+      icon-btn nav (search/tags, active-route highlighted) built as
+      `.app-topbar`; still missing the ember mono kicker ("vault · N
+      notes") and the collapse-to-back-squircle pattern on sub-screens
+      (topbar is currently identical on every route).
+- [ ] **Search field + sort button** — pill search field done (2026-09-10);
+      no sort button — there's no sort concept in the API or UI at all.
+- [ ] **Section rail + view-mode switcher** — not built; no concept of
       list/folder/tag "view mode" exists client-side (tags and list are
       separate routes, not a switcher on one screen).
-- [ ] **Snippet card** — Fraunces title, 3-line excerpt w/ ink wikilinks,
-      tag chip + relationship chip + mono timestamp footer, ember unsynced
-      dot. Not built — `note-list.js` renders title + tags only, no excerpt,
-      no backlink count, no sync-state indicator (there's no offline/sync
-      layer yet per `spec.md` §7, unimplemented).
+- [x] **Snippet card** — done 2026-09-10 as shared `renderNoteCard()`
+      (`ui.js`): Fraunces title, excerpt, tag chip + backlink-count chip +
+      mono stamp. Still no unsynced dot (no sync layer yet, `spec.md` §7)
+      and only a 1-tag chip shown, not the mockup's multi-tag row.
 - [ ] **Folder row / file row** — blocked on §0.
-- [ ] **Tag row + expander** — see `1j` above.
-- [ ] **Docked bar + primary action (FAB)** — 27%-surface bar, 30 px
-      shoulders, alternating squircle cluster + one ember asymmetric pill.
-      Not built — no persistent bottom bar exists; actions are inline
-      buttons in the flow.
-- [ ] **Editor surface** — live-styled markdown, Fraunces headings, 16 px
-      Manrope body, ember bullet markers, well-surface code blocks w/ moss
-      rule. Partially built via CodeMirror's `ViewPlugin` (M4) but not
-      reviewed against these exact type/color rules.
-- [ ] **Wikilink autocomplete** — well-surface list, 28 px radius, ink-
-      container top match, mono "+ Create '…'" row. Built functionally (M4:
-      `codemirror-setup.js`), not styled to spec.
+- [x] **Tag row** — done 2026-09-10 (pill row, ember `#` mark, mono count).
+      **Expander** still not built — see `1j` above.
+- [x] **Docked bar + primary action (FAB)** — done 2026-09-10 on the note
+      list only (`.toolbar`/`.fab-new`): plain-circle icon button + ember
+      pill FAB, not yet the squircle-cluster/asymmetric-pill shape family
+      (§1). Search/tags/editor still use inline actions, not this bar.
+- [x] **Editor surface** — title + actions restyled, CodeMirror theme now
+      reads tokens instead of hardcoded hex (2026-09-10). Syntax
+      de-emphasis unchanged from M4.
+- [x] **Wikilink autocomplete** — tooltip chrome (surface/radius/selected
+      row) now reads tokens via global CSS overrides on CodeMirror's
+      `cm-tooltip-autocomplete` classes (2026-09-10); the "Create …" row is
+      distinguished by color (`:has(.cm-completionIcon-keyword)`).
 - [ ] **Format pop menu** — blocked on §0/`1c` above (no toolbar exists to
       attach it to yet beyond CodeMirror's built-in keybindings).
 - [ ] **Undo/redo/Snapshot row** — undo/redo not surfaced as UI (CodeMirror
       has it internally via keybindings only); Snapshot blocked on §0.
 - [ ] **Version history, AI panels, Settings** — blocked on §0.
-- [ ] **Search results card** — see `1d` above.
+- [x] **Search results card** — see `1d` above.
 
 ## 4. Cross-cutting interaction rules (Design Notes §5) — not yet applicable
 
@@ -155,7 +160,10 @@ design it animates exists.
 ## How to use this
 
 1. M5 (`TODO.md`) should close out §1 (foundations) and the `1a`/`1c`
-   (partial)/`1d`/`1j` rows of §2/§3 — that's its stated scope.
+   (partial)/`1d`/`1j` rows of §2/§3 — that's its stated scope. Tokens/fonts
+   (§1) and the note-list/search/tag-browser restyle landed 2026-09-10; the
+   remaining shape system, the editor's format menu/undo-redo, and the
+   docked bar on every screen are still open.
 2. Before `1e`–`1h`/`1i` can move from "not applicable" to real checklist
    items, each needs a `spec.md` entry and roadmap milestone (§0) — that's a
    product decision, not a styling task.

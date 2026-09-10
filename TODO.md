@@ -4,22 +4,61 @@ Granular task list, one level finer than `notes/roadmap.md`. Checkbox format
 matches the roadmap. Finished tasks move under a dated `## Done` heading (newest
 first) per `notes/development.md` §5 — they are not deleted.
 
-## M5 — Design system integration (next)
+## M5 — Design system integration (in progress)
 
 See `notes/design-checklist.md` for the full screen-by-screen and
 element-by-element comparison against the mockup bundle
-(`notes/mobile-app-design-project/`) — includes scope flags for mockup
-screens (settings, version history, AI panels, folder view) that aren't yet
-covered by `spec.md`/`roadmap.md`.
+(`notes/mobile-app-design-project/`) — includes scope flags for mockup screens
+(settings, version history, AI panels, folder view) that aren't yet covered by
+`spec.md`/`roadmap.md`. First pass shipped 2026-09-10 (below); remaining:
 
-- [ ] Port the Material 3 Expressive token set (spec.md §12) into the real
-      stylesheet — plain CSS custom properties, no preprocessor
-- [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — no
-      hardcoded colours/radii anywhere
-- [ ] Light/dark via `prefers-color-scheme`
-- [ ] Spot-check contrast against real note content
+- [ ] The full shape library beyond plain pills/circles — mirrored squircle icon
+      buttons (16/26px alternating), the notched card family (28px + one 12px
+      notch), the asymmetric commit pill (flat end toward the content it acts
+      on). Current icon buttons are plain circles, note cards a uniform radius,
+      action buttons full pills.
+- [ ] Editor format pop-menu (Bold/Italic/Strike/H2/List/Quote grid +
+      Wikilink/Tag/Code pill row) and visible undo/redo controls — currently
+      only CodeMirror's built-in keybindings (Ctrl/Cmd+Z etc.), no UI for either
+- [ ] Docked toolbar + FAB on every screen, not just the note list (search,
+      tags, and the editor still use inline actions)
+- [ ] Rigorous contrast spot-check (computed ratios, not just eyeballing
+      screenshots) against real note content in both themes
 
 ## Done
+
+### 2026-09-10 — M5 first pass: tokens, fonts, note/search/tags restyle
+
+- [x] **Design tokens** (`public/app/styles.css`) — the full OKLCH token set
+      from `notes/noted-field-guide.html` (spec.md §12) ported as CSS custom
+      properties: five seeds, the M3 role system (primary/secondary/tertiary +
+      on-/-container pairs), the surface-container ladder, the radius scale.
+      Light is `:root`; dark overrides via
+      `@media (prefers-color-scheme: dark)`.
+- [x] **Fonts** — Fraunces/Manrope/IBM Plex Mono loaded in `index.html`,
+      assigned by jurisdiction (`--font-display`/`--font-body`/
+      `--font-source`): serif for titles, sans for chrome, mono for
+      filenames/timestamps/counts.
+- [x] **`excerpt` + `backlinkCount` on `NoteSummary`** (`src/types.ts`,
+      `src/note-index.ts`, `src/handlers.ts`) — reuses the already-in-memory
+      body and backlink graph (`search.ts`'s `firstLine`, now exported; no new
+      computation) so the note card can show a real snippet + backlink count
+      instead of just title/tags.
+- [x] **Shared `renderNoteCard()`** (`public/app/ui.js`) — the field guide's
+      `.note-card` (Fraunces title, excerpt, tag chip + backlink chip + mono
+      stamp), reused by the Note List and the Tag Browser's per-tag list.
+- [x] **Restyled**: app shell topbar (Fraunces wordmark + icon-btn nav,
+      active-route highlight), note list (cards + docked toolbar/FAB "New
+      note"), search results (cards + pill search field), tag browser (pill rows
+      with ember `#` mark), editor (Fraunces title, pill actions), backlinks
+      panel, and the CodeMirror theme/wikilink- autocomplete tooltip (tokens
+      instead of hardcoded hex).
+- [x] Verified: `deno check`/`fmt`/`lint` clean, all 18 non-Playwright e2e tests
+      green (the 3 Playwright tests don't run in this sandbox — no `chrome`
+      channel install here, pre-existing per ISSUES.md, not a regression).
+      Manually screenshotted list/editor/search/tags in both themes with a
+      throwaway Playwright script against the pre-installed Chromium — matches
+      the token/type/shape direction.
 
 ### 2026-09-06 — Review + micro-refactor (post-M4)
 
