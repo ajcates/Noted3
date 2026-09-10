@@ -12,12 +12,14 @@ theme, OKLCH tokens, spring motion). The shipped app is a browser PWA
 (`spec.md` §3) — pixel-for-pixel Android chrome isn't the goal, faithful
 translation of the same tokens/shapes/hierarchy to the web is.
 
-**2026-09-10 update**: two M5 passes landed the same day — tokens/fonts/
-note-list/search/tag-browser/editor restyle, then the full shape system,
-docked toolbars everywhere, and the editor's format menu + visible
-undo/redo (see `TODO.md`'s two dated entries). What's still open is called
-out inline below rather than moved to a separate revisions log, so this
-file stays the single current-status view.
+**2026-09-10 update**: M5 is done (see `notes/roadmap.md`) — three passes
+landed the same day: tokens/fonts/note-list/search/tag-browser/editor
+restyle, then the full shape system + docked toolbars everywhere + the
+editor's format menu/undo-redo, then a rigorous WCAG contrast check that
+found and fixed 3 real failures (`TODO.md`'s three dated entries,
+`scripts/check-contrast.ts`). What's still open below is either logged in
+`ISSUES.md` as minor polish, or blocked on §0's scope decisions — nothing
+here should read as "M5 unfinished."
 
 ## 0. Scope mismatches to resolve before checking these off as "todo, in scope"
 
@@ -168,10 +170,10 @@ design it animates exists.
 ## How to use this
 
 1. M5 (`TODO.md`) should close out §1 (foundations) and the `1a`/`1c`
-   (partial)/`1d`/`1j` rows of §2/§3 — that's its stated scope. All of §1
-   plus every listed item above landed across two 2026-09-10 passes; what's
-   left is a rigorous contrast check and the smaller polish items called
-   out inline (format-menu active-mark state, richer shape rotation).
+   (partial)/`1d`/`1j` rows of §2/§3 — that's its stated scope, and it's done
+   as of 2026-09-10 (three passes, see `TODO.md`/`notes/roadmap.md`). The
+   smaller polish items called out inline (format-menu active-mark state,
+   richer shape rotation) are logged in `ISSUES.md`, not blocking.
 2. Before `1e`–`1h`/`1i` can move from "not applicable" to real checklist
    items, each needs a `spec.md` entry and roadmap milestone (§0) — that's a
    product decision, not a styling task.

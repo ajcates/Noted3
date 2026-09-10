@@ -55,7 +55,7 @@ One naming note before you start: the `notes/` folder in the project directory i
 - [x] Tag Browser — `GET /api/tags`, `GET /api/tags/:tag`, `<tag-browser>`, header nav
 - [x] Playwright e2e for the autocomplete flow — trigger, filter, select existing, and the "create new" path (with on-disk assertion). 20/20 tests green.
 
-## M5 — Design system integration
+## M5 — Design system integration ✅ (done 2026-09-10)
 
 Full screen-by-screen and element-by-element target list:
 `notes/design-checklist.md` (checked against the mockup bundle in
@@ -92,8 +92,11 @@ agree are in scope.
       tags — done 2026-09-10, shared `renderToolbar()`); the editor gets its
       own sticky docked bar instead (Back/Save/Delete)
 - [x] Light/dark via `prefers-color-scheme` — done 2026-09-10
-- [ ] Spot-check contrast against real note content, not just the palette
-      swatches — eyeballed via screenshots so far, not computed ratios
+- [x] Spot-check contrast against real note content, not just the palette
+      swatches — done 2026-09-10 via `scripts/check-contrast.ts` (real
+      WCAG 2 ratios, not eyeballing): found and fixed 3 pairs under 4.5:1
+      (the tag `#` mark, the "ok" status color, the delete button), every
+      other pair already cleared it
 
 **Open decisions to make here** (`design-checklist.md` §0): the mockup bundle
 also covers Settings, Version history, an AI edit panel (single + bulk),

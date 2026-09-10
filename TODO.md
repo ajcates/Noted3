@@ -4,24 +4,38 @@ Granular task list, one level finer than `notes/roadmap.md`. Checkbox format
 matches the roadmap. Finished tasks move under a dated `## Done` heading (newest
 first) per `notes/development.md` §5 — they are not deleted.
 
-## M5 — Design system integration (in progress)
+## M6 — PWA & offline-first (next)
 
-See `notes/design-checklist.md` for the full screen-by-screen and
-element-by-element comparison against the mockup bundle
-(`notes/mobile-app-design-project/`) — includes scope flags for mockup screens
-(settings, version history, AI panels, folder view) that aren't yet covered by
-`spec.md`/`roadmap.md`. Two passes shipped 2026-09-10 (below); remaining:
-
-- [ ] Rigorous contrast spot-check (computed ratios, not just eyeballing
-      screenshots) against real note content in both themes
-- [ ] Format-menu cells don't reflect the current selection's active marks
-      (they're plain actions, not toggle indicators) — a smaller gap than the
-      menu's existence, left for a follow-up pass
-- [ ] Card-shape "notch rotates position" and icon-button "alternating mirror"
-      only alternate odd/even in a flat list; the mockup's richer per-screen
-      rotation isn't replicated
+M5 (design system integration) is done — see `notes/roadmap.md` and the
+2026-09-10 entries below. Two small polish items from it were logged to
+`ISSUES.md` rather than left blocking (format-menu cells don't show active
+marks; shape alternation is odd/even, not the mockup's richer per-screen
+rotation). Break M6's roadmap items into day-to-day tasks here once it's
+underway (`notes/development.md` §5).
 
 ## Done
+
+### 2026-09-10 — M5 closed: rigorous contrast check, 3 real fixes
+
+- [x] **`scripts/check-contrast.ts`** (`deno task check:contrast`) — computes
+      real WCAG 2 contrast ratios (OKLCH → OKLab → linear sRGB → relative
+      luminance) for every text/icon-on-background pair the app renders, in both
+      themes, instead of eyeballing screenshots.
+- [x] **Found + fixed 3 pairs under 4.5:1 (WCAG AA, normal text)** — all were a
+      token's bare role color used as text directly on a plain surface:
+      `.tag-row .mark` (ember `#`, 2.85:1 light), `.shell-status.is-ok` (moss,
+      3.88:1), `button.delete`/`.text-action.delete` (error, 4.18:1 light).
+      Fixed by switching each to its `on-<role>-container` value — designed for
+      exactly this brightness range, clears 4.5:1 comfortably in both themes
+      (13.6–14.7:1), same hue family. Every other role-colored text pair already
+      cleared 4.5:1.
+- [x] Verified: `deno check`/`fmt`/`lint` clean, all 18 API e2e tests green,
+      screenshotted the tag view in both themes to confirm the recolored `#`
+      mark still reads as "ember" and is now clearly legible.
+- [x] **M5 marked done in `notes/roadmap.md`** — every roadmap bullet is
+      satisfied; the two remaining small polish items (format-menu active- mark
+      state, richer shape rotation) are logged in `ISSUES.md` rather than left
+      blocking the milestone.
 
 ### 2026-09-10 — M5 second pass: shapes, docked bars everywhere, format menu
 

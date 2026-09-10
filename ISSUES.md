@@ -6,6 +6,15 @@ gaps into `spec.md` §11.
 
 ## Open
 
+- 2026-09-10 (M5) — The editor's format-menu cells (Bold/Italic/Strike/
+  Heading/List/Quote) are plain actions, not toggles — they don't reflect
+  whether the current selection already has that mark. Would need reading the
+  syntax tree at the selection on every menu-open/selection-change; deferred
+  since the commands themselves work correctly either way.
+- 2026-09-10 (M5) — Shape-system "alternation" (mirrored-squircle icon buttons,
+  notched cards) is odd/even-in-a-flat-list, not the mockup's richer per-screen
+  rotation (e.g. the mockup's card notch position also varies by content, not
+  just list position). Cosmetic; fine for v1.
 - 2026-09-05 — Auth is a plaintext shared token, checked with a length-constant
   compare (`src/auth.ts`, `spec.md` §11). Accepted for home-network v1; revisit
   before any wider exposure (needs TLS + something better than a static token).
