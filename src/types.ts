@@ -79,6 +79,18 @@ export interface TagCount {
   readonly count: number;
 }
 
+/**
+ * `PUT /api/notes/:filename` response when the caller's `updated` field
+ * (its last-seen timestamp) doesn't match the note's current one — the
+ * server's copy has moved on since the client last read it (spec.md §7,
+ * M6). 409, not applied; `current` is the server's copy as it stands now,
+ * for a "keep mine / keep server's" prompt.
+ */
+export interface ConflictResponse {
+  readonly error: "conflict";
+  readonly current: NoteDetail;
+}
+
 /** The full-note projection returned by `GET /api/notes/:filename`. */
 export interface NoteDetail extends NoteSummary {
   readonly created: string;

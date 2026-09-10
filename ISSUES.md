@@ -28,9 +28,6 @@ gaps into `spec.md` §11.
   it to UTC (`...Z`) in API responses and on next write. Same instant, but the
   author's local offset is dropped. Minor; fine for v1. Decide in M4/M5 whether
   to preserve the original offset string.
-- 2026-09-05 — `PUT /api/notes/:filename` has no conflict check yet — it always
-  overwrites and bumps `updated`. The client-supplied `updated` / conflict flow
-  is M6 (`spec.md` §7).
 - 2026-09-05 (M2) — After creating a note the "Created." status flashes and is
   immediately cleared by the route change to the new note. Cosmetic; fix when
   the status/toast UI gets real attention (M5).
@@ -81,3 +78,10 @@ gaps into `spec.md` §11.
 - 2026-09-05 — Deno not installed on the dev machine. **Closed 2026-09-05**:
   installed Deno 2.9.6 via the official install script to
   `C:\Users\ajcates\.deno\bin`.
+- 2026-09-05 — `PUT /api/notes/:filename` has no conflict check yet — it always
+  overwrites and bumps `updated`. The client-supplied `updated` / conflict flow
+  is M6 (`spec.md` §7). **Closed 2026-09-10**: an optional `updated` field on
+  the PUT body is checked against the note's current `updated`; a mismatch 409s
+  with a `ConflictResponse` (the server's current copy) instead of overwriting.
+  Omitting it still force-overwrites (back-compat) — nothing client-side sends
+  it yet until the Sync Manager (M6) is wired up.

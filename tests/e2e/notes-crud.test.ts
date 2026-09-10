@@ -15,7 +15,11 @@ import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { join } from "@std/path";
 import { createApp } from "../../src/router.ts";
 import { NoteIndex } from "../../src/note-index.ts";
-import type { NoteDetail, NoteSummary } from "../../src/types.ts";
+import type {
+  ConflictResponse,
+  NoteDetail,
+  NoteSummary,
+} from "../../src/types.ts";
 
 const TOKEN = "test-token";
 
@@ -194,6 +198,56 @@ Deno.test("PUT with a blank title is rejected; PUT without title keeps it", asyn
     })).json() as NoteDetail;
     assertEquals(updated.title, "Keep Me");
     assertEquals(updated.body, "three");
+  });
+});
+
+Deno.test("PUT conflict: a stale client-supplied `updated` gets a 409 with the server's current copy, not an overwrite", async () => {
+  await withServer(async ({ api }) => {
+    const created = await (await api("/api/notes", {
+      method: "POST",
+      body: JSON.stringify({ title: "Shared note", body: "v1" }),
+    })).json() as NoteDetail;
+
+    // A save that carries the exact `updated` it last read applies cleanly.
+    await new Promise((r) => setTimeout(r, 5)); // ensure a distinct ISO timestamp
+    const clean = await api(`/api/notes/${created.filename}`, {
+      method: "PUT",
+      body: JSON.stringify({ body: "v2", updated: created.updated }),
+    });
+    assertEquals(clean.status, 200);
+    const afterClean = await clean.json() as NoteDetail;
+    assertEquals(afterClean.body, "v2");
+
+    // A second save still carrying the *original* (now stale) `updated`
+    // conflicts instead of clobbering "v2".
+    const stale = await api(`/api/notes/${created.filename}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        body: "v3 from a stale client",
+        updated: created.updated,
+      }),
+    });
+    assertEquals(stale.status, 409);
+    const conflict = await stale.json() as ConflictResponse;
+    assertEquals(conflict.error, "conflict");
+    assertEquals(conflict.current.body, "v2"); // the server's real current state
+    assertEquals(conflict.current.updated, afterClean.updated);
+
+    // The file on disk is untouched by the rejected write.
+    const stillV2 = await (await api(`/api/notes/${created.filename}`))
+      .json() as NoteDetail;
+    assertEquals(stillV2.body, "v2");
+
+    // Omitting `updated` entirely still force-overwrites (back-compat).
+    const forced = await api(`/api/notes/${created.filename}`, {
+      method: "PUT",
+      body: JSON.stringify({ body: "v4, no updated field" }),
+    });
+    assertEquals(forced.status, 200);
+    assertEquals(
+      (await forced.json() as NoteDetail).body,
+      "v4, no updated field",
+    );
   });
 });
 
