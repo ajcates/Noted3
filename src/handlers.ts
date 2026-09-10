@@ -43,6 +43,7 @@ import {
   rewriteWikilinkTarget,
 } from "./markdown.ts";
 import type { NoteIndex } from "./note-index.ts";
+import { firstLine } from "./search.ts";
 
 export interface HandlerContext {
   readonly notesDir: string;
@@ -253,6 +254,8 @@ function buildDetail(
     tags: frontmatter.tags,
     created: frontmatter.created,
     updated: frontmatter.updated,
+    excerpt: firstLine(body),
+    backlinkCount: index.backlinkFilenames(filename).length,
     body,
     links: index.outgoingLinksFor(body),
     html: renderMarkdown(body, (target) => index.resolve(target)),

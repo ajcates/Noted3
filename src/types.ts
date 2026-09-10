@@ -42,6 +42,10 @@ export interface NoteSummary {
   readonly title: string;
   readonly tags: readonly string[];
   readonly updated: string;
+  /** First line of the body, truncated — for the note-card excerpt (M5). */
+  readonly excerpt: string;
+  /** Count of notes whose links currently resolve to this one (M5). */
+  readonly backlinkCount: number;
 }
 
 /** One `[[wikilink]]` found in a note body, with its resolution against the index. */
