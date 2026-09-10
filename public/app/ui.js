@@ -57,3 +57,60 @@ export function el(tag, props = {}, ...children) {
 export function emit(node, type, detail) {
   node.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }
+
+/**
+ * A short, legible timestamp — today's notes get a time, older ones a date.
+ * Not full relative-time ("2h ago"); that needs a live-updating clock this
+ * app doesn't have yet.
+ * @param {string} iso
+ */
+export function formatStamp(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const sameDay = d.toDateString() === new Date().toDateString();
+  return sameDay
+    ? d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+    : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+/**
+ * The shared note-card look (design-checklist.md `1a`/field-guide
+ * `.note-card`): Fraunces title, plain-text excerpt, a tag chip + backlink
+ * chip, and a mono updated stamp. Used by the Note List and the Tag Browser's
+ * per-tag list so a note reads the same wherever it's listed.
+ * @param {import("./api.js").NoteSummary} note
+ * @param {{ onOpen: () => void }} handlers
+ */
+export function renderNoteCard(note, { onOpen }) {
+  /** @type {HTMLElement[]} */
+  const chips = [];
+  const [firstTag] = note.tags;
+  if (firstTag) {
+    chips.push(
+      el("span", { class: "chip tertiary", textContent: `#${firstTag}` }),
+    );
+  }
+  if (note.backlinkCount > 0) {
+    chips.push(el("span", {
+      class: "chip secondary",
+      textContent: `${note.backlinkCount} backlink${
+        note.backlinkCount === 1 ? "" : "s"
+      }`,
+    }));
+  }
+
+  return el(
+    "button",
+    { class: "note-card", onclick: onOpen },
+    el("h4", { textContent: note.title }),
+    note.excerpt === ""
+      ? null
+      : el("p", { class: "snippet", textContent: note.excerpt }),
+    el(
+      "div",
+      { class: "meta-row" },
+      el("div", { class: "chips" }, ...chips),
+      el("span", { class: "stamp", textContent: formatStamp(note.updated) }),
+    ),
+  );
+}

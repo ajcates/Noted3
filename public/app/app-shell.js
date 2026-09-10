@@ -22,12 +22,14 @@ import { NoteEditor } from "./note-editor.js";
 import { SearchView } from "./search-view.js";
 import { TagBrowser } from "./tag-browser.js";
 
-/** @type {Array<[label: string, hash: string]>} */
-const NAV = [["Notes", "#/"], ["Search", "#/search"], ["Tags", "#/tags"]];
+/** @type {Array<[label: string, glyph: string, hash: string]>} */
+const NAV = [["Search", "⌕", "#/search"], ["Tags", "#", "#/tags"]];
 
 export class AppShell extends HTMLElement {
   #main = el("main");
   #status = el("div", { class: "shell-status" });
+  /** @type {HTMLAnchorElement[]} */
+  #navLinks = [];
   /** @type {HTMLInputElement} */
   #tokenInput = /** @type {HTMLInputElement} */ (el("input", {
     type: "password",
@@ -82,20 +84,40 @@ export class AppShell extends HTMLElement {
       this.#route();
     });
 
-    const header = el(
+    this.#navLinks = NAV.map((
+      [label, glyph, hash],
+    ) => /** @type {HTMLAnchorElement} */ (el("a", {
+      class: "icon-btn",
+      textContent: glyph,
+      title: label,
+      href: hash,
+    })));
+
+    const topbar = el(
       "header",
-      { class: "shell-header" },
-      el("h1", { textContent: "noted" }),
-      el(
-        "nav",
-        {},
-        ...NAV.map(([label, hash]) =>
-          el("a", { textContent: label, href: hash })
-        ),
-      ),
-      el("label", { textContent: "token " }, this.#tokenInput),
+      { class: "app-topbar" },
+      el("a", { class: "wordmark", textContent: "noted", href: "#/" }),
+      el("nav", {}, ...this.#navLinks),
     );
-    this.replaceChildren(header, this.#status, this.#main);
+    const tokenStrip = el(
+      "div",
+      { class: "token-strip" },
+      el("span", { textContent: "token" }),
+      this.#tokenInput,
+    );
+    this.replaceChildren(topbar, tokenStrip, this.#status, this.#main);
+  }
+
+  /** Highlight the nav icon whose route prefixes the current hash. */
+  #updateNavActive() {
+    const hash = location.hash.replace(/^#/, "");
+    for (const link of this.#navLinks) {
+      const target = (link.getAttribute("href") ?? "").replace(/^#/, "");
+      link.classList.toggle(
+        "active",
+        hash === target || hash.startsWith(`${target}/`),
+      );
+    }
   }
 
   /** @param {string} hash */
@@ -106,6 +128,7 @@ export class AppShell extends HTMLElement {
 
   async #route() {
     this.#setStatus("", false);
+    this.#updateNavActive();
     const hash = location.hash.replace(/^#/, "");
 
     try {
@@ -262,7 +285,8 @@ export class AppShell extends HTMLElement {
    */
   #setStatus(message, isError) {
     this.#status.textContent = message;
-    this.#status.style.color = isError ? "#b00020" : "#116329";
+    this.#status.classList.toggle("is-error", isError && message !== "");
+    this.#status.classList.toggle("is-ok", !isError && message !== "");
   }
 }
 

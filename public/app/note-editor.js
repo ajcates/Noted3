@@ -105,7 +105,8 @@ export class NoteEditor extends HTMLElement {
       "div",
       { class: "actions" },
       el("button", {
-        textContent: "Back",
+        class: "text-action",
+        textContent: "← Back",
         onclick: () => emit(this, "editor-back"),
       }),
       el("button", {

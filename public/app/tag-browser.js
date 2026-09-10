@@ -8,7 +8,7 @@
  *     `note-open`, "All tags" emits `tags-all`
  */
 
-import { el, emit } from "./ui.js";
+import { el, emit, renderNoteCard } from "./ui.js";
 
 /** @typedef {import("./api.js").TagCount} TagCount */
 /** @typedef {import("./api.js").NoteSummary} NoteSummary */
@@ -57,18 +57,19 @@ export class TagBrowser extends HTMLElement {
     return [
       el("h2", { textContent: "Tags" }),
       el(
-        "ul",
-        {},
+        "div",
+        { class: "tag-list" },
         ...tags.map(({ tag, count }) =>
           el(
-            "li",
-            {},
+            "div",
+            { class: "tag-row" },
+            el("span", { class: "mark", textContent: "#" }),
             el("button", {
-              class: "tag-chip",
-              textContent: `#${tag}`,
+              class: "name",
+              textContent: tag,
               onclick: () => emit(this, "tag-open", { tag }),
             }),
-            el("span", { class: "tag-count", textContent: String(count) }),
+            el("span", { class: "count", textContent: String(count) }),
           )
         ),
       ),
@@ -82,6 +83,7 @@ export class TagBrowser extends HTMLElement {
   #renderOne(tag, notes) {
     return [
       el("button", {
+        class: "text-action",
         textContent: "← All tags",
         onclick: () => emit(this, "tags-all"),
       }),
@@ -89,19 +91,13 @@ export class TagBrowser extends HTMLElement {
       notes.length === 0
         ? el("p", { class: "empty", textContent: "No notes with this tag." })
         : el(
-          "ul",
-          {},
+          "div",
+          { class: "card-list" },
           ...notes.map((note) =>
-            el(
-              "li",
-              {},
-              el("button", {
-                class: "result-title",
-                textContent: note.title,
-                onclick: () =>
-                  emit(this, "note-open", { filename: note.filename }),
-              }),
-            )
+            renderNoteCard(note, {
+              onOpen: () =>
+                emit(this, "note-open", { filename: note.filename }),
+            })
           ),
         ),
     ];

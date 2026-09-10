@@ -7,7 +7,7 @@
  * A result click emits `note-open` (`detail: { filename }`).
  */
 
-import { el, emit } from "./ui.js";
+import { el, emit, formatStamp } from "./ui.js";
 
 /** @typedef {import("./api.js").SearchResult} SearchResult */
 
@@ -41,7 +41,7 @@ export class SearchView extends HTMLElement {
 
     this.#input = /** @type {HTMLInputElement} */ (el("input", {
       type: "search",
-      placeholder: "Search notes…",
+      placeholder: "Search your notes…",
       value: this.#query,
       oninput: () => {
         clearTimeout(this.#debounce);
@@ -51,7 +51,7 @@ export class SearchView extends HTMLElement {
         );
       },
     }));
-    this.#list = el("ul");
+    this.#list = el("div", { class: "card-list" });
 
     this.replaceChildren(this.#input, this.#list);
     this.#renderList();
@@ -69,22 +69,35 @@ export class SearchView extends HTMLElement {
       ...!hasQuery
         ? []
         : this.#results.length === 0
-        ? [el("li", { class: "empty", textContent: "No matches." })]
+        ? [el("p", { class: "empty", textContent: "No matches." })]
         : this.#results.map((r) => this.#renderItem(r)),
     );
   }
 
   /** @param {SearchResult} r */
   #renderItem(r) {
+    /** @type {HTMLElement[]} */
+    const chips = [];
+    const [firstTag] = r.tags;
+    if (firstTag) {
+      chips.push(
+        el("span", { class: "chip tertiary", textContent: `#${firstTag}` }),
+      );
+    }
     return el(
-      "li",
-      {},
-      el("button", {
-        class: "result-title",
-        textContent: r.title,
+      "button",
+      {
+        class: "note-card",
         onclick: () => emit(this, "note-open", { filename: r.filename }),
-      }),
-      el("p", { class: "result-snippet", textContent: r.snippet }),
+      },
+      el("h4", { textContent: r.title }),
+      el("p", { class: "snippet", textContent: r.snippet }),
+      el(
+        "div",
+        { class: "meta-row" },
+        el("div", { class: "chips" }, ...chips),
+        el("span", { class: "stamp", textContent: formatStamp(r.updated) }),
+      ),
     );
   }
 }
