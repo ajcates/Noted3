@@ -12,13 +12,20 @@
  *   - a light `[[wikilink]]` accent (colour only — brackets stay visible);
  *   - **wikilink autocomplete** — typing `[[` opens a title-filtered list,
  *     with a "Create …" entry that fires `onCreateNote`.
+ *   - **format commands** exposed on the returned handle (undo/redo, bold/
+ *     italic/strike/heading/list/quote, wikilink/tag/code) for the Editor
+ *     View's format pop-menu — plain selection edits, not toolbar UI.
  *
  * CodeMirror packages load as ES modules through the import map in index.html
  * (vendored under /vendor/codemirror/); `deno check` resolves the same names
  * to npm for types.
  */
 
-import { EditorState, RangeSetBuilder } from "@codemirror/state";
+import {
+  EditorSelection,
+  EditorState,
+  RangeSetBuilder,
+} from "@codemirror/state";
 import {
   Decoration,
   drawSelection,
@@ -31,6 +38,8 @@ import {
   history,
   historyKeymap,
   indentWithTab,
+  redo,
+  undo,
 } from "@codemirror/commands";
 import {
   HighlightStyle,
@@ -38,7 +47,11 @@ import {
   syntaxTree,
 } from "@codemirror/language";
 import { markdown } from "@codemirror/lang-markdown";
-import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
+import {
+  autocompletion,
+  completionKeymap,
+  startCompletion,
+} from "@codemirror/autocomplete";
 import { tags as t } from "@lezer/highlight";
 
 const highlightStyle = HighlightStyle.define([
@@ -207,13 +220,135 @@ function wikilinkCompletion(getNoteTitles, onCreateNote) {
 }
 
 /**
+ * Wrap the primary selection in `marker…marker`; unwrap if it's already
+ * wrapped. An empty selection just places the cursor between two fresh
+ * markers, rather than expanding to the enclosing word (spec.md §6 doesn't
+ * call for word-boundary detection, and this is the simpler, common case).
+ * @param {EditorView} view
+ * @param {string} marker
+ */
+function toggleWrap(view, marker) {
+  const { state } = view;
+  const { from, to } = state.selection.main;
+
+  if (from === to) {
+    view.dispatch({
+      changes: { from, insert: marker + marker },
+      selection: EditorSelection.cursor(from + marker.length),
+    });
+    view.focus();
+    return;
+  }
+
+  const before = state.sliceDoc(Math.max(0, from - marker.length), from);
+  const after = state.sliceDoc(to, to + marker.length);
+  if (before === marker && after === marker) {
+    view.dispatch({
+      changes: [{ from: from - marker.length, to: from }, {
+        from: to,
+        to: to + marker.length,
+      }],
+      selection: EditorSelection.range(
+        from - marker.length,
+        to - marker.length,
+      ),
+    });
+  } else {
+    view.dispatch({
+      changes: [{ from, insert: marker }, { from: to, insert: marker }],
+      selection: EditorSelection.range(
+        from + marker.length,
+        to + marker.length,
+      ),
+    });
+  }
+  view.focus();
+}
+
+/**
+ * Toggle a line-prefix (`## `, `- `, `> `) across every line the primary
+ * selection touches. Adds the prefix to every touched line if the first one
+ * lacks it, otherwise strips it from whichever touched lines have it.
+ * @param {EditorView} view
+ * @param {string} prefix
+ */
+function toggleLinePrefix(view, prefix) {
+  const { state } = view;
+  const { from, to } = state.selection.main;
+  const startLine = state.doc.lineAt(from).number;
+  const endLine = state.doc.lineAt(to).number;
+  const firstLine = state.doc.line(startLine);
+  const adding = !firstLine.text.startsWith(prefix);
+
+  /** @type {{ from: number, to?: number, insert?: string }[]} */
+  const changes = [];
+  for (let n = startLine; n <= endLine; n++) {
+    const line = state.doc.line(n);
+    if (adding) {
+      changes.push({ from: line.from, insert: prefix });
+    } else if (line.text.startsWith(prefix)) {
+      changes.push({ from: line.from, to: line.from + prefix.length });
+    }
+  }
+  if (changes.length === 0) return;
+  view.dispatch({ changes });
+  view.focus();
+}
+
+/**
+ * Insert `text` right before the cursor (or the start of a selection),
+ * cursor landing immediately after it — for a bare prefix like `#`, not a
+ * wrap.
+ * @param {EditorView} view
+ * @param {string} text
+ */
+function insertPrefix(view, text) {
+  const { from } = view.state.selection.main;
+  view.dispatch({
+    changes: { from, insert: text },
+    selection: EditorSelection.cursor(from + text.length),
+  });
+  view.focus();
+}
+
+/**
+ * Insert `[[` at the cursor (replacing any selection) and force the
+ * wikilink-autocomplete popup open — the same trigger as typing it by hand.
+ * @param {EditorView} view
+ */
+function insertWikilinkTrigger(view) {
+  const { from, to } = view.state.selection.main;
+  view.dispatch({
+    changes: { from, to, insert: "[[" },
+    selection: EditorSelection.cursor(from + 2),
+  });
+  startCompletion(view);
+  view.focus();
+}
+
+/**
  * @param {{
  *   parent: HTMLElement,
  *   doc: string,
  *   getNoteTitles: () => string[],
  *   onCreateNote: (title: string) => void,
  * }} opts
- * @returns {{ view: EditorView, getValue: () => string, destroy: () => void }}
+ * @returns {{
+ *   view: EditorView,
+ *   getValue: () => string,
+ *   destroy: () => void,
+ *   undo: () => void,
+ *   redo: () => void,
+ *   toggleBold: () => void,
+ *   toggleItalic: () => void,
+ *   toggleStrike: () => void,
+ *   toggleHeading: () => void,
+ *   toggleList: () => void,
+ *   toggleQuote: () => void,
+ *   insertWikilink: () => void,
+ *   insertTag: () => void,
+ *   insertCode: () => void,
+ * }}
  */
 export function createMarkdownEditor(opts) {
   const view = new EditorView({
@@ -267,5 +402,22 @@ export function createMarkdownEditor(opts) {
     view,
     getValue: () => view.state.doc.toString(),
     destroy: () => view.destroy(),
+    undo: () => {
+      undo(view);
+      view.focus();
+    },
+    redo: () => {
+      redo(view);
+      view.focus();
+    },
+    toggleBold: () => toggleWrap(view, "**"),
+    toggleItalic: () => toggleWrap(view, "_"),
+    toggleStrike: () => toggleWrap(view, "~~"),
+    toggleHeading: () => toggleLinePrefix(view, "## "),
+    toggleList: () => toggleLinePrefix(view, "- "),
+    toggleQuote: () => toggleLinePrefix(view, "> "),
+    insertWikilink: () => insertWikilinkTrigger(view),
+    insertTag: () => insertPrefix(view, "#"),
+    insertCode: () => toggleWrap(view, "`"),
   };
 }

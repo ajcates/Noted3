@@ -583,6 +583,86 @@ button.text-action.delete:hover {
   flex: 1;
 }
 
+/* ============ format toolbar + pop-menu ============ */
+
+.format-toolbar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.format-menu {
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.format-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.format-cell {
+  height: 3.6rem;
+  border: none;
+  border-radius: var(--radius-lg) var(--radius-sm) var(--radius-lg)
+    var(--radius-sm);
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.format-cell .glyph {
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.format-cell .label {
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.format-pillrow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.format-pill {
+  height: 2.8rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.format-pill:first-child {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+.format-pill .glyph {
+  font-family: var(--font-source);
+}
+
 /* ============ backlinks panel ============ */
 
 .backlinks-panel {
