@@ -71,21 +71,26 @@ agree are in scope.
 - [x] Load Fraunces / Manrope / IBM Plex Mono and assign them by
       jurisdiction (titles / chrome / filenames+metadata — design-checklist
       §1) instead of the current `system-ui` default — done 2026-09-10
-- [ ] Build the *full* shape system as reusable CSS — plain pills/circles are
-      in place (chips, buttons, the FAB), but the mirrored squircle icon
-      buttons (16/26px alternating), the notched snippet card, and the
-      asymmetric commit pill (flat end toward its content) still aren't
+- [x] Build the shape system as reusable CSS — done 2026-09-10: mirrored
+      squircle icon buttons (alternating odd/even), the notched snippet
+      card (alternating which corner), the asymmetric commit pill (flat
+      end toward its content). Simplification: alternation is odd/even in
+      a flat list, not the mockup's richer per-screen rotation.
 - [x] Restyle note list (`1a`: card shape, tag + backlink chip, mono stamp —
       done 2026-09-10, using new `excerpt`/`backlinkCount` fields on
       `NoteSummary`), search (`1d`: pill field + result cards — done; scope
       chips and highlighted match spans still open), tag browser (`1j`: pill
       rows — done; A–Z index and the expander-vs-row-navigates split still
       open)
-- [ ] Editor (`1c`): format pop-menu and undo/redo controls — still nothing
-      beyond CodeMirror's built-in keybindings (Snapshot itself is out, see
-      below)
-- [x] Docked bottom bar + FAB on the note list (done 2026-09-10) — [ ] still
-      needs to replace the inline actions on search/tags/editor too
+- [x] Editor (`1c`): format pop-menu (Bold/Italic/Strike/Heading/List/Quote
+      grid + Wikilink/Tag/Code pills) and visible undo/redo — done
+      2026-09-10, verified end-to-end via a scripted Playwright session.
+      Simplification: cells don't reflect the current selection's active
+      marks yet (plain actions, not toggle indicators); Snapshot itself is
+      still out (blocked on §0)
+- [x] Docked bottom bar + FAB on every browsing view (note list, search,
+      tags — done 2026-09-10, shared `renderToolbar()`); the editor gets its
+      own sticky docked bar instead (Back/Save/Delete)
 - [x] Light/dark via `prefers-color-scheme` — done 2026-09-10
 - [ ] Spot-check contrast against real note content, not just the palette
       swatches — eyeballed via screenshots so far, not computed ratios

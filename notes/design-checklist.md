@@ -12,10 +12,12 @@ theme, OKLCH tokens, spring motion). The shipped app is a browser PWA
 (`spec.md` §3) — pixel-for-pixel Android chrome isn't the goal, faithful
 translation of the same tokens/shapes/hierarchy to the web is.
 
-**2026-09-10 update**: M5's first pass landed — tokens, fonts, and the
-note-list/search/tag-browser/editor restyle (see `TODO.md`'s dated entry).
-What's still open is called out inline below rather than moved to a separate
-revisions log, so this file stays the single current-status view.
+**2026-09-10 update**: two M5 passes landed the same day — tokens/fonts/
+note-list/search/tag-browser/editor restyle, then the full shape system,
+docked toolbars everywhere, and the editor's format menu + visible
+undo/redo (see `TODO.md`'s two dated entries). What's still open is called
+out inline below rather than moved to a separate revisions log, so this
+file stays the single current-status view.
 
 ## 0. Scope mismatches to resolve before checking these off as "todo, in scope"
 
@@ -60,13 +62,13 @@ chips, toolbar, FAB."
       Fraunces (`--font-display`) for titles, Manrope (`--font-body`) for
       chrome/body, IBM Plex Mono (`--font-source`) for
       filenames/timestamps/counts.
-- [ ] Shape system: **partial**. Pill (999px) is in place for chips, buttons,
-      the search field, and the FAB. Still missing: mirrored squircle icon
-      buttons (16/26 px, alternating — current icon buttons are plain
-      circles), the notched card family (28 px + one 12 px notch — current
-      note cards use a uniform `--radius-lg`), the asymmetric commit pill
-      (flat end toward its content), cookie clip-path (moot until the
-      format badge/AI avatar exist, §0).
+- [x] Shape system — done 2026-09-10: pill (999px) for chips/buttons/search
+      field, mirrored-squircle icon buttons (alternating odd/even), the
+      notched card family (one corner drops to `--radius-sm`, alternating
+      which corner), the asymmetric commit pill (flat end toward its
+      content) on the FAB. Simplification: alternation is odd/even in a
+      flat list, not the mockup's richer per-screen rotation; cookie
+      clip-path still moot (no format badge/AI avatar needing it, §0).
 - [ ] Spacing/density scale (18–20 px gutter, 120 px snippet-card row, 58 px
       folder row, 52 px tag row, 44 px minimum tap target, 74 px format
       cell) — not audited; current layout uses ad-hoc `rem` gaps that read
@@ -81,8 +83,8 @@ chips, toolbar, FAB."
 
 | # | Mockup screen | App view | Status | Gap |
 |---|---|---|---|---|
-| `1a` | Note list — snippet cards | `note-list.js` | 🟡 styled, feature-partial | Card shape/tokens/tag chip/backlink-count chip/mono stamp done (2026-09-10, real data via `NoteSummary.excerpt`/`.backlinkCount`); docked toolbar + FAB "New" done. Still missing: unsynced dot (no sync layer yet), sort button, view-mode switcher |
-| `1c` | Editor — format menu, undo/redo, snapshot | `note-editor.js` + `codemirror-setup.js` | 🟡 partial | Syntax de-emphasis + wikilink autocomplete done (M4); title/actions/backlinks restyled and CodeMirror theme moved to tokens (2026-09-10). Still missing: Format pop-menu, visible undo/redo controls, Snapshot action (blocked on §0) |
+| `1a` | Note list — snippet cards | `note-list.js` | 🟡 styled, feature-partial | Card shape (incl. notch)/tokens/tag chip/backlink-count chip/mono stamp done (2026-09-10, real data via `NoteSummary.excerpt`/`.backlinkCount`); docked toolbar + shaped FAB "New" done. Still missing: unsynced dot (no sync layer yet), sort button, view-mode switcher |
+| `1c` | Editor — format menu, undo/redo, snapshot | `note-editor.js` + `codemirror-setup.js` | 🟡 mostly done | Syntax de-emphasis + wikilink autocomplete done (M4); title/actions/backlinks restyled, CodeMirror theme on tokens (2026-09-10 first pass); **format pop-menu (Bold/Italic/Strike/Heading/List/Quote grid + Wikilink/Tag/Code pills) and visible undo/redo done 2026-09-10 second pass**, verified end-to-end. Still missing: cells don't show active-mark state, Snapshot action (blocked on §0) |
 | `1d` | Search — scope chips, matched spans | `search-view.js` | 🟡 styled, feature-partial | Pill search field + result cards (title/excerpt/tag chip/stamp) done (2026-09-10). Still missing: scope chips (Everything/Titles/Tags/Links — API doesn't distinguish these either), match-count/timing line, highlighted match spans, "create missing note" affordance |
 | `1e` | Settings | *none* | ⬜ not applicable to M5 | Blocked on §0 — no spec, no endpoint, no view |
 | `1f` | Version history | *none* | ⬜ not applicable to M5 | Blocked on §0 — no versioning API |
@@ -112,10 +114,11 @@ Legend: ⬜ not started · 🟡 partial/unstyled · ✅ matches mockup
 - [ ] **Folder row / file row** — blocked on §0.
 - [x] **Tag row** — done 2026-09-10 (pill row, ember `#` mark, mono count).
       **Expander** still not built — see `1j` above.
-- [x] **Docked bar + primary action (FAB)** — done 2026-09-10 on the note
-      list only (`.toolbar`/`.fab-new`): plain-circle icon button + ember
-      pill FAB, not yet the squircle-cluster/asymmetric-pill shape family
-      (§1). Search/tags/editor still use inline actions, not this bar.
+- [x] **Docked bar + primary action (FAB)** — done 2026-09-10 across note
+      list, search, and tags (shared `renderToolbar()`): mirrored-squircle
+      icon button + the FAB's asymmetric commit pill (§1). The editor gets
+      its own sticky/surfaced bar (Back/Save/Delete) instead of this one —
+      a "New note" FAB mid-edit wouldn't make sense.
 - [x] **Editor surface** — title + actions restyled, CodeMirror theme now
       reads tokens instead of hardcoded hex (2026-09-10). Syntax
       de-emphasis unchanged from M4.
@@ -123,10 +126,15 @@ Legend: ⬜ not started · 🟡 partial/unstyled · ✅ matches mockup
       row) now reads tokens via global CSS overrides on CodeMirror's
       `cm-tooltip-autocomplete` classes (2026-09-10); the "Create …" row is
       distinguished by color (`:has(.cm-completionIcon-keyword)`).
-- [ ] **Format pop menu** — blocked on §0/`1c` above (no toolbar exists to
-      attach it to yet beyond CodeMirror's built-in keybindings).
-- [ ] **Undo/redo/Snapshot row** — undo/redo not surfaced as UI (CodeMirror
-      has it internally via keybindings only); Snapshot blocked on §0.
+- [x] **Format pop menu** — done 2026-09-10 (`note-editor.js`
+      `#renderFormatMenu`): Bold/Italic/Strike/Heading/List/Quote grid +
+      Wikilink/Tag/Code pill row, reusing the existing CodeMirror instance
+      (no focus/selection/undo loss on toggle). Cells are plain actions,
+      not selection-aware toggles yet.
+- [x] **Undo/redo row** — done 2026-09-10: visible icon buttons in the
+      editor's format toolbar, wired to `@codemirror/commands`' `undo`/
+      `redo` (now refocusing the editor afterward). **Snapshot** itself is
+      still blocked on §0 (no versioning API).
 - [ ] **Version history, AI panels, Settings** — blocked on §0.
 - [x] **Search results card** — see `1d` above.
 
@@ -160,10 +168,10 @@ design it animates exists.
 ## How to use this
 
 1. M5 (`TODO.md`) should close out §1 (foundations) and the `1a`/`1c`
-   (partial)/`1d`/`1j` rows of §2/§3 — that's its stated scope. Tokens/fonts
-   (§1) and the note-list/search/tag-browser restyle landed 2026-09-10; the
-   remaining shape system, the editor's format menu/undo-redo, and the
-   docked bar on every screen are still open.
+   (partial)/`1d`/`1j` rows of §2/§3 — that's its stated scope. All of §1
+   plus every listed item above landed across two 2026-09-10 passes; what's
+   left is a rigorous contrast check and the smaller polish items called
+   out inline (format-menu active-mark state, richer shape rotation).
 2. Before `1e`–`1h`/`1i` can move from "not applicable" to real checklist
    items, each needs a `spec.md` entry and roadmap milestone (§0) — that's a
    product decision, not a styling task.

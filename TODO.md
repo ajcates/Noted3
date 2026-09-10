@@ -10,22 +10,46 @@ See `notes/design-checklist.md` for the full screen-by-screen and
 element-by-element comparison against the mockup bundle
 (`notes/mobile-app-design-project/`) — includes scope flags for mockup screens
 (settings, version history, AI panels, folder view) that aren't yet covered by
-`spec.md`/`roadmap.md`. First pass shipped 2026-09-10 (below); remaining:
+`spec.md`/`roadmap.md`. Two passes shipped 2026-09-10 (below); remaining:
 
-- [ ] The full shape library beyond plain pills/circles — mirrored squircle icon
-      buttons (16/26px alternating), the notched card family (28px + one 12px
-      notch), the asymmetric commit pill (flat end toward the content it acts
-      on). Current icon buttons are plain circles, note cards a uniform radius,
-      action buttons full pills.
-- [ ] Editor format pop-menu (Bold/Italic/Strike/H2/List/Quote grid +
-      Wikilink/Tag/Code pill row) and visible undo/redo controls — currently
-      only CodeMirror's built-in keybindings (Ctrl/Cmd+Z etc.), no UI for either
-- [ ] Docked toolbar + FAB on every screen, not just the note list (search,
-      tags, and the editor still use inline actions)
 - [ ] Rigorous contrast spot-check (computed ratios, not just eyeballing
       screenshots) against real note content in both themes
+- [ ] Format-menu cells don't reflect the current selection's active marks
+      (they're plain actions, not toggle indicators) — a smaller gap than the
+      menu's existence, left for a follow-up pass
+- [ ] Card-shape "notch rotates position" and icon-button "alternating mirror"
+      only alternate odd/even in a flat list; the mockup's richer per-screen
+      rotation isn't replicated
 
 ## Done
+
+### 2026-09-10 — M5 second pass: shapes, docked bars everywhere, format menu
+
+- [x] **Token field moved to a footer** (`app-shell.js`) — the topbar is now
+      orientation-only (wordmark + nav); the auth-token input lives in a quiet
+      mono `<footer>` below the routed view instead of crowding the top bar.
+- [x] **Full shape system** (`styles.css`) — icon buttons alternate a
+      mirrored-squircle corner pair (odd/even via `:nth-of-type`) instead of
+      plain circles; note cards drop one corner to a smaller radius, alternating
+      which corner card-to-card; the FAB is now an asymmetric pill (flat end
+      toward the content it acts on, full-round end toward the screen edge).
+      Every other button stays a plain pill on purpose.
+- [x] **Docked toolbar on every browsing view** — `renderToolbar()` (`ui.js`)
+      shared by Note List, Search, and Tag Browser (Tags shortcut + "New note"
+      FAB). The editor gets its own sticky/surfaced bar instead
+      (Back/Save/Delete — a "New note" FAB mid-edit wouldn't make sense).
+- [x] **Editor format pop-menu + visible undo/redo** — `codemirror-setup.js`
+      exposes real commands (undo/redo now refocusing the editor; wrap/ unwrap
+      for bold/italic/strike; line-prefix toggle for heading/list/ quote;
+      `[[`-insert-and-open-autocomplete for wikilink; prefix-insert for tag;
+      wrap for code). `note-editor.js` adds an Aa/Undo/Redo toolbar and a
+      collapsible grid+pill menu that reuses the existing CodeMirror instance
+      (no lost focus/selection/undo history on toggle). Verified end-to-end with
+      a scripted Playwright session: select → Bold → Undo → Heading → Undo →
+      Wikilink, each producing the exact expected document text.
+- [x] Verified: `deno check`/`fmt`/`lint` clean, all 18 API e2e tests green,
+      manually screenshotted every view in both themes plus the live format-menu
+      interaction.
 
 ### 2026-09-10 — M5 first pass: tokens, fonts, note/search/tags restyle
 
