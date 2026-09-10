@@ -6,6 +6,12 @@ first) per `notes/development.md` §5 — they are not deleted.
 
 ## M5 — Design system integration (next)
 
+See `notes/design-checklist.md` for the full screen-by-screen and
+element-by-element comparison against the mockup bundle
+(`notes/mobile-app-design-project/`) — includes scope flags for mockup
+screens (settings, version history, AI panels, folder view) that aren't yet
+covered by `spec.md`/`roadmap.md`.
+
 - [ ] Port the Material 3 Expressive token set (spec.md §12) into the real
       stylesheet — plain CSS custom properties, no preprocessor
 - [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — no
