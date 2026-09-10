@@ -2,8 +2,8 @@
 /**
  * App Shell / Router (system-overview.md §1).
  *
- * Owns the top bar (title + nav + auth-token field + status line) and swaps
- * the active view based on `location.hash`:
+ * Owns the top bar (title + nav), the status line, and a footer (auth-token
+ * field); swaps the active view based on `location.hash`:
  *   #/                 → note list
  *   #/new              → editor for a new note
  *   #/note/<filename>  → editor for an existing note (+ backlinks panel)
@@ -99,13 +99,13 @@ export class AppShell extends HTMLElement {
       el("a", { class: "wordmark", textContent: "noted", href: "#/" }),
       el("nav", {}, ...this.#navLinks),
     );
-    const tokenStrip = el(
-      "div",
-      { class: "token-strip" },
+    const footer = el(
+      "footer",
+      { class: "app-footer" },
       el("span", { textContent: "token" }),
       this.#tokenInput,
     );
-    this.replaceChildren(topbar, tokenStrip, this.#status, this.#main);
+    this.replaceChildren(topbar, this.#status, this.#main, footer);
   }
 
   /** Highlight the nav icon whose route prefixes the current hash. */

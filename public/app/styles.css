@@ -200,17 +200,18 @@ main {
   color: var(--on-primary-container);
 }
 
-.token-strip {
+.app-footer {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0 1.1rem 0.75rem;
+  padding: 0.9rem 1.1rem;
+  border-top: 1px solid var(--outline-variant);
   font-family: var(--font-source);
   font-size: 0.72rem;
   color: var(--on-surface-variant);
 }
 
-.token-strip input {
+.app-footer input {
   flex: 1;
   min-width: 0;
   font: inherit;
