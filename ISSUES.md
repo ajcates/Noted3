@@ -131,6 +131,24 @@ gaps into `spec.md` §11.
 
 ## Closed
 
+- 2026-09-10 (M7) — Reported by the user: `npm install -g @ajcates/noted3`
+  failed outright on Termux (Android) with
+  `npm error notsup Unsupported
+  platform ... current: {"os":"android"}` —
+  `package.json`'s `os` allowlist (`darwin`/`linux`/`win32`) omitted Android
+  despite `spec.md` §8 explicitly naming Termux as a target platform. **Closed
+  2026-09-10**: added `"android"` to `package.json`'s `os` field, and went
+  further since Termux isn't just "Linux" for two other things this milestone
+  got wrong for it: (1) `bin/noted.js` now tries Termux's own
+  `pkg install -y deno` before the generic deno.land installer, since that
+  installer's binary isn't guaranteed to run under Termux's bionic libc (the
+  failure message now points at a community workaround instead of the generic
+  docs); (2) `src/open-browser.ts`'s `pickOpener` now detects Termux via the
+  `TERMUX_VERSION` env var and uses `termux-open-url` instead of `xdg-open`,
+  which Termux doesn't have. Not fully verified on an actual Termux device (no
+  such environment available here) — the `pkg install` fallback path and
+  `termux-open-url` both depend on packages (`termux-api`) that may not be
+  installed; worth a real check next time `noted` is run there.
 - 2026-09-05 — Deno not installed on the dev machine. **Closed 2026-09-05**:
   installed Deno 2.9.6 via the official install script to
   `C:\Users\ajcates\.deno\bin`.

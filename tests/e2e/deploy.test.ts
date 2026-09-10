@@ -156,6 +156,14 @@ Deno.test("pickOpener: picks the right command per OS", () => {
   assert(pickOpener("windows", "http://x").args.includes("http://x"));
 });
 
+Deno.test("pickOpener: Termux (Android) uses termux-open-url, not xdg-open", () => {
+  // Termux reports Deno.build.os === "linux" (not a distinct target), so
+  // this has to come from the isTermux flag, not the os switch.
+  const termux = pickOpener("linux", "http://x", true);
+  assertEquals(termux.cmd, "termux-open-url");
+  assertEquals(termux.args, ["http://x"]);
+});
+
 async function gitAvailable(): Promise<boolean> {
   try {
     return (await new Deno.Command("git", { args: ["--version"] }).output())
