@@ -6,6 +6,39 @@ gaps into `spec.md` §11.
 
 ## Open
 
+- 2026-09-10 (M7) — `derivePort`'s hash isn't collision-free: two different
+  vault directories could in principle land on the same port (very unlikely at
+  personal scale, but possible). If it ever happens, running the second one just
+  fails to bind and logs an error — no automatic fallback to a nearby port.
+  Worth adding one if it's ever hit in practice.
+- 2026-09-10 (M7) — Backup commits are best-effort with no retry queue: if
+  `git commit` fails for a reason other than "nothing to commit" (disk full, a
+  corrupted `.git`, an unexpected lock), that one write's backup is just lost —
+  logged to the console, not surfaced in the app, and not retried on the next
+  write. Acceptable since the note itself is still safely on disk either way
+  (backup, not source of truth); revisit if it's ever silently broken for a
+  while in practice.
+- 2026-09-10 (M7) — Observed during manual testing, not a code bug: killing the
+  `noted` (npm launcher) process with `SIGKILL` doesn't give the Node wrapper a
+  chance to forward the signal to its Deno child, so the child can be orphaned
+  holding the port. The graceful path (`Ctrl-C`, `SIGTERM`, `SIGINT`) works
+  correctly — verified end-to-end, including "same folder reuses the same port
+  after a graceful restart." An orphaned instance is still handled sanely on the
+  next launch (treated as "already running," browser opened to it) — just worth
+  knowing `kill -9` is the one way to leave a stray process around.
+- 2026-09-10 (M7) — The npm launcher's automatic Deno-install path (official
+  installer via `curl | sh` / `irm | iex`) is exercised and confirmed working
+  for the "Deno already installed" case (this session's actual test), but the
+  "Deno missing, auto-install kicks in" branch itself wasn't exercised
+  end-to-end on Windows — only the command construction was reviewed, not run.
+  Worth a real test on a clean Windows machine before relying on it there.
+- 2026-09-10 (M7) — `vault-state.ts`'s `getOrCreateToken` has a narrow race: two
+  `noted` processes launched for the very first time against the same brand-new
+  vault, at the same moment, could each generate a different token and race to
+  persist it — the loser's in-memory token wouldn't match what's on disk. Only
+  matters for two _simultaneous first launches_ of the same fresh directory,
+  which the normal "one `noted` per folder" usage pattern doesn't produce; not
+  worth atomic-transaction complexity for v1.
 - 2026-09-10 (M5) — The editor's format-menu cells (Bold/Italic/Strike/
   Heading/List/Quote) are plain actions, not toggles — they don't reflect
   whether the current selection already has that mark. Would need reading the
@@ -20,8 +53,10 @@ gaps into `spec.md` §11.
   before any wider exposure (needs TLS + something better than a static token).
 - 2026-09-05 — Existing-notes migration: frontmatter parser now tolerates
   missing/partial/malformed frontmatter and backfills on read; still needs a
-  check against a real pre-existing vault's frontmatter shape before M7
-  (`spec.md` §11).
+  check against a real pre-existing vault's frontmatter shape (`spec.md` §11).
+  Still open post-M7 — no real existing vault was available to test against
+  during that milestone; do this the first time `noted` is pointed at real
+  notes.
 - 2026-09-05 — Reading a note with an offset timestamp (`...-07:00`) normalizes
   it to UTC (`...Z`) in API responses and on next write. Same instant, but the
   author's local offset is dropped. Minor; fine for v1. Decide in M4/M5 whether

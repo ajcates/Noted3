@@ -25,7 +25,7 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 
 | Component | Responsibility | Implementation |
 |---|---|---|
-| **Config Loader** | Reads `NOTES_DIR`, `PORT`, `AUTH_TOKEN` from env at boot | Pure function — env in, typed config object out |
+| **Config Loader** | Reads `NOTES_DIR`, `PORT`, `AUTH_TOKEN` from env at boot; each falls back to a deterministic per-directory default (cwd / `derivePort` / a persisted vault token) when unset (M7) | Pure function plus the two small stateful defaults it calls into — env in, typed config object out |
 | **HTTP Router** (`Deno.serve`) | Dispatches requests to handlers; the only thing the client ever talks to | Hand-rolled router function, no framework |
 | **Auth Middleware** | Checks the shared token on every request before it reaches a handler | Pure function — request in, allow/deny out |
 | **Notes API Handlers** | One handler per endpoint in spec.md §5 (list, get, create, update, delete, backlinks, search, tags) | Plain functions, one per endpoint |
@@ -59,6 +59,11 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 | `src/search.ts` | Search Module — `searchNotes(snapshot, query)`, pure; naive title+body substring, title hits ranked first, body-match snippet |
 | `src/file-store.ts` | File Store — only module that touches disk: list/read/write (atomic)/delete/rename/mtime; `resolveNewFilename` |
 | `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `OutgoingLink`, `Backlink`, `SearchResult`, `TagCount`, `Config`, `ApiError` |
+| `src/derive-port.ts` | (M7) Pure `derivePort(absPath)` — FNV-1a hash of a vault's absolute path into a stable port, so `NOTES_DIR`'s default `PORT` is deterministic per directory |
+| `src/vault-state.ts` | (M7) Per-vault `AUTH_TOKEN` persistence outside `NOTES_DIR` — `getOrCreateToken`/`resolveStateDir`, `~/.noted/vaults/<hash>.json` |
+| `src/git-backup.ts` | (M7) Backup strategy — `ensureRepo` (`git init` a fresh vault, once, at boot), `scheduleBackup`/`flushBackups` (fire-and-forget, per-directory-serialized `git add -A && git commit` after every write) |
+| `src/open-browser.ts` | (M7) `openInBrowser` — best-effort OS-default-browser launch on boot; `pickOpener` is the pure per-OS command-picker |
+| `bin/noted.js` | (M7) npm launcher (Node, not Deno) — ensures `deno` is installed, then execs `deno run` against `main.ts`/`src/*.ts` with the caller's cwd as `NOTES_DIR` and scoped permissions; the npm package (`package.json`) around it is a distribution wrapper, not a rewrite |
 
 **M3 read-path change:** `GET /api/notes` is now served from the In-Memory
 Index with no disk I/O; `GET /api/notes/:filename` and the backlinks endpoint
@@ -94,9 +99,9 @@ disk. `deno check` / `lint` / `fmt` still cover it (`compilerOptions.checkJs`,
 way in M4–M6, the escalation paths already on record are an on-the-fly
 transpile step or Preact (`spec.md` §3).
 
-All server + client components in the inventory now exist. Remaining milestones
-are polish and platform: M5 design tokens, M6 the PWA/offline layer (Service
-Worker, IndexedDB Cache, Write Queue, Sync Manager), M7 deploy.
+All server + client components in the inventory now exist, including M7's
+deploy layer (npm launcher, per-directory port/token defaults, git-backed
+auto-backup, self-opening browser).
 
 ## 2. Dependency map
 

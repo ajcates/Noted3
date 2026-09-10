@@ -54,8 +54,13 @@ The concrete technology choices for the project, in one place. `spec.md` explain
 
 ## Deployment
 
-- Single long-running Deno process, process-supervised (systemd unit, or a Termux-friendly restart wrapper) — `spec.md` §8.
-- **Caddy** as the reverse proxy if this is ever exposed past `localhost`, purely for automatic HTTPS — needed for full PWA installability off-network.
+- Still, underneath, a single long-running Deno process (`spec.md` §8) — M7 (`notes/roadmap.md`) just changed how you get one running.
+- **Distributed via npm** (`npm install -g @ajcates/noted3`) as a thin launcher (`bin/noted.js`), not a Deno-to-Node port: it checks for `deno` (installing it via the official installer if missing) and then execs `deno run` against the real `main.ts`/`src/*.ts` — no build step, no bundling, the same TypeScript source `deno task start` runs.
+- **Zero-config by directory**: run `noted` from inside a vault folder and it just works — `NOTES_DIR` defaults to the current directory, `PORT` to a deterministic hash of its absolute path (`src/derive-port.ts` — the same folder always gets the same port, a different one almost always gets a different port), and `AUTH_TOKEN` to a token generated once and persisted outside `NOTES_DIR` (`src/vault-state.ts`, `~/.noted/vaults/`) so a restart doesn't log the browser out and a secret never ends up inside the git-backed vault below. An explicit env var still overrides any of the three.
+- **Opens itself**: on a successful boot, `noted` launches the OS's default browser pointed at the running app with the token embedded in the URL (`src/open-browser.ts`; the client picks the token up and strips it from the address bar). If the derived port is already taken, that's treated as "another `noted` is already running for this folder" — it opens the browser to the existing instance instead of erroring.
+- **Backup**: the vault directory becomes a plain git repo on first run (`src/git-backup.ts`, `git init` if one doesn't already exist — a repo you already manage yourself is left untouched), and every write is committed automatically, serialized so concurrent saves can't race over `.git/index.lock`. No separate periodic-copy job — full history comes for free. Best-effort throughout: a machine with no `git` installed just runs without backups, logged once at boot.
+- No process supervisor (systemd/Termux wrapper) or reverse proxy is set up by any of the above — accepted for now since the deploy target is "run from a terminal on the home network," not "always-on server reachable from outside it" (`spec.md` §11). Revisit both if that assumption changes.
+- **Caddy** would still be the reverse proxy of choice if this is ever exposed past `localhost`, purely for automatic HTTPS — needed for full PWA installability off-network. Not needed for the home-network-only v1 deploy.
 
 ## Summary table
 
@@ -74,4 +79,6 @@ The concrete technology choices for the project, in one place. `spec.md` explain
 | Browser tests | Playwright |
 | Dependency source | JSR first, `npm:` fallback |
 | Formatting/linting | `deno fmt` / `deno lint`, defaults |
+| Distribution | npm (`@ajcates/noted3`), thin launcher around the same Deno process |
+| Backup | Auto-committing git repo in `NOTES_DIR` |
 | Reverse proxy | Caddy (only if exposed beyond localhost) |

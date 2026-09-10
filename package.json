@@ -1,0 +1,25 @@
+{
+  "name": "@ajcates/noted3",
+  "version": "0.1.0",
+  "description": "A local-first, self-hosted markdown notes app with wikilinks, backlinks, and offline sync. Runs as a Deno process; this package just gives it an npm-installable launcher.",
+  "license": "UNLICENSED",
+  "bin": {
+    "noted": "bin/noted.js"
+  },
+  "files": [
+    "bin",
+    "main.ts",
+    "src",
+    "public",
+    "deno.json",
+    "deno.lock"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+}
