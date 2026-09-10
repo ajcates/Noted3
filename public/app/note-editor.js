@@ -6,14 +6,18 @@
  * the M2 textarea). Owns no persistence: it emits and the App Shell calls the
  * API:
  *   - `editor-back`
- *   - `editor-save`        — `detail: { filename: string | null, title, body }`
+ *   - `editor-save`        — `detail: { filename: string | null, title, body, updated? }`
+ *     (`updated` is this note's last-seen timestamp, for the Sync Manager's
+ *     conflict check, M6 — absent for a brand-new note)
  *   - `editor-delete`      — `detail: { filename }`
  *   - `editor-create-link` — `detail: { title }` (autocomplete "Create …")
  *   - `editor-error`       — `detail: { message }`
+ *   - `editor-resolve-conflict` — `detail: { filename, choice: "mine" | "theirs" }`
+ *     (M6 — from the conflict banner's two buttons)
  *
- * The App Shell sets `.note` / `.backlinks` / `.noteTitles` before appending
- * this element; those setters just store while disconnected, and
- * `connectedCallback` renders once.
+ * The App Shell sets `.note` / `.backlinks` / `.noteTitles` / `.conflict`
+ * before appending this element; those setters just store while
+ * disconnected, and `connectedCallback` renders once.
  */
 
 import { el, emit } from "./ui.js";
@@ -42,6 +46,9 @@ export class NoteEditor extends HTMLElement {
    * selection, or undo history. */
   #formatMenuHost = null;
   #formatOpen = false;
+  /** @type {{ entry: unknown, current: NoteDetail } | null} — set by the App
+   * Shell when this note has a parked write-queue conflict (M6). */
+  #conflict = null;
 
   /** @param {NoteDetail | null} value */
   set note(value) {
@@ -51,6 +58,12 @@ export class NoteEditor extends HTMLElement {
 
   get note() {
     return this.#note;
+  }
+
+  /** @param {{ entry: unknown, current: NoteDetail } | null} value */
+  set conflict(value) {
+    this.#conflict = value;
+    if (this.isConnected) this.#render();
   }
 
   /** @param {Backlink[]} value */
@@ -94,13 +107,15 @@ export class NoteEditor extends HTMLElement {
     if (this.#panel) this.#panel.backlinks = this.#backlinks;
 
     /** @type {(Node)[]} */
-    const kids = [
+    const kids = [];
+    if (note && this.#conflict) kids.push(this.#renderConflictBanner(note));
+    kids.push(
       this.#titleInput,
       this.#renderFormatToolbar(),
       this.#formatMenuHost,
       host,
       this.#renderActions(note),
-    ];
+    );
     if (this.#panel) kids.push(this.#panel);
     this.replaceChildren(...kids);
 
@@ -110,6 +125,41 @@ export class NoteEditor extends HTMLElement {
       getNoteTitles: () => this.#noteTitles,
       onCreateNote: (title) => emit(this, "editor-create-link", { title }),
     });
+  }
+
+  /** @param {NoteDetail} note */
+  #renderConflictBanner(note) {
+    return el(
+      "div",
+      { class: "conflict-banner" },
+      el("p", {
+        class: "conflict-message",
+        textContent:
+          "This note was saved from somewhere else while you were editing it.",
+      }),
+      el(
+        "div",
+        { class: "conflict-actions" },
+        el("button", {
+          class: "primary",
+          textContent: "Keep mine",
+          onclick: () =>
+            emit(this, "editor-resolve-conflict", {
+              filename: note.filename,
+              choice: "mine",
+            }),
+        }),
+        el("button", {
+          class: "text-action",
+          textContent: "Keep the other version",
+          onclick: () =>
+            emit(this, "editor-resolve-conflict", {
+              filename: note.filename,
+              choice: "theirs",
+            }),
+        }),
+      ),
+    );
   }
 
   #renderFormatToolbar() {
@@ -241,6 +291,7 @@ export class NoteEditor extends HTMLElement {
       filename: this.#note?.filename ?? null,
       title,
       body,
+      updated: this.#note?.updated,
     });
   }
 }

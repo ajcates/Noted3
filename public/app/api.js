@@ -49,6 +49,9 @@ export class ApiError extends Error {
  * @typedef {{ filename: string, title: string, snippet: string }} Backlink
  * @typedef {NoteSummary & { snippet: string }} SearchResult
  * @typedef {{ tag: string, count: number }} TagCount
+ * @typedef {{ ok: true, note: NoteDetail }
+ *   | { ok: false, conflict: true, current: NoteDetail }
+ *   | { ok: false, conflict: false, status: number }} PutResult
  */
 
 /**
@@ -120,6 +123,40 @@ export async function updateNote(filename, patch) {
       body: JSON.stringify(patch),
     })
   );
+}
+
+/**
+ * A `PUT` that doesn't throw on 409 — the Sync Manager needs to tell "the
+ * server rejected this because of a real conflict" apart from "any other
+ * failure" without exception-based control flow, and needs the conflict's
+ * `current` payload, which a thrown {@link ApiError} doesn't carry. Every
+ * other write in this module goes through {@link updateNote} and its
+ * throw-on-error behavior; this one is only for {@link
+ * import("./sync-manager.js").SyncManager}'s queue drain.
+ * @param {string} filename
+ * @param {{ title?: string | undefined, body?: string | undefined, tags?: string[] | undefined, updated: string }} patch
+ * @returns {Promise<PutResult>}
+ */
+export async function putNoteForSync(filename, patch) {
+  let res;
+  try {
+    res = await fetch(`/api/notes/${encodeURIComponent(filename)}`, {
+      method: "PUT",
+      headers: {
+        authorization: `Bearer ${getToken()}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(patch),
+    });
+  } catch (cause) {
+    throw new ApiError(0, `network error: ${String(cause)}`);
+  }
+  const data = await res.json().catch(() => null);
+  if (res.status === 409) {
+    return { ok: false, conflict: true, current: data.current };
+  }
+  if (!res.ok) return { ok: false, conflict: false, status: res.status };
+  return { ok: true, note: /** @type {NoteDetail} */ (data) };
 }
 
 /**

@@ -76,6 +76,7 @@ const light: Record<string, Oklch> = {
   "tertiary-container": [90, 0.06, 55],
   "on-tertiary-container": [29, 0.09, 55],
   error: [55, 0.20, 25],
+  "error-container": [91, 0.05, 25],
   "on-error-container": [27, 0.12, 25],
 };
 
@@ -97,6 +98,7 @@ const dark: Record<string, Oklch> = {
   "tertiary-container": [34, 0.08, 55],
   "on-tertiary-container": [91, 0.05, 55],
   error: [78, 0.16, 25],
+  "error-container": [33, 0.10, 25],
   "on-error-container": [90, 0.05, 25],
 };
 
@@ -167,6 +169,11 @@ const pairs: [string, string, string][] = [
     "Outline chip / icon-btn default text on its surface",
     "on-surface-variant",
     "surface-container-high",
+  ],
+  [
+    "Conflict-banner message (M6) on its container",
+    "on-error-container",
+    "error-container",
   ],
 ];
 
