@@ -57,10 +57,40 @@ One naming note before you start: the `notes/` folder in the project directory i
 
 ## M5 — Design system integration
 
-- [ ] Port the token set from `noted-field-guide.html` into the app's real stylesheet (spec.md §12 has the exact custom properties) — plain CSS, no preprocessor, no CSS-in-JS (`techstack.md`)
-- [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — never a hardcoded color/radius
-- [ ] Light/dark via `prefers-color-scheme`, same pattern the field guide already models
-- [ ] Spot-check contrast against real note content, not just the palette swatches
+Full screen-by-screen and element-by-element target list:
+`notes/design-checklist.md` (checked against the mockup bundle in
+`notes/mobile-app-design-project/`). This milestone closes out that
+checklist's §1 (foundations) and the note-list/search/tag-view/editor rows
+of its §2–§3 — the four screens the mockups and the current spec actually
+agree are in scope.
+
+- [ ] Port the OKLCH token set (spec.md §12; full values in
+      `notes/design-checklist.md` §1) into the app's real stylesheet — plain
+      CSS custom properties, no preprocessor, no CSS-in-JS (`techstack.md`)
+- [ ] Load Fraunces / Manrope / IBM Plex Mono and assign them by
+      jurisdiction (titles / chrome / filenames+metadata — design-checklist
+      §1) instead of the current `system-ui` default
+- [ ] Build the shape system as reusable CSS (mirrored squircle buttons,
+      notched snippet card, pill, asymmetric commit pill) — never a
+      hardcoded color/radius on a one-off element
+- [ ] Restyle the four in-scope views against `design-checklist.md` §2–§3:
+      note list (`1a`: card shape, tag + backlink chips, unsynced dot),
+      search (`1d`: scope chips, match-count/timing line, highlighted
+      spans), tag browser (`1j`: A–Z index, expander-vs-row-navigates
+      split), editor (`1c`: format pop-menu, undo/redo controls — Snapshot
+      itself is out, see below)
+- [ ] Docked bottom bar + FAB, replacing the current inline buttons
+- [ ] Light/dark via `prefers-color-scheme`
+- [ ] Spot-check contrast against real note content, not just the palette
+      swatches
+
+**Open decisions to make here** (`design-checklist.md` §0): the mockup bundle
+also covers Settings, Version history, an AI edit panel (single + bulk),
+and a folder view — none of which has a `spec.md` entry, and the folder
+view actively contradicts the §9 non-goal on nested folders. Resolve each
+(bring into scope with a real spec section, or explicitly defer) before
+M5 is called done, so the milestone doesn't quietly ship 4 of 9 mockup
+screens without anyone deciding that was the plan.
 
 ## M6 — PWA & offline-first — budget real time here, it's the hardest milestone
 
@@ -85,3 +115,11 @@ One naming note before you start: the `notes/` folder in the project directory i
 ## v2 candidates — not scheduled, don't build early
 
 Folders/nested organization, image attachments, a real full-text search index, note templates, git-backed history or export/import. Revisit only once v1 has survived actual daily use — see spec.md §9 for why these are explicitly out of scope for now.
+
+Also from the mockup bundle (`notes/design-checklist.md` §0), each needing its
+own `spec.md` section + milestone before it's buildable, not just a style
+pass: a **Settings screen** (vault path, auth token, sync — none of it
+wired to anything server-side yet), **note version history / snapshots**
+(no versioning API exists), and an **AI edit panel** (single-note and bulk,
+propose-then-commit with a diff preview — no LLM integration exists). The
+folder view above already covers mockup `1i`/part of `1j`.
