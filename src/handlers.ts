@@ -43,6 +43,7 @@ import {
   renderMarkdown,
   rewriteWikilinkTarget,
 } from "./markdown.ts";
+import { scheduleBackup } from "./git-backup.ts";
 import type { NoteIndex } from "./note-index.ts";
 import { firstLine } from "./search.ts";
 
@@ -177,6 +178,7 @@ export const renameNote: Handler = async ({ notesDir, index, params, req }) => {
 
   await renameNoteFile(notesDir, from, to);
   index.rename(from, to);
+  scheduleBackup(notesDir, `noted: rename ${from} -> ${to}`);
 
   const fromBare = stripExt(from);
   const toBare = stripExt(to);
@@ -205,6 +207,7 @@ export const deleteNote: Handler = async ({ notesDir, index, params }) => {
   const filename = parseFilename(params.filename ?? "");
   await deleteNoteFile(notesDir, filename);
   index.remove(filename);
+  scheduleBackup(notesDir, `noted: delete ${filename}`);
   return new Response(null, { status: 204 });
 };
 
@@ -238,6 +241,7 @@ async function writeNoteAndIndex(
     body,
     mtime: await noteMtime(notesDir, filename),
   });
+  scheduleBackup(notesDir, `noted: save ${filename}`);
 }
 
 // --- projections -----------------------------------------------------------

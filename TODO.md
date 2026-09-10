@@ -4,13 +4,84 @@ Granular task list, one level finer than `notes/roadmap.md`. Checkbox format
 matches the roadmap. Finished tasks move under a dated `## Done` heading (newest
 first) per `notes/development.md` §5 — they are not deleted.
 
-## M7 — Deploy (next)
-
-M6 (PWA & offline-first) is done — see `notes/roadmap.md` and the 2026-09-10
-entry below. Break M7's roadmap items into day-to-day tasks here once it's
-underway (`notes/development.md` §5).
-
 ## Done
+
+### 2026-09-10 — M7 closed: npm launcher, cwd-derived config, git-backed auto-backup
+
+- [x] **`derivePort`** (`src/derive-port.ts`) — pure FNV-1a hash of a vault's
+      absolute path into a port in `[20000, 65000)`. Same directory, same port,
+      every time; a different directory (almost always) gets a different one.
+- [x] **`vault-state.ts`** — `getOrCreateToken`/`resolveStateDir`: a per-vault
+      `AUTH_TOKEN` generated once and persisted under
+      `~/.noted/vaults/<sha256(path)>.json`, outside `NOTES_DIR` — a secret has
+      no business inside a directory that's now a git repo (below). Same atomic
+      temp-file-then-rename write pattern as `file-store.ts`.
+- [x] **`src/config.ts`** rewritten — `NOTES_DIR`/`PORT`/`AUTH_TOKEN` each fall
+      back to a deterministic default (cwd / `derivePort` / the persisted token)
+      instead of being required; an explicit env var still wins over all three,
+      so `deno task dev`/`start` and the test suite are unaffected.
+- [x] **`src/git-backup.ts`** — `ensureRepo` (`git init` a fresh vault once at
+      boot; leaves an existing repo, including one you already manage yourself,
+      untouched) and `scheduleBackup`/`flushBackups` (fire-and- forget
+      `git add -A && git commit` after every write, chained per directory so
+      concurrent saves can't race `.git/index.lock`; awaited on
+      `SIGINT`/`SIGTERM` before exit). Wired into every write path in
+      `handlers.ts` (create/update/rename/delete). Best-effort — a machine with
+      no `git` just runs without backups, logged once.
+- [x] **`src/open-browser.ts`** — `openInBrowser`/`pickOpener`, a small per-OS
+      command picker (`open`/`xdg-open`/`cmd /c start`) that launches the
+      default browser at the running app on boot. Never throws; a headless
+      machine just logs a warning and keeps serving.
+- [x] **`main.ts`** boot sequence — `ensureRepo` awaited before `Deno.serve`
+      (closes a race where the very first write could slip past it); on success,
+      opens the browser with the token embedded in the URL; `AddrInUse` on the
+      derived port is treated as "another `noted` is already running for this
+      folder" and just opens the browser to it instead of crashing;
+      `SIGINT`/`SIGTERM` flush pending backups before exiting.
+- [x] **Client** (`public/app/main.js`) — picks up `?token=` from the opened
+      URL, stores it via `api.setToken`, and scrubs it from the address bar with
+      `history.replaceState` — opening the browser now logs you in instead of
+      requiring the footer token field.
+- [x] **npm packaging** — `package.json` (`@ajcates/noted3`, `bin: noted`) +
+      `bin/noted.js`: a thin Node launcher that checks for `deno` (installing it
+      via the official installer if missing) and execs `deno run` against the
+      real `main.ts`/`src/*.ts` with the caller's cwd as the vault and scoped
+      `--allow-read`/`--allow-write` (cwd + `~/.noted`) / `--allow-run` (git +
+      the OS opener). No build step — Deno runs the same TypeScript
+      `deno task start` does. `deno.json` got `"nodeModulesDir": "none"` so
+      `package.json`'s mere presence doesn't flip Deno's npm-dependency
+      resolution into node_modules mode.
+- [x] **`deno.json` tasks** — `dev`/`start` gained `--allow-run` (for git + the
+      browser opener) and `start` also reads/writes `$HOME/.noted`.
+- [x] **`tests/e2e/deploy.test.ts`** (new, 11 cases) — `derivePort`
+      determinism + range, `vault-state` create/reuse/per-vault-distinct,
+      `resolveStateDir`, `loadConfig`'s new defaults (including that an explicit
+      env var still wins), `pickOpener` per OS, and two `git-backup` cases (a
+      real `git init` + commit, gated on `git` being installed; and confirming a
+      directory that never called `ensureRepo` gets no commits — this is also
+      what keeps every other test's temp dirs silent instead of spamming "not a
+      git repository" warnings).
+- [x] **Manually verified end-to-end** via the actual npm launcher (not just
+      `deno task start`): ran `node bin/noted.js` from two different directories
+      — got two different, stable ports; created a note via the API and
+      confirmed a real `git log` entry; killed and relaunched from the same
+      directory and got the identical port + token back; confirmed graceful
+      `SIGTERM` frees the port immediately (`SIGKILL` orphans the child instead
+      — logged in `ISSUES.md`, not a code bug); confirmed the "already running"
+      path opens the browser instead of crashing when the port's still taken.
+- [x] Verified: `deno check`/`fmt`/`lint` clean; 30/30 non-Playwright tests
+      green (19 prior + 11 new); Playwright tests still blocked on the
+      pre-existing sandbox Chrome/WSL-detection limitation in `ISSUES.md`,
+      unrelated to this milestone's changes.
+- [x] **Docs**: `techstack.md`/`spec.md` §8 Deployment rewritten, `spec.md` §11
+      gained three resolved decisions (install/launch shape, home-network-only
+      scope, git as the backup strategy), `system-overview.md`'s module map
+      extended, `notes/roadmap.md` M7 checked off with the Caddy/systemd items
+      explicitly struck through as deliberately skipped, root `README.md` added,
+      five new `ISSUES.md` entries logged (port-hash collisions, backup
+      best-effort/no-retry, the `SIGKILL`-orphans-the-child observation, the
+      Windows auto-install path being reviewed but not run, and the first-launch
+      token-write race). **M7 marked done in `notes/roadmap.md`**.
 
 ### 2026-09-10 — M6 closed: PWA, offline-first read/write, conflict UI
 

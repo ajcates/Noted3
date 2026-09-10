@@ -2,16 +2,30 @@
  * Config Loader (system-overview.md §1).
  *
  * Reads `NOTES_DIR`, `PORT`, and `AUTH_TOKEN` from an environment and returns
- * a typed {@link Config}. Fails fast — the roadmap (M1) wants a boot-time
- * error if `NOTES_DIR` is missing or not a directory, so this deliberately
- * does one `stat` rather than staying purely env-in/config-out.
+ * a typed {@link Config}. Fails fast if `NOTES_DIR` is set but not a real
+ * directory.
+ *
+ * M7 (`notes/roadmap.md`) changed what "unset" means for all three: `noted`
+ * is meant to be launched from inside a vault with no config at all, so each
+ * one now has a deterministic default instead of being required —
+ * `NOTES_DIR` defaults to the current directory, `PORT` to a hash of its
+ * absolute path ({@link derivePort} — same folder, same port, every time),
+ * and `AUTH_TOKEN` to a token persisted per-vault outside `NOTES_DIR`
+ * ({@link getOrCreateToken}, so it never ends up inside the git-backed vault).
+ * An explicit env var still wins over all three defaults, so `deno task dev`
+ * / `deno task start` / the test suite are unaffected.
  */
 
+import { resolve } from "@std/path";
 import type { Config } from "./types.ts";
+import { derivePort } from "./derive-port.ts";
+import { getOrCreateToken, resolveStateDir } from "./vault-state.ts";
 
 /** Minimal view of the environment, so tests can pass a plain object. */
 export interface Env {
   get(key: string): string | undefined;
+  /** Defaults to `Deno.cwd()` in production; injectable for tests. */
+  cwd(): string;
 }
 
 export class ConfigError extends Error {
@@ -21,20 +35,16 @@ export class ConfigError extends Error {
   }
 }
 
-const DEFAULT_PORT = 8000;
-
 /**
- * Resolve runtime config from `env`, verifying that `NOTES_DIR` points at an
- * existing directory.
+ * Resolve runtime config from `env`. `NOTES_DIR`/`PORT`/`AUTH_TOKEN` each
+ * fall back to a deterministic default when unset (see module doc); an
+ * explicit env var always wins.
  *
- * @throws {ConfigError} if `NOTES_DIR` is unset / not a directory, `PORT` is
- *   not a valid port number, or `AUTH_TOKEN` is unset or blank.
+ * @throws {ConfigError} if `NOTES_DIR` (given or defaulted) isn't a real
+ *   directory, or `PORT` is given but not a valid port number.
  */
 export async function loadConfig(env: Env): Promise<Config> {
-  const notesDir = env.get("NOTES_DIR")?.trim();
-  if (!notesDir) {
-    throw new ConfigError("NOTES_DIR is required");
-  }
+  const notesDir = resolve(env.get("NOTES_DIR")?.trim() || env.cwd());
 
   let stat: Deno.FileInfo;
   try {
@@ -51,18 +61,17 @@ export async function loadConfig(env: Env): Promise<Config> {
     throw new ConfigError(`NOTES_DIR is not a directory: ${notesDir}`);
   }
 
-  const port = parsePort(env.get("PORT"));
+  const port = parsePort(env.get("PORT")) ?? derivePort(notesDir);
 
-  const authToken = env.get("AUTH_TOKEN")?.trim();
-  if (!authToken) {
-    throw new ConfigError("AUTH_TOKEN is required");
-  }
+  const authToken = env.get("AUTH_TOKEN")?.trim() ||
+    await getOrCreateToken(notesDir, resolveStateDir(env));
 
   return { notesDir, port, authToken };
 }
 
-function parsePort(raw: string | undefined): number {
-  if (raw === undefined || raw.trim() === "") return DEFAULT_PORT;
+/** `undefined` means "unset — use the derived default", not "use 8000". */
+function parsePort(raw: string | undefined): number | undefined {
+  if (raw === undefined || raw.trim() === "") return undefined;
   const port = Number(raw);
   if (!Number.isInteger(port) || port < 1 || port > 65_535) {
     throw new ConfigError(`PORT must be an integer in 1..65535, got: ${raw}`);

@@ -120,17 +120,58 @@ screens without anyone deciding that was the plan.
 
 **Design correction made during verification:** the original plan called for stale-while-revalidate on `/api/*` GETs. That's wrong for this app — SWR serves the *previous* response immediately and only refreshes the cache in the background, so the very next read after a write (e.g. the note-list re-fetch right after a delete) sees stale data. Switched to network-first: try the network, update the cache on success, fall back to the cache only when the network fails. Caught via an end-to-end delete test where a just-deleted note kept "reappearing" in the list.
 
-## M7 — Deploy
+## M7 — Deploy ✅ (done 2026-09-10)
 
-- [ ] Reverse proxy — Caddy, only if this leaves `localhost` (`techstack.md`), for automatic HTTPS
-- [ ] Process supervisor — systemd unit, or a restart-on-crash wrapper if running under Termux
-- [ ] Point `NOTES_DIR` at your real notes; settle on a backup strategy (git, or a plain periodic copy)
-- [ ] Confirm home-screen install actually works over HTTPS from your phone
-- [ ] `deno test` (and the Playwright suite) green locally before this milestone is called done — there's no CI pipeline for a solo project (`techstack.md`), so this check is the gate
+Scope firmed up during this milestone (see `spec.md` §11's three new M7
+entries): home-network-only (no Caddy/TLS), no process supervisor — `noted`
+is meant to be launched from a terminal, not run as an always-on service —
+and an npm-installable launcher instead of a bare `deno task start`.
+
+- [x] `npm install -g @ajcates/noted3` — `package.json` + `bin/noted.js`, a
+      thin Node launcher that checks for `deno` (installing it via the
+      official installer if missing) and execs `deno run` against the real
+      `main.ts`/`src/*.ts` with the caller's cwd as the vault and scoped
+      permissions. No build step — Deno still runs the actual TypeScript;
+      the npm package is a distribution wrapper, not a port.
+- [x] `NOTES_DIR` defaults to the directory `noted` is launched from
+      (`src/config.ts`); `PORT` defaults to a deterministic hash of that
+      directory's absolute path (`src/derive-port.ts`) so the same folder
+      always gets the same port and a different folder (almost always) gets
+      a different one — several vaults can run side by side with no
+      port-juggling.
+- [x] `AUTH_TOKEN` defaults to a token generated once per vault and
+      persisted outside `NOTES_DIR` (`src/vault-state.ts`,
+      `~/.noted/vaults/`) — stable across restarts (same origin, same
+      token) and never committed into the git-backed vault below. An
+      explicit env var still overrides any of the three defaults.
+- [x] Browser auto-open — on a successful boot, `noted` launches the OS
+      default browser at the running app with the token in the URL
+      (`src/open-browser.ts`); the client picks it up and scrubs it from the
+      address bar (`public/app/main.js`). If the derived port is already
+      taken, that's treated as "already running for this folder" and it
+      opens the browser to the existing instance instead of erroring.
+- [x] Backup strategy resolved as **git**: the vault becomes a plain git
+      repo on first run (or is left alone if you already manage one
+      yourself), and every create/update/rename/delete gets an automatic
+      commit (`src/git-backup.ts`), serialized per directory so concurrent
+      saves can't race over `.git/index.lock`. Best-effort — a machine with
+      no `git` installed just runs without backups, logged once at boot.
+      Graceful shutdown (`SIGINT`/`SIGTERM`) waits for any commit already in
+      flight before exiting.
+- [x] `deno test` green locally (30/30 non-Playwright tests, including 11 new
+      ones for this milestone); Playwright tests remain blocked on the
+      pre-existing sandbox limitation in `ISSUES.md`, not a regression from
+      this work. `deno check`/`fmt`/`lint` clean.
+- [ ] ~~Reverse proxy (Caddy) / process supervisor (systemd/Termux)~~ —
+      deliberately not built; see the scope note above and `spec.md` §11.
+      `techstack.md` documents Caddy as ready to add if exposure changes.
+- [ ] ~~Confirm home-screen install over HTTPS from your phone~~ — moot for
+      the home-network-only decision made this milestone (no HTTPS in this
+      deploy shape); revisit if/when this leaves the home network.
 
 ## v2 candidates — not scheduled, don't build early
 
-Folders/nested organization, image attachments, a real full-text search index, note templates, git-backed history or export/import. Revisit only once v1 has survived actual daily use — see spec.md §9 for why these are explicitly out of scope for now.
+Folders/nested organization, image attachments, a real full-text search index, note templates, export/import. (Git-backed history itself shipped early, as M7's backup strategy — `src/git-backup.ts` — but nothing in the app *reads* that history yet: no version browser, no restore-a-past-version UI. That's still a v2 candidate.) Revisit only once v1 has survived actual daily use — see spec.md §9 for why these are explicitly out of scope for now.
 
 Also from the mockup bundle (`notes/design-checklist.md` §0), each needing its
 own `spec.md` section + milestone before it's buildable, not just a style

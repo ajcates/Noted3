@@ -5,12 +5,30 @@
  * loaded directly as an ES module.
  */
 
+import * as api from "./api.js";
 import { AppShell } from "./app-shell.js";
 import { NoteList } from "./note-list.js";
 import { NoteEditor } from "./note-editor.js";
 import { BacklinksPanel } from "./backlinks-panel.js";
 import { SearchView } from "./search-view.js";
 import { TagBrowser } from "./tag-browser.js";
+
+// M7 (notes/roadmap.md): `noted` opens the browser itself with the vault's
+// auth token in the URL (`main.ts`'s onListen), so the app logs itself in
+// instead of making you paste the token from the footer field every launch.
+// Pulled out of the URL immediately and never left in the address bar/history.
+const urlParams = new URLSearchParams(location.search);
+const tokenFromUrl = urlParams.get("token");
+if (tokenFromUrl) {
+  api.setToken(tokenFromUrl);
+  urlParams.delete("token");
+  const query = urlParams.toString();
+  history.replaceState(
+    null,
+    "",
+    location.pathname + (query ? `?${query}` : "") + location.hash,
+  );
+}
 
 customElements.define("app-shell", AppShell);
 customElements.define("note-list", NoteList);

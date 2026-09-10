@@ -107,10 +107,17 @@ Writes should be idempotent enough to support the offline sync-queue replaying t
 
 ## 8. Deployment
 
-- Single Deno process, run via `deno run --allow-read=$NOTES_DIR --allow-write=$NOTES_DIR --allow-net main.ts` (scope permissions tightly to the notes directory — don't grant blanket `--allow-read`/`--allow-write`).
-- Config via environment variables: `NOTES_DIR`, `PORT`, auth token/passphrase.
-- Suggested to run under a process supervisor (systemd unit, or `pm2`/a simple restart-on-crash wrapper) so it survives reboots on whatever machine hosts it — including Termux on Android if that's the target, matching your existing on-device Android tooling.
-- HTTPS: needed for full PWA features (service worker, installability) on anything other than `localhost` — a reverse proxy (Caddy is the simplest for auto-TLS) in front of the Deno process is the easiest path if this is exposed beyond your home network.
+- Single Deno process, permissions scoped to what it actually touches: `NOTES_DIR` (the vault) and `~/.noted` (per-vault state — the persisted auth token, kept outside `NOTES_DIR` since M7 makes that directory a git repo). Don't grant blanket `--allow-read`/`--allow-write`.
+- _As built (M7):_ shipped as `npm install -g @ajcates/noted3` — a thin launcher (`bin/noted.js`) that ensures `deno` is present (installing it via the official installer if not) and execs `deno run` against the real TypeScript source with the caller's actual working directory as `NOTES_DIR`. Running `deno task start` directly still works identically; the npm package is a convenience wrapper, not a different app.
+- Config via environment variables: `NOTES_DIR`, `PORT`, auth token — _as built (M7):_ each now has a deterministic default instead of being required, so `noted` needs no `.env`/setup to run from inside a fresh vault directory:
+  - `NOTES_DIR` defaults to the current directory.
+  - `PORT` defaults to a hash of `NOTES_DIR`'s absolute path (`src/derive-port.ts`) — the same folder always gets the same port back across restarts; a different folder (almost always) gets a different one, so several vaults can run side by side with no port-juggling.
+  - `AUTH_TOKEN` defaults to a token generated once per vault and persisted under `~/.noted/vaults/` (`src/vault-state.ts`), so the browser stays logged in (same origin, same token) across restarts without the token ever being committed into the vault's own git history.
+  - An explicit env var still overrides any of the three, unchanged.
+- _As built (M7):_ on a successful boot, `noted` opens the OS's default browser to the running app with the token in the URL (`src/open-browser.ts`); the client reads it and scrubs it from the address bar (`public/app/main.js`). If the derived port is already bound, that's treated as "already running for this folder" and it just opens the browser to the existing instance rather than erroring.
+- _As built (M7):_ backup strategy resolved as **git** — the vault becomes a plain git repo on first run (`git init`, or left alone if you already manage it yourself) and every write is committed automatically (`src/git-backup.ts`), best-effort (a machine with no `git` just runs without backups). See the open-questions entry below for why this was chosen over a periodic-copy job.
+- No process supervisor (systemd unit, Termux restart wrapper) or reverse proxy is set up as part of M7 — the accepted deploy shape for v1 is "you run `noted` from a terminal on your home network," not "always-on server reachable from outside it." Revisit both if that assumption changes (see §11).
+- HTTPS: needed for full PWA features (service worker, installability) on anything other than `localhost` — a reverse proxy (Caddy is the simplest for auto-TLS) in front of the Deno process is the easiest path if this is exposed beyond your home network. Not set up for v1; home-network-only.
 
 ## 9. Non-goals for v1
 
@@ -135,6 +142,12 @@ Writes should be idempotent enough to support the offline sync-queue replaying t
   - _Partly handled (2026-09-05, during M1):_ the Frontmatter Parser (`src/frontmatter.ts`) tolerates missing / partial / malformed frontmatter — it backfills `title` from the filename and `created`/`updated` from the current time on read, and normalizes `tags` to a string array. A read does not rewrite the file; the backfilled values are persisted on the next `PUT`. Still open: sanity-check against a real existing vault before M7.
 - **Client framework**: defaulted to plain JS/Web Components per your past PWA work; flagged Preact as a fallback if the editor + sync-queue state gets hard to manage by hand.
   - _Resolved for M2 (2026-09-05):_ plain **`.js`** ES modules (not `.ts`) + `// @ts-check` + JSDoc, native Web Components, no bundler/transpile — the browser loads the exact file on disk. `deno check`/`lint`/`fmt` still cover it. Rationale + escalation paths (on-the-fly transpile, or Preact) in `system-overview.md` "Client module map".
+- **How `noted` gets installed and launched (M7)**: `techstack.md`/§8 originally assumed a systemd unit or Termux restart wrapper you set up by hand.
+  - _Resolved for M7 (2026-09-10):_ `npm install -g @ajcates/noted3`, run from any directory — no process supervisor, still a plain foreground Deno process you start yourself (`bin/noted.js` is a launcher, not a service manager). Chosen over systemd/Termux because the actual usage pattern is "launch it from a terminal when you want it," not "always-on." Revisit (and add the systemd unit / Termux wrapper this originally called for) if that stops being true.
+- **Whether this ever leaves the home network (M7)**: §8/§11's auth resolution already assumed "home network only" behind Caddy/TLS if exposed further; M7 needed a concrete answer to decide whether to build that reverse-proxy/TLS layer now.
+  - _Resolved for M7 (2026-09-10):_ home network only, no public exposure. Caddy/TLS and the auth hardening §11's "Auth" entry calls for both stay explicitly out of scope until that changes — `techstack.md` documents Caddy as ready to add, not added.
+- **Backup strategy for `NOTES_DIR` (M7)**: `spec.md` §8/roadmap.md M7 left this as "git, or a plain periodic copy," undecided.
+  - _Resolved for M7 (2026-09-10):_ git. The vault becomes a git repo on first run (or is left alone if you already manage it as one yourself) and every write gets an automatic commit (`src/git-backup.ts`) — chosen over a periodic-copy job because it's finer-grained (a commit per save, not per interval) and gives real history for free, matching the git-backed-history idea already listed as a v2 candidate (§10) — this pulls just the backup half of that forward into v1, not full export/import.
 
 ## 12. Design system — Material 3 Expressive
 
