@@ -22,3 +22,11 @@ customElements.define("tag-browser", TagBrowser);
 if (!document.querySelector("app-shell")) {
   document.body.append(new AppShell());
 }
+
+if ("serviceWorker" in navigator) {
+  globalThis.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((cause) => {
+      console.warn("service worker registration failed:", cause);
+    });
+  });
+}
