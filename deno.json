@@ -4,7 +4,8 @@
     "start": "deno run --allow-read=$NOTES_DIR,./public --allow-write=$NOTES_DIR --allow-net --allow-env main.ts",
     "test": "deno test --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys",
     "test:api": "deno test --allow-read --allow-write --allow-net --allow-env tests/e2e/notes-crud.test.ts",
-    "check": "deno check main.ts public/app/main.js"
+    "check": "deno check main.ts public/app/main.js",
+    "check:contrast": "deno run scripts/check-contrast.ts"
   },
   "compilerOptions": {
     "strict": true,

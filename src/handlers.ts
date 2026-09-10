@@ -12,6 +12,7 @@
 import {
   ApiError,
   type Backlink,
+  type ConflictResponse,
   type Filename,
   type Frontmatter,
   type NoteDetail,
@@ -43,6 +44,7 @@ import {
   rewriteWikilinkTarget,
 } from "./markdown.ts";
 import type { NoteIndex } from "./note-index.ts";
+import { firstLine } from "./search.ts";
 
 export interface HandlerContext {
   readonly notesDir: string;
@@ -110,8 +112,14 @@ export const createNote: Handler = async ({ notesDir, index, req }) => {
 
 /**
  * `PUT /api/notes/:filename` — update content. Merges the provided fields onto
- * the existing note and bumps `updated`. (Conflict detection against a
- * client-supplied `updated` is M6, not M1.)
+ * the existing note and bumps `updated`.
+ *
+ * Conflict detection (spec.md §7, M6): an optional `updated` field is the
+ * caller's last-seen timestamp for this note. When present and it doesn't
+ * match the note's *current* `updated`, someone else's write landed first —
+ * respond 409 with a {@link ConflictResponse} (the server's current copy)
+ * instead of overwriting it. Omitting `updated` skips the check and force-
+ * overwrites, as before M6 — kept for callers that don't track it.
  */
 export const updateNote: Handler = async ({ notesDir, index, params, req }) => {
   const filename = parseFilename(params.filename ?? "");
@@ -121,6 +129,12 @@ export const updateNote: Handler = async ({ notesDir, index, params, req }) => {
     index,
   );
   const input = await readJsonObject(req);
+
+  const clientUpdated = optionalString(input, "updated");
+  if (clientUpdated !== undefined && clientUpdated !== existing.updated) {
+    const conflict: ConflictResponse = { error: "conflict", current: existing };
+    return json(conflict, 409);
+  }
 
   const frontmatter: Frontmatter = {
     title: mergedTitle(optionalString(input, "title"), existing.title),
@@ -253,6 +267,8 @@ function buildDetail(
     tags: frontmatter.tags,
     created: frontmatter.created,
     updated: frontmatter.updated,
+    excerpt: firstLine(body),
+    backlinkCount: index.backlinkFilenames(filename).length,
     body,
     links: index.outgoingLinksFor(body),
     html: renderMarkdown(body, (target) => index.resolve(target)),

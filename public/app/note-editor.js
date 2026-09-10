@@ -6,14 +6,18 @@
  * the M2 textarea). Owns no persistence: it emits and the App Shell calls the
  * API:
  *   - `editor-back`
- *   - `editor-save`        — `detail: { filename: string | null, title, body }`
+ *   - `editor-save`        — `detail: { filename: string | null, title, body, updated? }`
+ *     (`updated` is this note's last-seen timestamp, for the Sync Manager's
+ *     conflict check, M6 — absent for a brand-new note)
  *   - `editor-delete`      — `detail: { filename }`
  *   - `editor-create-link` — `detail: { title }` (autocomplete "Create …")
  *   - `editor-error`       — `detail: { message }`
+ *   - `editor-resolve-conflict` — `detail: { filename, choice: "mine" | "theirs" }`
+ *     (M6 — from the conflict banner's two buttons)
  *
- * The App Shell sets `.note` / `.backlinks` / `.noteTitles` before appending
- * this element; those setters just store while disconnected, and
- * `connectedCallback` renders once.
+ * The App Shell sets `.note` / `.backlinks` / `.noteTitles` / `.conflict`
+ * before appending this element; those setters just store while
+ * disconnected, and `connectedCallback` renders once.
  */
 
 import { el, emit } from "./ui.js";
@@ -37,6 +41,14 @@ export class NoteEditor extends HTMLElement {
   #editor = null;
   /** @type {BacklinksPanel | null} */
   #panel = null;
+  /** @type {HTMLElement | null} — holds the format menu; re-rendered without
+   * touching the CodeMirror instance, so toggling it doesn't lose focus,
+   * selection, or undo history. */
+  #formatMenuHost = null;
+  #formatOpen = false;
+  /** @type {{ entry: unknown, current: NoteDetail } | null} — set by the App
+   * Shell when this note has a parked write-queue conflict (M6). */
+  #conflict = null;
 
   /** @param {NoteDetail | null} value */
   set note(value) {
@@ -46,6 +58,12 @@ export class NoteEditor extends HTMLElement {
 
   get note() {
     return this.#note;
+  }
+
+  /** @param {{ entry: unknown, current: NoteDetail } | null} value */
+  set conflict(value) {
+    this.#conflict = value;
+    if (this.isConnected) this.#render();
   }
 
   /** @param {Backlink[]} value */
@@ -73,6 +91,7 @@ export class NoteEditor extends HTMLElement {
     this.#editor?.destroy();
     this.#editor = null;
     this.#panel = null;
+    this.#formatOpen = false;
 
     const note = this.#note;
     this.#titleInput = /** @type {HTMLInputElement} */ (el("input", {
@@ -83,11 +102,20 @@ export class NoteEditor extends HTMLElement {
     }));
 
     const host = el("div", { class: "cm-host" });
+    this.#formatMenuHost = el("div", {});
     this.#panel = note ? new BacklinksPanel() : null;
     if (this.#panel) this.#panel.backlinks = this.#backlinks;
 
     /** @type {(Node)[]} */
-    const kids = [this.#titleInput, host, this.#renderActions(note)];
+    const kids = [];
+    if (note && this.#conflict) kids.push(this.#renderConflictBanner(note));
+    kids.push(
+      this.#titleInput,
+      this.#renderFormatToolbar(),
+      this.#formatMenuHost,
+      host,
+      this.#renderActions(note),
+    );
     if (this.#panel) kids.push(this.#panel);
     this.replaceChildren(...kids);
 
@@ -99,13 +127,136 @@ export class NoteEditor extends HTMLElement {
     });
   }
 
+  /** @param {NoteDetail} note */
+  #renderConflictBanner(note) {
+    return el(
+      "div",
+      { class: "conflict-banner" },
+      el("p", {
+        class: "conflict-message",
+        textContent:
+          "This note was saved from somewhere else while you were editing it.",
+      }),
+      el(
+        "div",
+        { class: "conflict-actions" },
+        el("button", {
+          class: "primary",
+          textContent: "Keep mine",
+          onclick: () =>
+            emit(this, "editor-resolve-conflict", {
+              filename: note.filename,
+              choice: "mine",
+            }),
+        }),
+        el("button", {
+          class: "text-action",
+          textContent: "Keep the other version",
+          onclick: () =>
+            emit(this, "editor-resolve-conflict", {
+              filename: note.filename,
+              choice: "theirs",
+            }),
+        }),
+      ),
+    );
+  }
+
+  #renderFormatToolbar() {
+    return el(
+      "div",
+      { class: "format-toolbar" },
+      el("button", {
+        class: "icon-btn",
+        textContent: "Aa",
+        title: "Format",
+        onclick: () => this.#toggleFormatMenu(),
+      }),
+      el("button", {
+        class: "icon-btn",
+        textContent: "↶",
+        title: "Undo",
+        onclick: () => this.#editor?.undo(),
+      }),
+      el("button", {
+        class: "icon-btn",
+        textContent: "↷",
+        title: "Redo",
+        onclick: () => this.#editor?.redo(),
+      }),
+    );
+  }
+
+  #toggleFormatMenu() {
+    this.#formatOpen = !this.#formatOpen;
+    this.#renderFormatMenu();
+  }
+
+  #renderFormatMenu() {
+    if (!this.#formatMenuHost) return;
+    if (!this.#formatOpen) {
+      this.#formatMenuHost.replaceChildren();
+      return;
+    }
+
+    /**
+     * @param {string} label
+     * @param {string} glyph
+     * @param {() => void} onclick
+     */
+    const cell = (label, glyph, onclick) =>
+      el(
+        "button",
+        { class: "format-cell", onclick },
+        el("span", { class: "glyph", textContent: glyph }),
+        el("span", { class: "label", textContent: label }),
+      );
+    /**
+     * @param {string} label
+     * @param {string} glyph
+     * @param {() => void} onclick
+     */
+    const pill = (label, glyph, onclick) =>
+      el(
+        "button",
+        { class: "format-pill", onclick },
+        el("span", { class: "glyph", textContent: glyph }),
+        el("span", { textContent: label }),
+      );
+
+    this.#formatMenuHost.replaceChildren(
+      el(
+        "div",
+        { class: "format-menu" },
+        el(
+          "div",
+          { class: "format-grid" },
+          cell("Bold", "B", () => this.#editor?.toggleBold()),
+          cell("Italic", "I", () => this.#editor?.toggleItalic()),
+          cell("Strike", "S", () => this.#editor?.toggleStrike()),
+          cell("Heading", "H2", () => this.#editor?.toggleHeading()),
+          cell("List", "•—", () => this.#editor?.toggleList()),
+          cell("Quote", "”", () => this.#editor?.toggleQuote()),
+        ),
+        el(
+          "div",
+          { class: "format-pillrow" },
+          pill("Wikilink", "[[", () => this.#editor?.insertWikilink()),
+          pill("Tag", "#", () => this.#editor?.insertTag()),
+          pill("Code", "‹›", () => this.#editor?.insertCode()),
+        ),
+      ),
+    );
+  }
+
   /** @param {NoteDetail | null} note */
   #renderActions(note) {
     return el(
       "div",
       { class: "actions" },
       el("button", {
-        textContent: "Back",
+        class: "text-action",
+        textContent: "← Back",
         onclick: () => emit(this, "editor-back"),
       }),
       el("button", {
@@ -140,6 +291,7 @@ export class NoteEditor extends HTMLElement {
       filename: this.#note?.filename ?? null,
       title,
       body,
+      updated: this.#note?.updated,
     });
   }
 }

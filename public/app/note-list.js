@@ -9,7 +9,7 @@
  *   - `note-delete` — `detail: { filename }`
  */
 
-import { el, emit } from "./ui.js";
+import { el, emit, renderNoteCard, renderToolbar } from "./ui.js";
 
 /** @typedef {import("./api.js").NoteSummary} NoteSummary */
 
@@ -34,37 +34,38 @@ export class NoteList extends HTMLElement {
 
   #render() {
     this.replaceChildren(
-      el("button", {
-        class: "primary",
-        textContent: "New note",
-        onclick: () => emit(this, "note-new"),
-      }),
       this.#notes.length === 0
         ? el("p", { class: "empty", textContent: "No notes yet." })
-        : el("ul", {}, ...this.#notes.map((n) => this.#renderItem(n))),
+        : el(
+          "div",
+          { class: "card-list" },
+          ...this.#notes.map((n) => this.#renderItem(n)),
+        ),
+      renderToolbar(this),
     );
   }
 
   /** @param {NoteSummary} note */
   #renderItem(note) {
     return el(
-      "li",
+      "div",
       { dataset: { filename: note.filename } },
-      el("button", {
-        class: "title",
-        textContent: note.title,
-        onclick: () => emit(this, "note-open", { filename: note.filename }),
+      renderNoteCard(note, {
+        onOpen: () => emit(this, "note-open", { filename: note.filename }),
       }),
-      el("span", { class: "tags", textContent: note.tags.join(", ") }),
-      el("button", {
-        class: "delete",
-        textContent: "Delete",
-        onclick: () => {
-          if (confirm(`Delete "${note.title}"?`)) {
-            emit(this, "note-delete", { filename: note.filename });
-          }
-        },
-      }),
+      el(
+        "div",
+        { class: "note-row-actions" },
+        el("button", {
+          class: "text-action delete",
+          textContent: "Delete",
+          onclick: () => {
+            if (confirm(`Delete "${note.title}"?`)) {
+              emit(this, "note-delete", { filename: note.filename });
+            }
+          },
+        }),
+      ),
     );
   }
 }

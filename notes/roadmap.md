@@ -55,24 +55,70 @@ One naming note before you start: the `notes/` folder in the project directory i
 - [x] Tag Browser — `GET /api/tags`, `GET /api/tags/:tag`, `<tag-browser>`, header nav
 - [x] Playwright e2e for the autocomplete flow — trigger, filter, select existing, and the "create new" path (with on-disk assertion). 20/20 tests green.
 
-## M5 — Design system integration
+## M5 — Design system integration ✅ (done 2026-09-10)
 
-- [ ] Port the token set from `noted-field-guide.html` into the app's real stylesheet (spec.md §12 has the exact custom properties) — plain CSS, no preprocessor, no CSS-in-JS (`techstack.md`)
-- [ ] Apply tokens to real components: note cards, tag chips, toolbar, FAB — never a hardcoded color/radius
-- [ ] Light/dark via `prefers-color-scheme`, same pattern the field guide already models
-- [ ] Spot-check contrast against real note content, not just the palette swatches
+Full screen-by-screen and element-by-element target list:
+`notes/design-checklist.md` (checked against the mockup bundle in
+`notes/mobile-app-design-project/`). This milestone closes out that
+checklist's §1 (foundations) and the note-list/search/tag-view/editor rows
+of its §2–§3 — the four screens the mockups and the current spec actually
+agree are in scope.
 
-## M6 — PWA & offline-first — budget real time here, it's the hardest milestone
+- [x] Port the OKLCH token set (spec.md §12; full values in
+      `notes/design-checklist.md` §1) into the app's real stylesheet — plain
+      CSS custom properties, no preprocessor, no CSS-in-JS (`techstack.md`)
+      — done 2026-09-10, straight from `notes/noted-field-guide.html`
+- [x] Load Fraunces / Manrope / IBM Plex Mono and assign them by
+      jurisdiction (titles / chrome / filenames+metadata — design-checklist
+      §1) instead of the current `system-ui` default — done 2026-09-10
+- [x] Build the shape system as reusable CSS — done 2026-09-10: mirrored
+      squircle icon buttons (alternating odd/even), the notched snippet
+      card (alternating which corner), the asymmetric commit pill (flat
+      end toward its content). Simplification: alternation is odd/even in
+      a flat list, not the mockup's richer per-screen rotation.
+- [x] Restyle note list (`1a`: card shape, tag + backlink chip, mono stamp —
+      done 2026-09-10, using new `excerpt`/`backlinkCount` fields on
+      `NoteSummary`), search (`1d`: pill field + result cards — done; scope
+      chips and highlighted match spans still open), tag browser (`1j`: pill
+      rows — done; A–Z index and the expander-vs-row-navigates split still
+      open)
+- [x] Editor (`1c`): format pop-menu (Bold/Italic/Strike/Heading/List/Quote
+      grid + Wikilink/Tag/Code pills) and visible undo/redo — done
+      2026-09-10, verified end-to-end via a scripted Playwright session.
+      Simplification: cells don't reflect the current selection's active
+      marks yet (plain actions, not toggle indicators); Snapshot itself is
+      still out (blocked on §0)
+- [x] Docked bottom bar + FAB on every browsing view (note list, search,
+      tags — done 2026-09-10, shared `renderToolbar()`); the editor gets its
+      own sticky docked bar instead (Back/Save/Delete)
+- [x] Light/dark via `prefers-color-scheme` — done 2026-09-10
+- [x] Spot-check contrast against real note content, not just the palette
+      swatches — done 2026-09-10 via `scripts/check-contrast.ts` (real
+      WCAG 2 ratios, not eyeballing): found and fixed 3 pairs under 4.5:1
+      (the tag `#` mark, the "ok" status color, the delete button), every
+      other pair already cleared it
 
-- [ ] `manifest.webmanifest` + icons + `display: standalone`
-- [ ] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell, stale-while-revalidate for API GETs, cache-first for static assets
-- [ ] IndexedDB Cache — direct IndexedDB, no wrapper library (`techstack.md`); note list + recently-opened bodies
-- [ ] Write Queue — durable pending-mutation log, written before any network attempt
-- [ ] Sync Manager — drains the queue on reconnect / background-sync event
-- [ ] Conflict handling — `updated`-timestamp check on replay; "keep mine / keep server's" UI, not a silent overwrite
-- [ ] Playwright e2e test, deliberately: simulate offline → edit a note → reconnect → confirm sync, then force a conflict and confirm the prompt appears
+**Open decisions to make here** (`design-checklist.md` §0): the mockup bundle
+also covers Settings, Version history, an AI edit panel (single + bulk),
+and a folder view — none of which has a `spec.md` entry, and the folder
+view actively contradicts the §9 non-goal on nested folders. Resolve each
+(bring into scope with a real spec section, or explicitly defer) before
+M5 is called done, so the milestone doesn't quietly ship 4 of 9 mockup
+screens without anyone deciding that was the plan.
 
-**Open decision to make here:** the conflict-resolution UI (spec.md §11) deserves its own quick design pass before you build it, not just an inline prompt bolted on.
+## M6 — PWA & offline-first — budget real time here, it's the hardest milestone ✅ done 2026-09-10
+
+- [x] `manifest.webmanifest` + icons + `display: standalone`
+- [x] Service Worker — hand-written, no Workbox (`techstack.md`); precache the app shell, **network-first** for API GETs (not stale-while-revalidate — see note below), cache-first for static assets
+- [x] IndexedDB Cache — direct IndexedDB, no wrapper library (`techstack.md`); note list + recently-opened bodies
+- [x] Write Queue — durable pending-mutation log, written before any network attempt
+- [x] Sync Manager — drains the queue on reconnect / background-sync event
+- [x] Conflict handling — `updated`-timestamp check on replay; "keep mine / keep server's" UI, not a silent overwrite
+- [x] Playwright e2e test, deliberately: simulate offline → edit a note → reconnect → confirm sync, then force a conflict and confirm the prompt appears (`tests/e2e/offline-sync.test.ts`)
+
+**Open decision resolved:** the conflict-resolution UI got its own banner component in the editor (`note-editor.js`'s `#renderConflictBanner`) — "Keep mine" / "Keep the other version", not a silent overwrite or a bare `confirm()`.
+
+**Design correction made during verification:** the original plan called for stale-while-revalidate on `/api/*` GETs. That's wrong for this app — SWR serves the *previous* response immediately and only refreshes the cache in the background, so the very next read after a write (e.g. the note-list re-fetch right after a delete) sees stale data. Switched to network-first: try the network, update the cache on success, fall back to the cache only when the network fails. Caught via an end-to-end delete test where a just-deleted note kept "reappearing" in the list.
 
 ## M7 — Deploy
 
@@ -85,3 +131,11 @@ One naming note before you start: the `notes/` folder in the project directory i
 ## v2 candidates — not scheduled, don't build early
 
 Folders/nested organization, image attachments, a real full-text search index, note templates, git-backed history or export/import. Revisit only once v1 has survived actual daily use — see spec.md §9 for why these are explicitly out of scope for now.
+
+Also from the mockup bundle (`notes/design-checklist.md` §0), each needing its
+own `spec.md` section + milestone before it's buildable, not just a style
+pass: a **Settings screen** (vault path, auth token, sync — none of it
+wired to anything server-side yet), **note version history / snapshots**
+(no versioning API exists), and an **AI edit panel** (single-note and bulk,
+propose-then-commit with a diff preview — no LLM integration exists). The
+folder view above already covers mockup `1i`/part of `1j`.
