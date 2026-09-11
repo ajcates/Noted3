@@ -44,20 +44,25 @@ export class ConfigError extends Error {
  *   directory, or `PORT` is given but not a valid port number.
  */
 export async function loadConfig(env: Env): Promise<Config> {
-  const notesDir = resolve(env.get("NOTES_DIR")?.trim() || env.cwd());
+  const rawDir = resolve(env.get("NOTES_DIR")?.trim() || env.cwd());
 
-  let stat: Deno.FileInfo;
+  // Resolved through symlinks (not just made absolute) so the same physical
+  // vault always produces the same `notesDir` — otherwise a symlinked path
+  // (e.g. macOS's /tmp -> /private/tmp, or a vault reached via a shortcut)
+  // would derive a different port and a different persisted auth token than
+  // the canonical path to the same directory.
+  let notesDir: string;
   try {
-    stat = await Deno.stat(notesDir);
+    notesDir = await Deno.realPath(rawDir);
   } catch (cause) {
     if (cause instanceof Deno.errors.NotFound) {
-      throw new ConfigError(`NOTES_DIR does not exist: ${notesDir}`);
+      throw new ConfigError(`NOTES_DIR does not exist: ${rawDir}`);
     }
     throw new ConfigError(
-      `NOTES_DIR could not be read: ${notesDir} (${(cause as Error).message})`,
+      `NOTES_DIR could not be read: ${rawDir} (${(cause as Error).message})`,
     );
   }
-  if (!stat.isDirectory) {
+  if (!(await Deno.stat(notesDir)).isDirectory) {
     throw new ConfigError(`NOTES_DIR is not a directory: ${notesDir}`);
   }
 

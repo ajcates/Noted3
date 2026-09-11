@@ -95,6 +95,35 @@ Deno.test("loadConfig: defaults NOTES_DIR to cwd, PORT to derivePort, AUTH_TOKEN
   }
 });
 
+Deno.test("loadConfig: resolves through a symlink, so the same physical vault always gets the same notesDir/port/token", async () => {
+  const realDir = await Deno.makeTempDir({ prefix: "noted-cfg-real-" });
+  const home = await Deno.makeTempDir({ prefix: "noted-home-" });
+  const linkParent = await Deno.makeTempDir({ prefix: "noted-cfg-link-" });
+  const link = join(linkParent, "vault-link");
+  try {
+    await Deno.symlink(realDir, link, { type: "dir" });
+
+    const viaLink = await loadConfig({
+      get: (k) => k === "HOME" ? home : undefined,
+      cwd: () => link,
+    });
+    const viaReal = await loadConfig({
+      get: (k) => k === "HOME" ? home : undefined,
+      cwd: () => realDir,
+    });
+
+    // Both must resolve to the same canonical directory, so the derived
+    // port and persisted token are identical however the vault is reached.
+    assertEquals(viaLink.notesDir, viaReal.notesDir);
+    assertEquals(viaLink.port, viaReal.port);
+    assertEquals(viaLink.authToken, viaReal.authToken);
+  } finally {
+    await Deno.remove(linkParent, { recursive: true });
+    await Deno.remove(realDir, { recursive: true });
+    await Deno.remove(home, { recursive: true });
+  }
+});
+
 Deno.test("loadConfig: explicit env vars still win over every default", async () => {
   const notesDir = await Deno.makeTempDir({ prefix: "noted-cfg-" });
   const otherDir = await Deno.makeTempDir({ prefix: "noted-cfg-other-" });
@@ -125,6 +154,14 @@ Deno.test("pickOpener: picks the right command per OS", () => {
   assertEquals(pickOpener("windows", "http://x").cmd, "cmd");
   assertEquals(pickOpener("linux", "http://x").cmd, "xdg-open");
   assert(pickOpener("windows", "http://x").args.includes("http://x"));
+});
+
+Deno.test("pickOpener: Termux (Android) uses termux-open-url, not xdg-open", () => {
+  // Termux reports Deno.build.os === "linux" (not a distinct target), so
+  // this has to come from the isTermux flag, not the os switch.
+  const termux = pickOpener("linux", "http://x", true);
+  assertEquals(termux.cmd, "termux-open-url");
+  assertEquals(termux.args, ["http://x"]);
 });
 
 async function gitAvailable(): Promise<boolean> {
@@ -166,6 +203,48 @@ Deno.test({
       }).output();
       const lines = new TextDecoder().decode(log.stdout).trim();
       assert(lines.includes("save note.md"), `unexpected git log: ${lines}`);
+    } finally {
+      await Deno.remove(notesDir, { recursive: true });
+    }
+  },
+});
+
+Deno.test({
+  name:
+    "git-backup: ensureRepo doesn't clobber an existing local user.name when only user.email is missing",
+  ignore: !(await gitAvailable()),
+  async fn() {
+    const notesDir = await Deno.makeTempDir({ prefix: "noted-git-identity-" });
+    try {
+      // Simulate a repo the user already set up themselves, with a name but
+      // no email configured (a common partial setup) — `ensureRepo` must
+      // treat an already-existing `.git` as "leave it alone" for init, but
+      // ensureRepo only skips identity setup entirely when *both* are
+      // present, so pre-existing name plus missing email is the case that
+      // used to get silently overwritten.
+      await new Deno.Command("git", {
+        args: ["init", "--quiet"],
+        cwd: notesDir,
+      })
+        .output();
+      await new Deno.Command("git", {
+        args: ["config", "user.name", "Real Name"],
+        cwd: notesDir,
+      }).output();
+
+      assert(await ensureRepo(notesDir));
+
+      const name = await new Deno.Command("git", {
+        args: ["config", "user.name"],
+        cwd: notesDir,
+      }).output();
+      assertEquals(new TextDecoder().decode(name.stdout).trim(), "Real Name");
+
+      const email = await new Deno.Command("git", {
+        args: ["config", "user.email"],
+        cwd: notesDir,
+      }).output();
+      assert(email.success, "user.email should have been filled in");
     } finally {
       await Deno.remove(notesDir, { recursive: true });
     }

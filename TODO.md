@@ -6,6 +6,38 @@ first) per `notes/development.md` §5 — they are not deleted.
 
 ## Done
 
+### 2026-09-10 — Post-M7 fixes: Termux/Android install, code-review bugfixes
+
+- [x] **Fixed a real user-reported bug**: `npm install -g @ajcates/noted3`
+      failed on Termux (Android) with `npm error notsup` — `package.json`'s `os`
+      allowlist omitted `android` despite `spec.md` §8 naming Termux as a
+      target. Added `"android"`.
+- [x] Went further since Termux isn't just "Linux" for two other spots: (1)
+      `bin/noted.js` now tries `pkg install -y deno` (Termux's own package
+      manager) before the generic deno.land installer, whose binary isn't
+      guaranteed to run under Termux's bionic libc — the failure message now
+      points at a community workaround instead of the generic docs when both
+      fail; (2) `src/open-browser.ts`'s `pickOpener` detects Termux via the
+      `TERMUX_VERSION` env var and uses `termux-open-url` instead of `xdg-open`.
+      Not verified on a real Termux device (none available here) — logged in
+      `ISSUES.md` as worth a real check.
+- [x] **Code review of the M7 diff** found and fixed 4 bugs (see the prior
+      commit's message for the review itself): `bin/noted.js` never granted
+      read/write permission to an explicit `NOTES_DIR` override (only the launch
+      cwd); `main.ts` interpolated the auth token into the auto-open URL
+      unescaped, corrupting tokens with special characters; `git-backup.ts`'s
+      `ensureRepo` could silently overwrite an existing `user.name` when only
+      `user.email` was missing; `config.ts` resolved `NOTES_DIR` lexically
+      instead of through symlinks, so a symlinked path (e.g. macOS's `/tmp` →
+      `/private/tmp`) derived a different port/token than the canonical one.
+      Regression tests added for the identity and symlink fixes.
+- [x] Verified: `deno fmt`/`lint` clean, `deno check main.ts public/app/main.js`
+      clean (matches the project's actual `check` task scope — `bin/noted.js` is
+      plain Node, syntax-checked with `node --check` instead), 34/34
+      non-Playwright tests green (33 + 1 new Termux `pickOpener` case), manually
+      re-verified the `NOTES_DIR`-override permission fix by running the actual
+      npm launcher end-to-end.
+
 ### 2026-09-10 — M7 closed: npm launcher, cwd-derived config, git-backed auto-backup
 
 - [x] **`derivePort`** (`src/derive-port.ts`) — pure FNV-1a hash of a vault's

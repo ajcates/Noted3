@@ -28,7 +28,9 @@ const config = await loadConfig({
   cwd: () => Deno.cwd(),
 });
 
-const url = `http://localhost:${config.port}/?token=${config.authToken}`;
+const url = `http://localhost:${config.port}/?token=${
+  encodeURIComponent(config.authToken)
+}`;
 
 try {
   const index = await NoteIndex.build(config.notesDir);

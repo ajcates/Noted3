@@ -8,11 +8,21 @@
  * something a boot fails over.
  */
 
-/** Pure: which command + args opens a URL on a given OS. Easy to unit test. */
+/**
+ * Pure: which command + args opens a URL on a given OS. Easy to unit test.
+ *
+ * Termux (Android) reports `Deno.build.os === "linux"` — it's not a distinct
+ * Deno target — but it isn't a desktop Linux install and has no `xdg-open`;
+ * it has its own `termux-open-url` (from the `termux-api` package) instead.
+ * Detected separately via `isTermux` (the `TERMUX_VERSION` env var Termux
+ * sets) rather than folded into `os`, since it isn't one.
+ */
 export function pickOpener(
   os: typeof Deno.build.os,
   url: string,
+  isTermux = false,
 ): { cmd: string; args: string[] } {
+  if (isTermux) return { cmd: "termux-open-url", args: [url] };
   switch (os) {
     case "darwin":
       return { cmd: "open", args: [url] };
@@ -27,7 +37,11 @@ export function pickOpener(
 
 /** Fire-and-forget: spawn the OS opener for `url`. Never throws. */
 export async function openInBrowser(url: string): Promise<void> {
-  const { cmd, args } = pickOpener(Deno.build.os, url);
+  const { cmd, args } = pickOpener(
+    Deno.build.os,
+    url,
+    Deno.env.get("TERMUX_VERSION") !== undefined,
+  );
   try {
     const { success } = await new Deno.Command(cmd, {
       args,

@@ -35,9 +35,33 @@ function denoInstallDir() {
     : path.join(os.homedir(), ".deno", "bin");
 }
 
-function installDeno() {
+function hasCommand(cmd) {
+  return spawnSync(cmd, ["--version"], { stdio: "ignore" }).error === undefined;
+}
+
+/**
+ * Termux (Android) has its own package manager and, unlike every other
+ * supported platform, the generic deno.land installer's prebuilt binary
+ * isn't guaranteed to run there (Termux is bionic-libc, not glibc) — so try
+ * `pkg` first and only fall back to the generic installer if that's not
+ * available or doesn't work. Returns `true` if this left a working `deno` on
+ * PATH.
+ */
+function tryTermuxPackage() {
+  if (process.platform !== "android" || !hasCommand("pkg")) return false;
   console.log(
-    "noted: 'deno' wasn't found on PATH — installing it via the official installer...",
+    "noted: 'deno' wasn't found — trying Termux's package manager (pkg install deno)...",
+  );
+  const result = spawnSync("pkg", ["install", "-y", "deno"], {
+    stdio: "inherit",
+  });
+  return !result.error && result.status === 0 && hasDeno();
+}
+
+/** Runs the official deno.land installer. Exits the process on failure. */
+function installViaOfficialScript() {
+  console.log(
+    "noted: installing Deno via the official installer (https://deno.land/install.sh)...",
   );
   const isWindows = process.platform === "win32";
   const result = isWindows
@@ -53,8 +77,12 @@ function installDeno() {
     );
 
   if (result.error || result.status !== 0) {
+    const hint = process.platform === "android"
+      ? "Termux's bionic libc means the generic installer's binary doesn't always run there — " +
+        "see https://github.com/denoland/deno/issues/15250 for community workarounds (e.g. glibc-runner), or "
+      : "Install it yourself from ";
     console.error(
-      "noted: automatic Deno install failed. Install it yourself from " +
+      `noted: automatic Deno install failed. ${hint}` +
         "https://docs.deno.com/runtime/getting_started/installation/ and re-run `noted`.",
     );
     process.exit(1);
@@ -65,7 +93,9 @@ function installDeno() {
 function resolveDeno() {
   if (hasDeno()) return "deno";
 
-  installDeno();
+  if (tryTermuxPackage()) return "deno";
+
+  installViaOfficialScript();
 
   const installed = path.join(
     denoInstallDir(),
@@ -88,13 +118,20 @@ function main() {
   const stateDir = path.join(home, ".noted");
   const publicDir = path.join(PKG_ROOT, "public");
 
+  // `src/config.ts` lets an explicit NOTES_DIR override the caller's cwd as
+  // the vault — mirror that here, or a custom NOTES_DIR gets no read/write
+  // grant at all and every note operation fails with a permission error.
+  const vaultDir = process.env.NOTES_DIR
+    ? path.resolve(process.env.NOTES_DIR)
+    : CALLER_CWD;
+
   const args = [
     "run",
     "--allow-net",
     "--allow-env",
-    "--allow-run=git,xdg-open,open,cmd,powershell",
-    `--allow-read=${[CALLER_CWD, publicDir, stateDir].join(",")}`,
-    `--allow-write=${[CALLER_CWD, stateDir].join(",")}`,
+    "--allow-run=git,xdg-open,open,cmd,powershell,termux-open-url,pkg",
+    `--allow-read=${[vaultDir, publicDir, stateDir].join(",")}`,
+    `--allow-write=${[vaultDir, stateDir].join(",")}`,
     path.join(PKG_ROOT, "main.ts"),
   ];
 
