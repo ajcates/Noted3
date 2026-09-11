@@ -6,6 +6,36 @@ first) per `notes/development.md` §5 — they are not deleted.
 
 ## Done
 
+### 2026-09-11 — Fixed a real Termux crash: unscoped `--allow-run` needed for LD_PRELOAD
+
+- [x] User tried the previous Termux fix on their actual device:
+      `npm
+      install`/`deno` resolution now worked, but `ensureRepo`'s
+      `isGitAvailable` check crashed with
+      `NotCapable: Requires --allow-run
+      permissions to spawn subprocess with LD_PRELOAD environment variable`.
+      Reproduced locally
+      (`LD_PRELOAD=/nonexistent.so deno run
+      --allow-run=git ...` fails
+      identically; unscoped `--allow-run` succeeds) — Deno requires the unscoped
+      form to spawn _any_ subprocess when an `LD_`/`DYLD_`-prefixed env var is
+      present, since a scoped command allowlist can't stop `LD_PRELOAD` from
+      injecting code into the child regardless of which binary was named. Termux
+      sets `LD_PRELOAD` globally for its own exec-wrapping shim, so the scoped
+      list from M7 failed outright there.
+- [x] Switched `deno.json`'s `dev`/`start` tasks and `bin/noted.js`'s spawned
+      `deno run` args from `--allow-run=git,xdg-open,...` to unscoped
+      `--allow-run`. Broader than before, but `noted` already runs as a trusted
+      single-user process with net + vault read/write, and the scoped list
+      wasn't actually enforcing anything stronger once an `LD_`-prefixed var is
+      present anyway.
+- [x] Verified: `deno fmt`/`lint`/`check` clean; 33/33 non-Playwright tests
+      green (unchanged — this is a permission-flag fix, not covered by the
+      in-process `createApp` tests); confirmed the fix directly by reproducing
+      the exact `NotCapable` error and its resolution in this sandbox. Not yet
+      re-confirmed past this specific error on the user's actual Termux device —
+      logged in `ISSUES.md`.
+
 ### 2026-09-10 — Post-M7 fixes: Termux/Android install, code-review bugfixes
 
 - [x] **Fixed a real user-reported bug**: `npm install -g @ajcates/noted3`

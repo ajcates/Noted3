@@ -148,7 +148,27 @@ gaps into `spec.md` §11.
   which Termux doesn't have. Not fully verified on an actual Termux device (no
   such environment available here) — the `pkg install` fallback path and
   `termux-open-url` both depend on packages (`termux-api`) that may not be
-  installed; worth a real check next time `noted` is run there.
+  installed; worth a real check next time `noted` is run there. **Follow-up,
+  verified live on the user's actual Termux device (2026-09-11):** the
+  install/Deno-resolution fix above worked — `npm install` and `deno` invocation
+  both succeeded — but `ensureRepo`'s `isGitAvailable` check then hit
+  `NotCapable: Requires --allow-run permissions to spawn subprocess with
+  LD_PRELOAD environment variable`.
+  Reproduced and confirmed the cause and fix directly
+  (`LD_PRELOAD=/nonexistent.so deno run --allow-run=git ...` fails with the
+  identical error; `--allow-run` unscoped succeeds): Deno requires the
+  _unscoped_ `--allow-run` to spawn any subprocess at all when an
+  `LD_`/`DYLD_`-prefixed env var is present, because a scoped command allowlist
+  can't protect against `LD_PRELOAD` injecting code into the child regardless of
+  which binary was named — and Termux always sets `LD_PRELOAD` globally for its
+  own exec-wrapping shim. **Closed 2026-09-11**: switched both `deno.json`'s
+  `dev`/`start` tasks and `bin/noted.js`'s spawned args from
+  `--allow-run=git,xdg-open,...` to unscoped `--allow-run`. Broader than the
+  scoped list was, but `noted` already runs as a trusted single-user process
+  with `--allow-net`/read-write over the vault, and the scoped list was never
+  actually enforcing anything stronger once an `LD_`-prefixed var is in the
+  environment. Not yet re-verified on the device past this specific error —
+  worth confirming `noted` reaches a listening server end-to-end there.
 - 2026-09-05 — Deno not installed on the dev machine. **Closed 2026-09-05**:
   installed Deno 2.9.6 via the official install script to
   `C:\Users\ajcates\.deno\bin`.

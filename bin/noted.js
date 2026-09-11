@@ -129,7 +129,13 @@ function main() {
     "run",
     "--allow-net",
     "--allow-env",
-    "--allow-run=git,xdg-open,open,cmd,powershell,termux-open-url,pkg",
+    // Unscoped, not `--allow-run=git,xdg-open,...`: Deno requires the
+    // unscoped form to spawn *any* subprocess when the environment has an
+    // `LD_`/`DYLD_`-prefixed variable set (a scoped allowlist can't protect
+    // against that regardless of which command you named) — and Termux
+    // always sets `LD_PRELOAD` for its own exec-wrapping shim, so a scoped
+    // list here fails outright on Android.
+    "--allow-run",
     `--allow-read=${[vaultDir, publicDir, stateDir].join(",")}`,
     `--allow-write=${[vaultDir, stateDir].join(",")}`,
     path.join(PKG_ROOT, "main.ts"),
