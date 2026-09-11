@@ -19,10 +19,10 @@
 
 import { assertStringIncludes } from "@std/assert";
 import { fromFileUrl, join } from "@std/path";
-import { type Browser, chromium } from "playwright";
+import type { Browser } from "playwright";
 import { createApp } from "../../src/router.ts";
 import { NoteIndex } from "../../src/note-index.ts";
-import { fillEditor } from "./_support.ts";
+import { fillEditor, launchBrowser } from "./_support.ts";
 
 const TOKEN = "test-token";
 const STATIC_DIR = fromFileUrl(new URL("../../public/", import.meta.url));
@@ -48,7 +48,7 @@ Deno.test({
 
     let browser: Browser | undefined;
     try {
-      browser = await chromium.launch({ channel: "chrome" });
+      browser = await launchBrowser();
       const context = await browser.newContext();
       await context.addInitScript(
         (token) => localStorage.setItem("noted.token", token),
@@ -63,7 +63,7 @@ Deno.test({
       await page.locator("input.title").fill("Trip Plan");
       await fillEditor(page, "day 1: arrive");
       await page.getByRole("button", { name: "Save" }).click();
-      await page.locator("button.delete").waitFor();
+      await page.locator("note-editor .actions button.delete").waitFor();
 
       // --- go offline and edit ---
       await context.setOffline(true);
@@ -115,7 +115,7 @@ Deno.test({
 
     let browser: Browser | undefined;
     try {
-      browser = await chromium.launch({ channel: "chrome" });
+      browser = await launchBrowser();
       const context = await browser.newContext();
       await context.addInitScript(
         (token) => localStorage.setItem("noted.token", token),
@@ -130,7 +130,7 @@ Deno.test({
       await page.locator("input.title").fill("Conflict Note");
       await fillEditor(page, "original body");
       await page.getByRole("button", { name: "Save" }).click();
-      await page.locator("button.delete").waitFor();
+      await page.locator("note-editor .actions button.delete").waitFor();
 
       // --- go offline and queue a local edit ---
       await context.setOffline(true);

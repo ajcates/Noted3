@@ -14,10 +14,10 @@
 import { assert, assertStringIncludes } from "@std/assert";
 import { fromFileUrl, join } from "@std/path";
 import { exists } from "@std/fs";
-import { type Browser, chromium } from "playwright";
+import type { Browser } from "playwright";
 import { createApp } from "../../src/router.ts";
 import { NoteIndex } from "../../src/note-index.ts";
-import { readEditor } from "./_support.ts";
+import { launchBrowser, readEditor } from "./_support.ts";
 
 const TOKEN = "test-token";
 const STATIC_DIR = fromFileUrl(new URL("../../public/", import.meta.url));
@@ -41,7 +41,7 @@ Deno.test({
 
     let browser: Browser | undefined;
     try {
-      browser = await chromium.launch({ channel: "chrome" });
+      browser = await launchBrowser();
       const context = await browser.newContext();
       await context.addInitScript(
         (token) => localStorage.setItem("noted.token", token),
@@ -54,7 +54,7 @@ Deno.test({
       await page.getByRole("button", { name: "New note" }).click();
       await page.locator("input.title").fill("Reading List");
       await page.getByRole("button", { name: "Save" }).click();
-      await page.locator("button.delete").waitFor();
+      await page.locator("note-editor .actions button.delete").waitFor();
 
       // New note whose body will link out.
       await page.getByRole("button", { name: "Back" }).click();

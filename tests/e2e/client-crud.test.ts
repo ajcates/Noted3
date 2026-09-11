@@ -14,10 +14,10 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { fromFileUrl, join } from "@std/path";
 import { exists } from "@std/fs";
-import { type Browser, chromium } from "playwright";
+import type { Browser } from "playwright";
 import { createApp } from "../../src/router.ts";
 import { NoteIndex } from "../../src/note-index.ts";
-import { fillEditor } from "./_support.ts";
+import { fillEditor, launchBrowser } from "./_support.ts";
 
 const TOKEN = "test-token";
 const STATIC_DIR = fromFileUrl(new URL("../../public/", import.meta.url));
@@ -43,7 +43,7 @@ Deno.test({
 
     let browser: Browser | undefined;
     try {
-      browser = await chromium.launch({ channel: "chrome" });
+      browser = await launchBrowser();
       const context = await browser.newContext();
       // Provide the auth token the way a returning user would have it.
       await context.addInitScript(
@@ -62,7 +62,7 @@ Deno.test({
       await page.getByRole("button", { name: "Save" }).click();
 
       // after create, the shell routes to the saved note (Delete now shows)
-      await page.locator("button.delete").waitFor();
+      await page.locator("note-editor .actions button.delete").waitFor();
       const created = await Deno.readTextFile(notePath);
       assertStringIncludes(created, "title: Trip Plan");
       assertStringIncludes(created, "day 2: hike");
@@ -78,17 +78,19 @@ Deno.test({
       await page.getByRole("button", { name: "Trip Plan" }).waitFor();
 
       // --- delete from the list ---
-      await page
-        .locator('[data-filename="trip-plan.md"]')
-        .getByRole("button", { name: "Delete" })
-        .click();
+      const row = page.locator('[data-filename="trip-plan.md"]');
+      await row.getByLabel("Actions for Trip Plan").click();
+      await row.getByRole("button", { name: "Delete" }).click();
       await page.getByRole("button", { name: "Trip Plan" }).waitFor({
         state: "detached",
       });
+      for (let i = 0; i < 70 && await exists(notePath); i++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
       assertEquals(await exists(notePath), false);
 
       // list is back to just the seeded welcome note (none here) -> empty state
-      await page.getByText("No notes yet.").waitFor();
+      await page.getByText("A quiet vault").waitFor();
       assert(true);
     } finally {
       await browser?.close();

@@ -3,7 +3,33 @@
  * CodeMirror instance (M4), not a `<textarea>`, so tests go through these.
  */
 
-import type { Page } from "playwright";
+import { type Browser, chromium, type Page } from "playwright";
+
+/** Launch whichever Chromium distribution is available on the machine. */
+export async function launchBrowser(): Promise<Browser> {
+  try {
+    return await chromium.launch({ channel: "chrome" });
+  } catch (chromeError) {
+    for (
+      const executablePath of [
+        Deno.env.get("NOTED_CHROMIUM_PATH"),
+        Deno.build.os === "linux" ? "/usr/bin/chromium" : undefined,
+      ]
+    ) {
+      if (!executablePath) continue;
+      try {
+        return await chromium.launch({ executablePath });
+      } catch {
+        // Try the next known location.
+      }
+    }
+    try {
+      return await chromium.launch();
+    } catch {
+      throw chromeError;
+    }
+  }
+}
 
 /** Replace the CodeMirror body with `text` (types it, so autocomplete still fires). */
 export async function fillEditor(page: Page, text: string): Promise<void> {

@@ -69,18 +69,17 @@ export async function ensureRepo(notesDir: string): Promise<boolean> {
   if (!alreadyRepo) {
     const init = await run(notesDir, ["init", "--quiet"]);
     if (!init.success) return false;
+  }
 
-    // A fresh machine may have no git identity configured at all, which
-    // would otherwise fail every commit. Check `user.name`/`user.email`
-    // independently and only set the ones actually missing — a machine with
-    // one but not the other (a real, common partial setup) must not have its
-    // existing field clobbered.
-    const hasName = (await run(notesDir, ["config", "user.name"])).success;
-    const hasEmail = (await run(notesDir, ["config", "user.email"])).success;
-    if (!hasName) await run(notesDir, ["config", "user.name", "noted"]);
-    if (!hasEmail) {
-      await run(notesDir, ["config", "user.email", "noted@localhost"]);
-    }
+  // A machine may have no git identity configured at all, which would
+  // otherwise fail every commit. Check `user.name`/`user.email`
+  // independently and only set the ones actually missing — including in an
+  // existing repo with a partial local identity.
+  const hasName = (await run(notesDir, ["config", "user.name"])).success;
+  const hasEmail = (await run(notesDir, ["config", "user.email"])).success;
+  if (!hasName) await run(notesDir, ["config", "user.name", "noted"]);
+  if (!hasEmail) {
+    await run(notesDir, ["config", "user.email", "noted@localhost"]);
   }
 
   readyDirs.add(notesDir);

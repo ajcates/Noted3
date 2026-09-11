@@ -11,10 +11,10 @@
 
 import { assert, assertStringIncludes } from "@std/assert";
 import { fromFileUrl } from "@std/path";
-import { type Browser, chromium } from "playwright";
+import type { Browser } from "playwright";
 import { createApp } from "../../src/router.ts";
 import { NoteIndex } from "../../src/note-index.ts";
-import { fillEditor, readEditor } from "./_support.ts";
+import { fillEditor, launchBrowser, readEditor } from "./_support.ts";
 
 const TOKEN = "test-token";
 const STATIC_DIR = fromFileUrl(new URL("../../public/", import.meta.url));
@@ -38,7 +38,7 @@ Deno.test({
 
     let browser: Browser | undefined;
     try {
-      browser = await chromium.launch({ channel: "chrome" });
+      browser = await launchBrowser();
       const context = await browser.newContext();
       await context.addInitScript(
         (token) => localStorage.setItem("noted.token", token),
@@ -52,7 +52,7 @@ Deno.test({
       await page.locator("input.title").fill("Alpha");
       await fillEditor(page, "See [[Beta]] for the plan.");
       await page.getByRole("button", { name: "Save" }).click();
-      await page.locator("button.delete").waitFor();
+      await page.locator("note-editor .actions button.delete").waitFor();
 
       // Create B.
       await page.getByRole("button", { name: "Back" }).click();
@@ -60,7 +60,7 @@ Deno.test({
       await page.locator("input.title").fill("Beta");
       await fillEditor(page, "The beta plan.");
       await page.getByRole("button", { name: "Save" }).click();
-      await page.locator("button.delete").waitFor();
+      await page.locator("note-editor .actions button.delete").waitFor();
 
       // On Beta, the backlinks panel should show Alpha with a snippet.
       const panel = page.locator("backlinks-panel");

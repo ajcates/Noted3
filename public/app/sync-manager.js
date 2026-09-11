@@ -47,6 +47,11 @@ export class SyncManager extends EventTarget {
     return this.#conflicts.get(filename) ?? null;
   }
 
+  /** Filenames currently parked for explicit user conflict resolution. */
+  conflictFilenames() {
+    return [...this.#conflicts.keys()];
+  }
+
   /** Best-effort Background Sync registration; a no-op where unsupported
    * (the `online` listener above still covers reconnect). */
   async requestBackgroundSync() {

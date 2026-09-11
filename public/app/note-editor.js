@@ -21,6 +21,8 @@
  */
 
 import { el, emit } from "./ui.js";
+import { icon } from "./icons.js";
+import { getDraft, saveDraft } from "./preferences.js";
 import { createMarkdownEditor } from "./codemirror-setup.js";
 import { BacklinksPanel } from "./backlinks-panel.js";
 
@@ -46,6 +48,13 @@ export class NoteEditor extends HTMLElement {
    * selection, or undo history. */
   #formatMenuHost = null;
   #formatOpen = false;
+  /** @type {HTMLElement | null} */
+  #syncStatus = null;
+  /** @type {"editing" | "queued" | "synced" | "conflict"} */
+  #syncState = "synced";
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  #draftTimer;
+  #draftId = "new";
   /** @type {{ entry: unknown, current: NoteDetail } | null} — set by the App
    * Shell when this note has a parked write-queue conflict (M6). */
   #conflict = null;
@@ -77,15 +86,38 @@ export class NoteEditor extends HTMLElement {
     this.#noteTitles = value; // read live by the completion source
   }
 
+  /** @param {"editing" | "queued" | "synced" | "conflict"} value */
+  set syncState(value) {
+    this.#syncState = value;
+    this.#updateSyncStatus();
+  }
+
   connectedCallback() {
     this.classList.add("note-editor");
     this.#render();
+    globalThis.visualViewport?.addEventListener("resize", this.#onViewport);
+    this.#onViewport();
   }
 
   disconnectedCallback() {
+    if (this.#syncState === "editing") this.#persistDraft();
     this.#editor?.destroy();
     this.#editor = null;
+    clearTimeout(this.#draftTimer);
+    globalThis.visualViewport?.removeEventListener("resize", this.#onViewport);
   }
+
+  #onViewport = () => {
+    const viewport = globalThis.visualViewport;
+    const covered = viewport
+      ? Math.max(
+        0,
+        globalThis.innerHeight - viewport.height - viewport.offsetTop,
+      )
+      : 0;
+    this.style.setProperty("--keyboard-offset", `${covered}px`);
+    this.classList.toggle("keyboard-open", covered > 100);
+  };
 
   #render() {
     this.#editor?.destroy();
@@ -94,21 +126,37 @@ export class NoteEditor extends HTMLElement {
     this.#formatOpen = false;
 
     const note = this.#note;
+    const draftId = note?.filename ?? "new";
+    this.#draftId = draftId;
+    const draft = getDraft(draftId);
+    const hasRestoredDraft = draft !== null &&
+      (draft.title !== (note?.title ?? "") ||
+        draft.body !== (note?.body ?? ""));
     this.#titleInput = /** @type {HTMLInputElement} */ (el("input", {
       class: "title",
       type: "text",
       placeholder: "Title",
-      value: note?.title ?? "",
+      value: hasRestoredDraft ? draft.title : note?.title ?? "",
+      oninput: () => this.#onEdit(),
     }));
 
     const host = el("div", { class: "cm-host" });
     this.#formatMenuHost = el("div", {});
+    this.#syncStatus = el("span", { class: "editor-sync-status" });
     this.#panel = note ? new BacklinksPanel() : null;
     if (this.#panel) this.#panel.backlinks = this.#backlinks;
 
     /** @type {(Node)[]} */
     const kids = [];
     if (note && this.#conflict) kids.push(this.#renderConflictBanner(note));
+    if (hasRestoredDraft) {
+      kids.push(el(
+        "div",
+        { class: "draft-notice", role: "status" },
+        icon("queued"),
+        el("span", { textContent: "Local draft restored" }),
+      ));
+    }
     kids.push(
       this.#titleInput,
       this.#renderFormatToolbar(),
@@ -121,10 +169,48 @@ export class NoteEditor extends HTMLElement {
 
     this.#editor = createMarkdownEditor({
       parent: host,
-      doc: note?.body ?? "",
+      doc: hasRestoredDraft ? draft.body : note?.body ?? "",
       getNoteTitles: () => this.#noteTitles,
       onCreateNote: (title) => emit(this, "editor-create-link", { title }),
+      onChange: () => this.#onEdit(),
     });
+    this.#updateSyncStatus();
+  }
+
+  #onEdit() {
+    this.#syncState = "editing";
+    this.#updateSyncStatus();
+    clearTimeout(this.#draftTimer);
+    this.#draftTimer = setTimeout(() => {
+      this.#persistDraft();
+    }, 120);
+  }
+
+  #persistDraft() {
+    saveDraft(this.#draftId, {
+      title: this.#titleInput?.value ?? "",
+      body: this.#editor?.getValue() ?? "",
+    });
+  }
+
+  #updateSyncStatus() {
+    if (!this.#syncStatus) return;
+    const labels = {
+      editing: "Editing",
+      queued: "Queued",
+      synced: "Synced",
+      conflict: "Conflict",
+    };
+    const iconName = this.#syncState === "conflict"
+      ? "conflict"
+      : this.#syncState === "synced"
+      ? "check"
+      : "queued";
+    this.#syncStatus.className = `editor-sync-status ${this.#syncState}`;
+    this.#syncStatus.replaceChildren(
+      icon(iconName),
+      el("span", { textContent: labels[this.#syncState] }),
+    );
   }
 
   /** @param {NoteDetail} note */
@@ -168,22 +254,21 @@ export class NoteEditor extends HTMLElement {
       { class: "format-toolbar" },
       el("button", {
         class: "icon-btn",
-        textContent: "Aa",
         title: "Format",
         onclick: () => this.#toggleFormatMenu(),
-      }),
+      }, icon("format")),
       el("button", {
         class: "icon-btn",
-        textContent: "↶",
         title: "Undo",
         onclick: () => this.#editor?.undo(),
-      }),
+      }, icon("undo")),
       el("button", {
         class: "icon-btn",
-        textContent: "↷",
         title: "Redo",
         onclick: () => this.#editor?.redo(),
-      }),
+      }, icon("redo")),
+      el("span", { class: "format-spacer" }),
+      this.#syncStatus,
     );
   }
 
@@ -254,27 +339,27 @@ export class NoteEditor extends HTMLElement {
     return el(
       "div",
       { class: "actions" },
-      el("button", {
-        class: "text-action",
-        textContent: "← Back",
-        onclick: () => emit(this, "editor-back"),
-      }),
-      el("button", {
-        class: "primary save",
-        textContent: "Save",
-        onclick: () => this.#save(),
-      }),
+      el(
+        "button",
+        {
+          class: "primary save",
+          onclick: () => this.#save(),
+        },
+        icon("check"),
+        el("span", { textContent: "Save" }),
+      ),
       note ? el("span", { class: "spacer" }) : null,
       note
-        ? el("button", {
-          class: "delete",
-          textContent: "Delete",
-          onclick: () => {
-            if (confirm(`Delete "${note.title}"?`)) {
-              emit(this, "editor-delete", { filename: note.filename });
-            }
+        ? el(
+          "button",
+          {
+            class: "delete",
+            onclick: () =>
+              emit(this, "editor-delete", { filename: note.filename }),
           },
-        })
+          icon("trash"),
+          el("span", { textContent: "Delete" }),
+        )
         : null,
     );
   }
@@ -292,6 +377,7 @@ export class NoteEditor extends HTMLElement {
       title,
       body,
       updated: this.#note?.updated,
+      draftId: this.#note?.filename ?? "new",
     });
   }
 }

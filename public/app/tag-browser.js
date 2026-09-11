@@ -8,7 +8,15 @@
  *     `note-open`, "All tags" emits `tags-all`
  */
 
-import { el, emit, renderNoteCard, renderToolbar } from "./ui.js";
+import { icon } from "./icons.js";
+import {
+  el,
+  emit,
+  emptyState,
+  renderNoteCard,
+  renderToolbar,
+  sectionRail,
+} from "./ui.js";
 
 /** @typedef {import("./api.js").TagCount} TagCount */
 /** @typedef {import("./api.js").NoteSummary} NoteSummary */
@@ -20,6 +28,11 @@ import { el, emit, renderNoteCard, renderToolbar } from "./ui.js";
 export class TagBrowser extends HTMLElement {
   /** @type {TagView} */
   #view = { kind: "all", tags: [] };
+  /** @type {Record<string, "queued" | "synced" | "conflict">} */
+  #syncStates = {};
+  #queueCount = 0;
+  /** @type {string | null} */
+  #selectedFilename = null;
 
   /** @param {TagCount[]} tags */
   set tags(tags) {
@@ -33,6 +46,24 @@ export class TagBrowser extends HTMLElement {
     this.#render();
   }
 
+  /** @param {Record<string, "queued" | "synced" | "conflict">} value */
+  set syncStates(value) {
+    this.#syncStates = value;
+    if (this.isConnected) this.#render();
+  }
+
+  /** @param {number} value */
+  set queueCount(value) {
+    this.#queueCount = value;
+    if (this.isConnected) this.#render();
+  }
+
+  /** @param {string | null} value */
+  set selectedFilename(value) {
+    this.#selectedFilename = value;
+    if (this.isConnected) this.#render();
+  }
+
   connectedCallback() {
     this.classList.add("tag-browser");
     this.#render();
@@ -43,7 +74,7 @@ export class TagBrowser extends HTMLElement {
       ...(this.#view.kind === "all"
         ? this.#renderAll(this.#view.tags)
         : this.#renderOne(this.#view.tag, this.#view.notes)),
-      renderToolbar(this),
+      renderToolbar(this, { active: "tags", queueCount: this.#queueCount }),
     );
   }
 
@@ -51,12 +82,20 @@ export class TagBrowser extends HTMLElement {
   #renderAll(tags) {
     if (tags.length === 0) {
       return [
-        el("h2", { textContent: "Tags" }),
-        el("p", { class: "empty", textContent: "No tags yet." }),
+        sectionRail("Tags", "0 tags"),
+        emptyState(
+          "tags",
+          "No tags yet",
+          "Add #tags in a note to build collections here.",
+          { label: "Create a note", onclick: () => emit(this, "note-new") },
+        ),
       ];
     }
     return [
-      el("h2", { textContent: "Tags" }),
+      sectionRail(
+        "Tags",
+        `${tags.length} ${tags.length === 1 ? "tag" : "tags"}`,
+      ),
       el(
         "div",
         { class: "tag-list" },
@@ -64,7 +103,7 @@ export class TagBrowser extends HTMLElement {
           el(
             "div",
             { class: "tag-row" },
-            el("span", { class: "mark", textContent: "#" }),
+            el("span", { class: "mark" }, icon("tag")),
             el("button", {
               class: "name",
               textContent: tag,
@@ -83,14 +122,25 @@ export class TagBrowser extends HTMLElement {
    */
   #renderOne(tag, notes) {
     return [
-      el("button", {
-        class: "text-action",
-        textContent: "← All tags",
-        onclick: () => emit(this, "tags-all"),
-      }),
-      el("h2", { textContent: `#${tag}` }),
+      el(
+        "button",
+        {
+          class: "text-action",
+          onclick: () => emit(this, "tags-all"),
+        },
+        icon("back"),
+        el("span", { textContent: "All tags" }),
+      ),
+      sectionRail(
+        `#${tag}`,
+        `${notes.length} ${notes.length === 1 ? "note" : "notes"}`,
+      ),
       notes.length === 0
-        ? el("p", { class: "empty", textContent: "No notes with this tag." })
+        ? emptyState(
+          "tags",
+          "Nothing here",
+          `No notes currently use #${tag}.`,
+        )
         : el(
           "div",
           { class: "card-list" },
@@ -98,6 +148,8 @@ export class TagBrowser extends HTMLElement {
             renderNoteCard(note, {
               onOpen: () =>
                 emit(this, "note-open", { filename: note.filename }),
+              syncState: this.#syncStates[note.filename] ?? "synced",
+              selected: this.#selectedFilename === note.filename,
             })
           ),
         ),

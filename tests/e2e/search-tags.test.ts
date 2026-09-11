@@ -108,6 +108,46 @@ Deno.test("search reflects create, edit, and delete", async () => {
   });
 });
 
+Deno.test("search scopes isolate titles, tags, and outgoing links", async () => {
+  await withServer(async (call) => {
+    const alpha = await (await create(call, {
+      title: "Alpha title",
+      body: "body-only needle and [[Linked needle]]",
+    })).json();
+    await call(`/api/notes/${alpha.filename}`, {
+      method: "PUT",
+      body: JSON.stringify({ tags: ["tag-needle"] }),
+    });
+    await create(call, { title: "Needle heading", body: "plain body" });
+
+    const filenames = async (scope: string) =>
+      ((await (await call(`/api/search?q=needle&scope=${scope}`))
+        .json()) as SearchResult[]).map((result) => result.filename);
+
+    assertEquals(await filenames("titles"), ["needle-heading.md"]);
+    assertEquals(await filenames("tags"), ["alpha-title.md"]);
+    assertEquals(await filenames("links"), ["alpha-title.md"]);
+    assertEquals((await filenames("everything")).sort(), [
+      "alpha-title.md",
+      "needle-heading.md",
+    ]);
+  });
+});
+
+Deno.test("GET /api/meta returns a display-safe vault name and live count", async () => {
+  await withServer(async (call) => {
+    await create(call, { title: "One" });
+    await create(call, { title: "Two" });
+    const meta = await (await call("/api/meta")).json() as {
+      vaultName: string;
+      noteCount: number;
+    };
+    assertEquals(meta.noteCount, 2);
+    assertEquals(typeof meta.vaultName, "string");
+    assertEquals(meta.vaultName.length > 0, true);
+  });
+});
+
 Deno.test("GET /api/tags counts tags; GET /api/tags/:tag lists notes", async () => {
   await withServer(async (call) => {
     // POST doesn't take tags; PUT does — create then tag.

@@ -127,6 +127,12 @@ function main() {
 
   const args = [
     "run",
+    // Keep the caller's cwd as the vault, but load dependency aliases from
+    // the package. Deno discovers deno.json from cwd rather than from an
+    // absolute entrypoint, so a global npm install otherwise cannot resolve
+    // bare imports such as `@std/path`.
+    "--config",
+    path.join(PKG_ROOT, "deno.json"),
     "--allow-net",
     "--allow-env",
     // Unscoped, not `--allow-run=git,xdg-open,...`: Deno requires the

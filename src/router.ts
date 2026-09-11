@@ -17,6 +17,7 @@ import {
   deleteNote,
   getBacklinks,
   getNote,
+  getVaultMeta,
   type Handler,
   listNotes,
   listTags,
@@ -44,6 +45,7 @@ interface Route {
 }
 
 const ROUTES: readonly Route[] = [
+  route("GET", "/api/meta", getVaultMeta),
   route("GET", "/api/notes", listNotes),
   route("POST", "/api/notes", createNote),
   route("GET", "/api/notes/:filename", getNote),

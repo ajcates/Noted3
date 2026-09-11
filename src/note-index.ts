@@ -23,6 +23,7 @@ import type {
   NoteSummary,
   OutgoingLink,
   SearchResult,
+  SearchScope,
   TagCount,
 } from "./types.ts";
 import { listNoteFiles } from "./file-store.ts";
@@ -184,7 +185,7 @@ export class NoteIndex {
   }
 
   /** Naive title+body substring search over the current snapshot. */
-  search(query: string): SearchResult[] {
+  search(query: string, scope: SearchScope = "everything"): SearchResult[] {
     return searchNotes(
       [...this.#entries.values()].map((e) => ({
         filename: e.filename,
@@ -194,8 +195,10 @@ export class NoteIndex {
         excerpt: firstLine(e.body),
         backlinkCount: this.#backlinkCount(e.filename),
         body: e.body,
+        outgoingTargets: e.outgoingTargets,
       })),
       query,
+      scope,
     );
   }
 

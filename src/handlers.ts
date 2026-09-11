@@ -16,7 +16,9 @@ import {
   type Filename,
   type Frontmatter,
   type NoteDetail,
+  type SearchScope,
 } from "./types.ts";
+import { basename } from "@std/path";
 import {
   deleteNoteFile,
   noteMtime,
@@ -59,6 +61,10 @@ export type Handler = (ctx: HandlerContext) => Response | Promise<Response>;
 
 /** `GET /api/notes` — summaries for the note browser, newest first (from the index). */
 export const listNotes: Handler = (ctx) => json(ctx.index.list());
+
+/** `GET /api/meta` — display-safe vault identity for the client masthead. */
+export const getVaultMeta: Handler = ({ notesDir, index }) =>
+  json({ vaultName: basename(notesDir), noteCount: index.list().length });
 
 /** `GET /api/notes/:filename` — full content of one note, plus outgoing links. */
 export const getNote: Handler = async ({ notesDir, index, params }) => {
@@ -212,8 +218,14 @@ export const deleteNote: Handler = async ({ notesDir, index, params }) => {
 };
 
 /** `GET /api/search?q=` — naive title+body search over the index. */
-export const search: Handler = ({ index, req }) =>
-  json(index.search(new URL(req.url).searchParams.get("q") ?? ""));
+export const search: Handler = ({ index, req }) => {
+  const params = new URL(req.url).searchParams;
+  const rawScope = params.get("scope") ?? "everything";
+  const scope: SearchScope = ["titles", "tags", "links"].includes(rawScope)
+    ? rawScope as SearchScope
+    : "everything";
+  return json(index.search(params.get("q") ?? "", scope));
+};
 
 /** `GET /api/tags` — every tag with its note count. */
 export const listTags: Handler = ({ index }) => json(index.tagCounts());

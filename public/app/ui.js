@@ -5,6 +5,8 @@
  * `document.createElement` + property assignment + `append`.
  */
 
+import { icon } from "./icons.js";
+
 /**
  * Build an element.
  *
@@ -74,26 +76,149 @@ export function formatStamp(iso) {
 }
 
 /**
+ * Text with case-insensitive query matches wrapped in `<mark>`.
+ * @param {string} value
+ * @param {string} query
+ * @returns {DocumentFragment}
+ */
+export function highlightedText(value, query) {
+  const fragment = document.createDocumentFragment();
+  const needle = query.trim();
+  if (needle === "") {
+    fragment.append(value);
+    return fragment;
+  }
+  const lower = value.toLocaleLowerCase();
+  const lowerNeedle = needle.toLocaleLowerCase();
+  let cursor = 0;
+  for (;;) {
+    const at = lower.indexOf(lowerNeedle, cursor);
+    if (at < 0) break;
+    fragment.append(value.slice(cursor, at));
+    fragment.append(
+      el("mark", { textContent: value.slice(at, at + needle.length) }),
+    );
+    cursor = at + needle.length;
+  }
+  fragment.append(value.slice(cursor));
+  return fragment;
+}
+
+/** @param {string} title @param {string} detail */
+export function sectionRail(title, detail) {
+  return el(
+    "header",
+    { class: "section-rail" },
+    el("h2", { textContent: title }),
+    el("span", { class: "section-detail", textContent: detail }),
+  );
+}
+
+/**
+ * Branded illustration + recovery/action copy for an otherwise blank view.
+ * @param {"notes" | "search" | "tags" | "offline" | "select"} kind
+ * @param {string} title
+ * @param {string} message
+ * @param {{ label: string, onclick: () => void } | null} [action]
+ */
+export function emptyState(kind, title, message, action = null) {
+  return el(
+    "section",
+    { class: `empty-state empty-${kind}` },
+    el(
+      "div",
+      { class: "empty-art", "aria-hidden": "true" },
+      el("span", { class: "empty-sheet" }),
+      el("span", { class: "empty-orbit" }),
+      el("span", { class: "empty-spark" }),
+    ),
+    el("h3", { textContent: title }),
+    el("p", { textContent: message }),
+    action
+      ? el("button", {
+        class: "primary empty-action",
+        textContent: action.label,
+        onclick: action.onclick,
+      })
+      : null,
+  );
+}
+
+/** @param {number} [count] */
+export function skeletonList(count = 4) {
+  return el(
+    "div",
+    { class: "card-list skeleton-list", ariaLabel: "Loading notes" },
+    ...Array.from({ length: count }, () =>
+      el(
+        "div",
+        { class: "note-card skeleton-card" },
+        el("span", { class: "skeleton-line wide" }),
+        el("span", { class: "skeleton-line" }),
+        el("span", { class: "skeleton-line short" }),
+      )),
+  );
+}
+
+/**
  * The docked bottom bar + FAB shared by every browsing view (Note List,
  * Search, Tag Browser): a Tags shortcut on the left, the one committing
  * action ("New note") on the right. `target` is whatever should carry the
  * emitted `note-new` event (usually `this`).
  * @param {EventTarget} target
+ * @param {{ active?: "home" | "search" | "tags", queueCount?: number }} [options]
  */
-export function renderToolbar(target) {
+export function renderToolbar(target, options = {}) {
+  /**
+   * @param {"home" | "search" | "tags"} name
+   * @param {string} label
+   * @param {string} href
+   */
+  const navItem = (name, label, href) =>
+    el(
+      "a",
+      {
+        class: `bottom-nav-item ${options.active === name ? "active" : ""}`,
+        href,
+        ariaLabel: label,
+      },
+      icon(name === "tags" ? "tag" : name),
+      el("span", { textContent: label }),
+    );
   return el(
     "div",
     { class: "toolbar" },
     el(
       "nav",
-      {},
-      el("a", { class: "icon-btn", href: "#/tags", textContent: "#" }),
+      { ariaLabel: "Primary" },
+      navItem("home", "Notes", "#/"),
+      navItem("search", "Search", "#/search"),
+      navItem("tags", "Tags", "#/tags"),
     ),
-    el("button", {
-      class: "fab-new",
-      textContent: "✎ New note",
-      onclick: () => emit(target, "note-new"),
-    }),
+    options.queueCount
+      ? el(
+        "button",
+        {
+          class: "queue-button",
+          ariaLabel: `${options.queueCount} queued change${
+            options.queueCount === 1 ? "" : "s"
+          }`,
+          onclick: () => emit(target, "queue-open"),
+        },
+        icon("queued"),
+        el("span", { textContent: String(options.queueCount) }),
+      )
+      : null,
+    el(
+      "button",
+      {
+        class: "fab-new",
+        onclick: () => emit(target, "note-new"),
+        ariaLabel: "New note",
+      },
+      icon("edit"),
+      el("span", { textContent: "New" }),
+    ),
   );
 }
 
@@ -103,16 +228,35 @@ export function renderToolbar(target) {
  * chip, and a mono updated stamp. Used by the Note List and the Tag Browser's
  * per-tag list so a note reads the same wherever it's listed.
  * @param {import("./api.js").NoteSummary} note
- * @param {{ onOpen: () => void }} handlers
+ * @param {{ onOpen: () => void, syncState?: "queued" | "synced" | "conflict", query?: string, snippet?: string, selected?: boolean }} handlers
  */
-export function renderNoteCard(note, { onOpen }) {
+export function renderNoteCard(
+  note,
+  {
+    onOpen,
+    syncState = "synced",
+    query = "",
+    snippet = note.excerpt,
+    selected = false,
+  },
+) {
   /** @type {HTMLElement[]} */
   const chips = [];
   const [firstTag] = note.tags;
   if (firstTag) {
     chips.push(
-      el("span", { class: "chip tertiary", textContent: `#${firstTag}` }),
+      el(
+        "span",
+        { class: "chip tertiary" },
+        highlightedText(`#${firstTag}`, query),
+      ),
     );
+  }
+  if (note.tags.length > 1) {
+    chips.push(el("span", {
+      class: "chip outline more-tags",
+      textContent: `+${note.tags.length - 1}`,
+    }));
   }
   if (note.backlinkCount > 0) {
     chips.push(el("span", {
@@ -125,16 +269,37 @@ export function renderNoteCard(note, { onOpen }) {
 
   return el(
     "button",
-    { class: "note-card", onclick: onOpen },
-    el("h4", { textContent: note.title }),
-    note.excerpt === ""
+    {
+      class: `note-card sync-${syncState} ${selected ? "selected" : ""}`,
+      onclick: onOpen,
+      ariaCurrent: selected ? "page" : null,
+    },
+    el("h4", {}, highlightedText(note.title, query)),
+    snippet === ""
       ? null
-      : el("p", { class: "snippet", textContent: note.excerpt }),
+      : el("p", { class: "snippet" }, highlightedText(snippet, query)),
     el(
       "div",
       { class: "meta-row" },
       el("div", { class: "chips" }, ...chips),
-      el("span", { class: "stamp", textContent: formatStamp(note.updated) }),
+      el(
+        "div",
+        { class: "card-state" },
+        syncState === "synced" ? null : el(
+          "span",
+          {
+            class: `sync-badge ${syncState}`,
+            title: syncState === "conflict"
+              ? "Needs attention"
+              : "Waiting to sync",
+          },
+          icon(syncState === "conflict" ? "conflict" : "queued"),
+          el("span", {
+            textContent: syncState === "conflict" ? "Conflict" : "Queued",
+          }),
+        ),
+        el("span", { class: "stamp", textContent: formatStamp(note.updated) }),
+      ),
     ),
   );
 }

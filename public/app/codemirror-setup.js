@@ -332,6 +332,7 @@ function insertWikilinkTrigger(view) {
  *   doc: string,
  *   getNoteTitles: () => string[],
  *   onCreateNote: (title: string) => void,
+ *   onChange?: (value: string) => void,
  * }} opts
  * @returns {{
  *   view: EditorView,
@@ -348,6 +349,7 @@ function insertWikilinkTrigger(view) {
  *   insertWikilink: () => void,
  *   insertTag: () => void,
  *   insertCode: () => void,
+ *   focus: () => void,
  * }}
  */
 export function createMarkdownEditor(opts) {
@@ -373,6 +375,9 @@ export function createMarkdownEditor(opts) {
         wikilinkAccent,
         autocompletion({
           override: [wikilinkCompletion(opts.getNoteTitles, opts.onCreateNote)],
+        }),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) opts.onChange?.(update.state.doc.toString());
         }),
         EditorView.theme({
           "&": {
@@ -419,5 +424,6 @@ export function createMarkdownEditor(opts) {
     insertWikilink: () => insertWikilinkTrigger(view),
     insertTag: () => insertPrefix(view, "#"),
     insertCode: () => toggleWrap(view, "`"),
+    focus: () => view.focus(),
   };
 }

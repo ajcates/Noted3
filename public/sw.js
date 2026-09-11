@@ -29,7 +29,7 @@
  *     Safari/iOS support).
  */
 
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL_CACHE = `noted-shell-${VERSION}`;
 const API_CACHE = `noted-api-${VERSION}`;
 
@@ -41,6 +41,8 @@ const SHELL_ASSETS = [
   "/app/main.js",
   "/app/app-shell.js",
   "/app/api.js",
+  "/app/icons.js",
+  "/app/preferences.js",
   "/app/ui.js",
   "/app/note-list.js",
   "/app/note-editor.js",

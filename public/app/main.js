@@ -6,6 +6,7 @@
  */
 
 import * as api from "./api.js";
+import { initialiseTheme } from "./preferences.js";
 import { AppShell } from "./app-shell.js";
 import { NoteList } from "./note-list.js";
 import { NoteEditor } from "./note-editor.js";
@@ -29,6 +30,8 @@ if (tokenFromUrl) {
     location.pathname + (query ? `?${query}` : "") + location.hash,
   );
 }
+
+initialiseTheme();
 
 customElements.define("app-shell", AppShell);
 customElements.define("note-list", NoteList);

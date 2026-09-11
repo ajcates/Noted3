@@ -8,6 +8,7 @@
  */
 
 import { el, emit } from "./ui.js";
+import { icon } from "./icons.js";
 
 /** @typedef {import("./api.js").Backlink} Backlink */
 
@@ -36,7 +37,12 @@ export class BacklinksPanel extends HTMLElement {
       el(
         "details",
         { open: count > 0 },
-        el("summary", { textContent: `Backlinks (${count})` }),
+        el(
+          "summary",
+          {},
+          icon("back"),
+          el("span", { textContent: `Backlinks (${count})` }),
+        ),
         count === 0
           ? el("p", { class: "empty", textContent: "No notes link here yet." })
           : el("ul", {}, ...this.#backlinks.map((b) => this.#renderItem(b))),

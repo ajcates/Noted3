@@ -73,6 +73,15 @@ export interface SearchResult extends NoteSummary {
   readonly snippet: string;
 }
 
+/** Field family searched by `GET /api/search`; `everything` is the default. */
+export type SearchScope = "everything" | "titles" | "tags" | "links";
+
+/** Small, non-secret identity payload used by the client masthead. */
+export interface VaultMeta {
+  readonly vaultName: string;
+  readonly noteCount: number;
+}
+
 /** One row of `GET /api/tags`. */
 export interface TagCount {
   readonly tag: string;

@@ -5,10 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>noted</title>
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#f7f8fb"
-      media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0c0d12"
-      media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem("noted.ui-preferences") || "null",
+      );
+      const wanted = saved?.theme || "system";
+      document.documentElement.dataset.theme = wanted === "system"
+        ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : wanted;
+    } catch {
+      // The default light palette remains usable when storage is blocked.
+    }
+    </script>
+    <meta name="theme-color" content="#f7f8fb" />
     <link rel="icon" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

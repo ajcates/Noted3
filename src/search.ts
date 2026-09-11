@@ -7,7 +7,7 @@
  * Ranking: title matches before body-only matches, then newest first.
  */
 
-import type { Filename, SearchResult } from "./types.ts";
+import type { Filename, SearchResult, SearchScope } from "./types.ts";
 
 export interface SearchableNote {
   readonly filename: Filename;
@@ -17,23 +17,36 @@ export interface SearchableNote {
   readonly excerpt: string;
   readonly backlinkCount: number;
   readonly body: string;
+  readonly outgoingTargets: readonly string[];
 }
 
 export function searchNotes(
   notes: Iterable<SearchableNote>,
   rawQuery: string,
+  scope: SearchScope = "everything",
 ): SearchResult[] {
   const query = rawQuery.trim().toLowerCase();
   if (query === "") return [];
 
-  const ranked: { result: SearchResult; titleHit: boolean }[] = [];
+  const ranked: { result: SearchResult; rank: number }[] = [];
   for (const note of notes) {
     const titleHit = note.title.toLowerCase().includes(query);
     const bodyIndex = note.body.toLowerCase().indexOf(query);
-    if (!titleHit && bodyIndex < 0) continue;
+    const tagHit = note.tags.some((tag) => tag.toLowerCase().includes(query));
+    const linkHit = note.outgoingTargets.some((target) =>
+      target.toLowerCase().includes(query)
+    );
+    const matches = scope === "titles"
+      ? titleHit
+      : scope === "tags"
+      ? tagHit
+      : scope === "links"
+      ? linkHit
+      : titleHit || bodyIndex >= 0 || tagHit || linkHit;
+    if (!matches) continue;
 
     ranked.push({
-      titleHit,
+      rank: titleHit ? 0 : tagHit ? 1 : linkHit ? 2 : 3,
       result: {
         filename: note.filename,
         title: note.title,
@@ -49,7 +62,7 @@ export function searchNotes(
   }
 
   ranked.sort((a, b) => {
-    if (a.titleHit !== b.titleHit) return a.titleHit ? -1 : 1;
+    if (a.rank !== b.rank) return a.rank - b.rank;
     return b.result.updated.localeCompare(a.result.updated);
   });
   return ranked.map((r) => r.result);

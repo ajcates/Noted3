@@ -49,6 +49,8 @@ export class ApiError extends Error {
  * @typedef {{ filename: string, title: string, snippet: string }} Backlink
  * @typedef {NoteSummary & { snippet: string }} SearchResult
  * @typedef {{ tag: string, count: number }} TagCount
+ * @typedef {"everything" | "titles" | "tags" | "links"} SearchScope
+ * @typedef {{ vaultName: string, noteCount: number }} VaultMeta
  * @typedef {{ ok: true, note: NoteDetail }
  *   | { ok: false, conflict: true, current: NoteDetail }
  *   | { ok: false, conflict: false, status: number }} PutResult
@@ -89,6 +91,11 @@ async function request(path, init = {}) {
 /** @returns {Promise<NoteSummary[]>} */
 export async function listNotes() {
   return /** @type {NoteSummary[]} */ (await request("/api/notes"));
+}
+
+/** @returns {Promise<VaultMeta>} */
+export async function getVaultMeta() {
+  return /** @type {VaultMeta} */ (await request("/api/meta"));
 }
 
 /**
@@ -181,11 +188,16 @@ export async function getBacklinks(filename) {
 
 /**
  * @param {string} q
+ * @param {SearchScope} [scope]
  * @returns {Promise<SearchResult[]>}
  */
-export async function search(q) {
+export async function search(q, scope = "everything") {
   return /** @type {SearchResult[]} */ (
-    await request(`/api/search?q=${encodeURIComponent(q)}`)
+    await request(
+      `/api/search?q=${encodeURIComponent(q)}&scope=${
+        encodeURIComponent(scope)
+      }`,
+    )
   );
 }
 
