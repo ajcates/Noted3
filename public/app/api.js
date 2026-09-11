@@ -51,6 +51,7 @@ export class ApiError extends Error {
  * @typedef {{ tag: string, count: number }} TagCount
  * @typedef {"everything" | "titles" | "tags" | "links"} SearchScope
  * @typedef {{ vaultName: string, noteCount: number }} VaultMeta
+ * @typedef {{ path: string }} FolderMutation
  * @typedef {{ ok: true, note: NoteDetail }
  *   | { ok: false, conflict: true, current: NoteDetail }
  *   | { ok: false, conflict: false, status: number }} PutResult
@@ -91,6 +92,35 @@ async function request(path, init = {}) {
 /** @returns {Promise<NoteSummary[]>} */
 export async function listNotes() {
   return /** @type {NoteSummary[]} */ (await request("/api/notes"));
+}
+
+/** @returns {Promise<string[]>} */
+export async function listFolders() {
+  return /** @type {string[]} */ (await request("/api/folders"));
+}
+
+/** @param {string} path @returns {Promise<FolderMutation>} */
+export async function createFolder(path) {
+  return /** @type {FolderMutation} */ (
+    await request("/api/folders", {
+      method: "POST",
+      body: JSON.stringify({ path }),
+    })
+  );
+}
+
+/**
+ * @param {string} from
+ * @param {string} to
+ * @returns {Promise<FolderMutation>}
+ */
+export async function renameFolder(from, to) {
+  return /** @type {FolderMutation} */ (
+    await request(`/api/folders/${encodeURIComponent(from)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ path: to }),
+    })
+  );
 }
 
 /** @returns {Promise<VaultMeta>} */

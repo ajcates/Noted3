@@ -13,15 +13,18 @@ import { isAuthorized } from "./auth.ts";
 import { serveStatic } from "./static.ts";
 import type { NoteIndex } from "./note-index.ts";
 import {
+  createFolder,
   createNote,
   deleteNote,
   getBacklinks,
   getNote,
   getVaultMeta,
   type Handler,
+  listFolders,
   listNotes,
   listTags,
   notesByTag,
+  renameFolder,
   renameNote,
   search,
   updateNote,
@@ -46,6 +49,9 @@ interface Route {
 
 const ROUTES: readonly Route[] = [
   route("GET", "/api/meta", getVaultMeta),
+  route("GET", "/api/folders", listFolders),
+  route("POST", "/api/folders", createFolder),
+  route("PATCH", "/api/folders/:path", renameFolder),
   route("GET", "/api/notes", listNotes),
   route("POST", "/api/notes", createNote),
   route("GET", "/api/notes/:filename", getNote),

@@ -99,12 +99,10 @@ agree are in scope.
       other pair already cleared it
 
 **Open decisions to make here** (`design-checklist.md` §0): the mockup bundle
-also covers Settings, Version history, an AI edit panel (single + bulk),
-and a folder view — none of which has a `spec.md` entry, and the folder
-view actively contradicts the §9 non-goal on nested folders. Resolve each
-(bring into scope with a real spec section, or explicitly defer) before
-M5 is called done, so the milestone doesn't quietly ship 4 of 9 mockup
-screens without anyone deciding that was the plan.
+also covers Settings, Version history, and an AI edit panel (single + bulk),
+none of which has a `spec.md` entry. Resolve each (bring it into scope with a
+real spec section, or explicitly defer it) before building it. The folder-view
+decision was resolved separately and the feature shipped on 2026-09-11.
 
 ## M6 — PWA & offline-first — budget real time here, it's the hardest milestone ✅ done 2026-09-10
 
@@ -171,7 +169,7 @@ and an npm-installable launcher instead of a bare `deno task start`.
 
 ## v2 candidates — not scheduled, don't build early
 
-Folders/nested organization, image attachments, a real full-text search index, note templates, export/import. (Git-backed history itself shipped early, as M7's backup strategy — `src/git-backup.ts` — but nothing in the app *reads* that history yet: no version browser, no restore-a-past-version UI. That's still a v2 candidate.) Revisit only once v1 has survived actual daily use — see spec.md §9 for why these are explicitly out of scope for now.
+Image attachments, a real full-text search index, note templates, export/import. (Folders/nested organization shipped on 2026-09-11. Git-backed history itself shipped early, as M7's backup strategy — `src/git-backup.ts` — but nothing in the app *reads* that history yet: no version browser, no restore-a-past-version UI. That's still a v2 candidate.) Revisit only once v1 has survived actual daily use — see spec.md §9 for what remains explicitly out of scope.
 
 Also from the mockup bundle (`notes/design-checklist.md` §0), each needing its
 own `spec.md` section + milestone before it's buildable, not just a style

@@ -7,13 +7,18 @@
  */
 
 declare const filenameBrand: unique symbol;
+declare const folderPathBrand: unique symbol;
 
 /**
- * A note's on-disk filename, e.g. `my-note.md`. Branded so an arbitrary
+ * A note's vault-relative on-disk path, e.g. `my-note.md` or
+ * `projects/my-note.md`. Branded so an arbitrary
  * `string` can't be passed where a validated filename is expected — callers
  * must go through {@link import("./filename.ts").parseFilename}.
  */
 export type Filename = string & { readonly [filenameBrand]: true };
+
+/** A validated, non-empty vault-relative directory path. */
+export type FolderPath = string & { readonly [folderPathBrand]: true };
 
 /** Fully-populated frontmatter block. Every field is present after normalization. */
 export interface Frontmatter {

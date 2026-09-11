@@ -26,7 +26,7 @@ Status: draft v1 — decisions below reflect what we've settled; open items are 
                                                    └──────────────────────────┘
                                                                 │
                                                                 ▼
-                                                     NOTES_DIR/*.md on disk
+                                                     NOTES_DIR/**/*.md on disk
 ```
 
 Key decision: **the filesystem directory is the database.** Notes are plain markdown files with YAML frontmatter, not rows in a database — this keeps the notes portable, editable outside the app (a text editor, git, Syncthing), and simple to back up. The server maintains an in-memory index (built at startup, updated incrementally on writes) purely for fast search, tag lookups, and backlink resolution — that index is a cache, never the source of truth, and can always be rebuilt by rescanning the directory.
@@ -48,7 +48,7 @@ Key decision: **the filesystem directory is the database.** Notes are plain mark
 
 ## 4. Data model
 
-**A note is one `.md` file.** File naming: slugified title (`my-note-title.md`), collisions get a numeric suffix. Filename is a stable ID used for links; title can change without renaming (title lives in frontmatter), but renaming the file is how a note's ID/URL changes — the server rewrites any incoming `[[wikilinks]]` that reference it by filename when a rename happens, so links don't silently break.
+**A note is one `.md` file.** Notes may live at the vault root or in nested folders; their vault-relative path is the stable ID used by the API and links. New notes are created at the vault root with a slugified title (`my-note-title.md`), and collisions get a numeric suffix. Title can change without renaming (title lives in frontmatter), but renaming the file is how a note's ID/URL changes — the server rewrites any incoming `[[wikilinks]]` that reference it by filename when a rename happens, so links don't silently break.
 
 Frontmatter (YAML) at the top of every file:
 
@@ -73,11 +73,17 @@ Body: plain markdown, with `[[Note Title]]` or `[[filename]]` as the wikilink sy
 
 REST/JSON over the Deno server. Illustrative, not final:
 
+Here and below, `:filename` is one URL-encoded vault-relative path such as
+`projects/roadmap.md`; the `/` within it is encoded by the client.
+
 - `GET /api/notes` — list all notes (filename, title, tags, updated) for the note browser
+- `GET /api/folders` — list visible vault-relative directory paths, including empty folders
+- `POST /api/folders` `{path: "projects"}` — create one folder; its parent must already exist
+- `PATCH /api/folders/:path` `{path: "archive/projects"}` — rename or move a folder, update every nested note ID, and rewrite incoming filename-form wikilinks
 - `GET /api/notes/:filename` — full content of one note. **As built (M3):** returns `{filename, title, tags, created, updated, body, links, html}` — `links` is the outgoing `[[wikilinks]]` de-duplicated, each `{target, resolved, filename, title}`; `html` is the rendered body with `<a class="wikilink [unresolved]">`.
 - `POST /api/notes` — create a note ({title, body} → server picks filename/slug); returns the same shape as GET, 201 + `Location`
 - `PUT /api/notes/:filename` — update content; server re-parses links, bumps `updated`, updates the index
-- `PATCH /api/notes/:filename` `{filename: "new-name.md"}` — **rename (M3).** Moves the file; rewrites incoming `[[links]]` that referenced it *by filename* in every backlinking note (title-form links untouched); 409 if the new name is taken.
+- `PATCH /api/notes/:filename` `{filename: "archive/new-name.md"}` — **rename/move (M3).** Moves the file, creating the destination folder when needed; rewrites incoming `[[links]]` that referenced it *by filename* in every backlinking note (title-form links untouched); 409 if the new name is taken.
 - `DELETE /api/notes/:filename` — delete; the index drops the entry and dependents' links become `resolved: false` on their next fetch (no server push — see §2 / system-overview.md "Deleting a note")
 - `GET /api/notes/:filename/backlinks` — notes that link to this one: `[{filename, title, snippet}]`, 404 if the note isn't indexed
 - `GET /api/search?q=` — naive case-insensitive title/body substring search **(M4)**; `[{filename,title,tags,updated,snippet}]`, title hits first, `[]` for a blank query
@@ -95,7 +101,10 @@ Writes should be idempotent enough to support the offline sync-queue replaying t
 - Typing `[[` triggers an autocomplete popup of existing note titles (filtered as you type), with an option to create a new note if nothing matches — this is the core wiki-linking interaction.
   - _Built in M4:_ query starts after `[[`; the `Create "…"` entry inserts the link and fires `editor-create-link`, which the App Shell turns into `POST /api/notes` for an empty note so the link resolves immediately.
 - A backlinks panel (collapsible, below or beside the editor) lists notes linking to the current one, each with a short snippet of surrounding context.
-- Note browser: flat list + tag filter for v1; folders/nested structure is a possible v2 (see non-goals).
+- Note browser: an all-notes list, folder view with breadcrumbs, tag filter,
+  and a responsive vault sidebar for jumping directly between notes and
+  folders. The folder view can create child folders and rename existing ones;
+  folders are real filesystem directories and remain visible when empty.
 
 ## 7. PWA / offline-first design
 
@@ -123,7 +132,6 @@ Writes should be idempotent enough to support the offline sync-queue replaying t
 
 - Multi-user accounts / sharing notes with other people.
 - Real-time collaborative editing (multiple people/tabs editing the same note simultaneously).
-- Nested folders/hierarchical organization (tags cover organization for v1; folders can layer on later without changing the storage model).
 - Full-text search engine (naive search is enough for a personal note count; revisit if the corpus grows large).
 - Image/attachment uploads (assume markdown links to files you place in the directory yourself, for now).
 
@@ -131,7 +139,7 @@ Writes should be idempotent enough to support the offline sync-queue replaying t
 
 1. **v0 (minimal core)**: Deno server serving the directory read-only-ish — list, read, create, edit, delete notes, no linking yet. Prove the server ↔ filesystem ↔ browser round trip.
 2. **v1 (this spec)**: wikilinks, backlinks panel, tags, search, CodeMirror editor, PWA installability, offline-first with sync queue.
-3. **v2 (candidates, not committed)**: folders/nesting, image attachments, full-text search index, note templates, export/import (e.g. a git-backed history of the notes directory instead of just mtimes).
+3. **v2 (candidates, not committed)**: image attachments, full-text search index, note templates, export/import (e.g. a git-backed history of the notes directory instead of just mtimes).
 
 ## 11. Open questions / assumptions to confirm before or during build
 

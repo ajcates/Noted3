@@ -26,11 +26,10 @@ here should read as "M5 unfinished."
 The mockups cover 9 screens; `spec.md`/`roadmap.md` only commit to some of
 them. Flag, don't silently build or silently drop:
 
-- [ ] **Folder view (mockup `1i`)** contradicts `spec.md` §9, which lists
-      "Nested folders/hierarchical organization" as an explicit v1
-      **non-goal** ("tags cover organization for v1"). Decide: update §9 to
-      bring folders into scope, or treat `1i`/`1j`'s folder parts as v2
-      concept art and scope M5 to list + tag view only.
+- [x] **Folder view (mockup `1i`)** brought into scope on 2026-09-11. The
+      server now indexes nested Markdown files, and the client provides folder
+      routes, breadcrumbs, compact folder/file rows, and a responsive vault
+      sidebar. `spec.md` §6/§9 was updated to match.
 - [ ] **Settings screen (`1e`)** has no corresponding endpoint, view, or
       roadmap milestone anywhere in `spec.md`/`roadmap.md`/`TODO.md`. Needs a
       spec section (what's actually configurable server-side?) before it's
@@ -92,7 +91,7 @@ chips, toolbar, FAB."
 | `1f` | Version history | *none* | ⬜ not applicable to M5 | Blocked on §0 — no versioning API |
 | `1g` | AI edit panel — single note | *none* | ⬜ not applicable to M5 | Blocked on §0 — no AI integration |
 | `1h` | AI edit panel — bulk | *none* | ⬜ not applicable to M5 | Blocked on §0 — no AI integration |
-| `1i` | Note list — folder view | *none* | ⬜ not applicable to M5 | Blocked on §0 — contradicts `spec.md` §9 non-goal |
+| `1i` | Note list — folder view | `folder-view.js` + `vault-sidebar.js` | ✅ built after M5 | Recursive vault index, breadcrumbs, folder/file rows, desktop sidebar and mobile drawer done 2026-09-11 |
 | `1j` | Note list — tag view w/ expanders | `tag-browser.js` | 🟡 styled, feature-partial | Pill rows with ember `#` mark done (2026-09-10); per-tag note list now uses the same restyled card. Still missing: A–Z jump index, expander-vs-row-navigates split (tapping a tag still just navigates), the 3-child preview + "N more" overflow row |
 
 Legend: ⬜ not started · 🟡 partial/unstyled · ✅ matches mockup
@@ -113,7 +112,10 @@ Legend: ⬜ not started · 🟡 partial/unstyled · ✅ matches mockup
       (`ui.js`): Fraunces title, excerpt, tag chip + backlink-count chip +
       mono stamp. Still no unsynced dot (no sync layer yet, `spec.md` §7)
       and only a 1-tag chip shown, not the mockup's multi-tag row.
-- [ ] **Folder row / file row** — blocked on §0.
+- [x] **Folder row / file row** — done 2026-09-11 in `folder-view.js`, with
+      recursive counts, compact direct-note rows, sync-state bars, and
+      breadcrumb drill-in. Folder creation and rename controls were added with
+      first-class empty-folder support.
 - [x] **Tag row** — done 2026-09-10 (pill row, ember `#` mark, mono count).
       **Expander** still not built — see `1j` above.
 - [x] **Docked bar + primary action (FAB)** — done 2026-09-10 across note

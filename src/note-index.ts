@@ -104,6 +104,20 @@ export class NoteIndex {
     this.#rebuildDerived();
   }
 
+  /** Update every indexed note path below a renamed folder in one rebuild. */
+  renameFolder(from: string, to: string): void {
+    const prefix = `${from}/`;
+    const moves = [...this.#entries.entries()].filter(([filename]) =>
+      filename.startsWith(prefix)
+    );
+    for (const [filename] of moves) this.#entries.delete(filename);
+    for (const [filename, entry] of moves) {
+      const next = `${to}/${filename.slice(prefix.length)}` as Filename;
+      this.#entries.set(next, { ...entry, filename: next });
+    }
+    this.#rebuildDerived();
+  }
+
   has(filename: Filename): boolean {
     return this.#entries.has(filename);
   }

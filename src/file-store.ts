@@ -7,20 +7,103 @@
  * `filename.ts`; callers pass an already-branded {@link Filename}.
  */
 
-import { join } from "@std/path";
-import { ApiError, type Filename } from "./types.ts";
+import { basename, dirname, join } from "@std/path";
+import { ApiError, type Filename, type FolderPath } from "./types.ts";
 import { NOTE_EXT, slugify } from "./filename.ts";
 
-/** List every `*.md` file directly under `notesDir` (not recursive — v1 is flat). */
+/**
+ * List every `*.md` file in the vault recursively. Paths are returned relative
+ * to `notesDir`, with `/` separators so they are stable across platforms.
+ * Hidden directories (especially `.git`) and symlinks are deliberately not
+ * traversed.
+ */
 export async function listNoteFiles(notesDir: string): Promise<Filename[]> {
   const names: Filename[] = [];
-  for await (const entry of Deno.readDir(notesDir)) {
-    if (entry.isFile && entry.name.endsWith(NOTE_EXT)) {
-      names.push(entry.name as Filename);
+  async function visit(directory: string, prefix: string): Promise<void> {
+    for await (const entry of Deno.readDir(directory)) {
+      if (entry.name.startsWith(".")) continue;
+      const relative = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
+      if (entry.isDirectory) {
+        await visit(join(directory, entry.name), relative);
+      } else if (entry.isFile && entry.name.endsWith(NOTE_EXT)) {
+        names.push(relative as Filename);
+      }
     }
   }
+  await visit(notesDir, "");
   names.sort((a, b) => a.localeCompare(b));
   return names;
+}
+
+/** List visible, real directories in the vault, including empty folders. */
+export async function listFolders(notesDir: string): Promise<FolderPath[]> {
+  const paths: FolderPath[] = [];
+  async function visit(directory: string, prefix: string): Promise<void> {
+    for await (const entry of Deno.readDir(directory)) {
+      if (entry.name.startsWith(".") || !entry.isDirectory) continue;
+      const relative = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
+      paths.push(relative as FolderPath);
+      await visit(join(directory, entry.name), relative);
+    }
+  }
+  await visit(notesDir, "");
+  paths.sort((a, b) => a.localeCompare(b));
+  return paths;
+}
+
+/** Create exactly one folder. Its parent must already exist. */
+export async function createFolder(
+  notesDir: string,
+  path: FolderPath,
+): Promise<void> {
+  try {
+    await Deno.mkdir(join(notesDir, path));
+  } catch (cause) {
+    if (cause instanceof Deno.errors.AlreadyExists) {
+      throw new ApiError(409, `a file or folder named ${path} already exists`);
+    }
+    if (cause instanceof Deno.errors.NotFound) {
+      throw new ApiError(404, `parent folder not found: ${path}`);
+    }
+    throw cause;
+  }
+}
+
+/** Rename or move a folder without overwriting an existing destination. */
+export async function renameFolder(
+  notesDir: string,
+  from: FolderPath,
+  to: FolderPath,
+): Promise<void> {
+  try {
+    const source = await Deno.lstat(join(notesDir, from));
+    if (!source.isDirectory || source.isSymlink) {
+      throw new ApiError(404, `folder not found: ${from}`);
+    }
+  } catch (cause) {
+    if (cause instanceof ApiError) throw cause;
+    if (cause instanceof Deno.errors.NotFound) {
+      throw new ApiError(404, `folder not found: ${from}`);
+    }
+    throw cause;
+  }
+
+  try {
+    await Deno.lstat(join(notesDir, to));
+    throw new ApiError(409, `a file or folder named ${to} already exists`);
+  } catch (cause) {
+    if (cause instanceof ApiError) throw cause;
+    if (!(cause instanceof Deno.errors.NotFound)) throw cause;
+  }
+
+  try {
+    await Deno.rename(join(notesDir, from), join(notesDir, to));
+  } catch (cause) {
+    if (cause instanceof Deno.errors.NotFound) {
+      throw new ApiError(404, `destination parent not found: ${to}`);
+    }
+    throw cause;
+  }
 }
 
 export async function noteFileExists(
@@ -62,7 +145,9 @@ export async function writeNoteFile(
   content: string,
 ): Promise<void> {
   const target = join(notesDir, filename);
-  const tmp = join(notesDir, `.${filename}.${crypto.randomUUID()}.tmp`);
+  const parent = dirname(target);
+  await Deno.mkdir(parent, { recursive: true });
+  const tmp = join(parent, `.${basename(filename)}.${crypto.randomUUID()}.tmp`);
   try {
     await Deno.writeTextFile(tmp, content);
     await Deno.rename(tmp, target);
@@ -100,6 +185,7 @@ export async function renameNoteFile(
     throw new ApiError(409, `a note named ${to} already exists`);
   }
   try {
+    await Deno.mkdir(dirname(join(notesDir, to)), { recursive: true });
     await Deno.rename(join(notesDir, from), join(notesDir, to));
   } catch (cause) {
     if (cause instanceof Deno.errors.NotFound) {

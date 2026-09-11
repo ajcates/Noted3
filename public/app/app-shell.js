@@ -18,11 +18,19 @@ import { NoteList } from "./note-list.js";
 import { NoteEditor } from "./note-editor.js";
 import { SearchView } from "./search-view.js";
 import { TagBrowser } from "./tag-browser.js";
+import { folderHash, FolderView } from "./folder-view.js";
+import { VaultSidebar } from "./vault-sidebar.js";
 
 export class AppShell extends HTMLElement {
   #main = el("main", { class: "workspace route-browse" });
   #browserPane = el("section", { class: "browser-pane" });
   #detailPane = el("section", { class: "detail-pane" });
+  #shellBody = el("div", { class: "shell-body" });
+  #sidebar = new VaultSidebar();
+  #sidebarBackdrop = el("button", {
+    class: "sidebar-backdrop",
+    ariaLabel: "Close navigation",
+  });
   #status = el("div", {
     class: "shell-status",
     role: "status",
@@ -40,6 +48,8 @@ export class AppShell extends HTMLElement {
 
   /** @type {string[]} */
   #noteTitles = [];
+  /** @type {import("./api.js").NoteSummary[]} */
+  #noteSummaries = [];
   #titlesLoaded = false;
   #searchQuery = "";
   /** @type {import("./api.js").SearchScope} */
@@ -64,6 +74,7 @@ export class AppShell extends HTMLElement {
   #routeDirection = "neutral";
   #routeGen = 0;
   #sync = new SyncManager();
+  #sidebarOpen = false;
 
   connectedCallback() {
     this.#renderChrome();
@@ -122,6 +133,11 @@ export class AppShell extends HTMLElement {
         this.#go(`#/tags/${encodeURIComponent(event.detail.tag)}`),
       "tags-all": () => this.#go("#/tags"),
       "queue-open": () => this.#openQueue(),
+      "sidebar-dismiss": () => this.#setSidebarOpen(false),
+      "folder-create-request": (event) =>
+        this.#openFolderCreate(String(event.detail.parentPath ?? "")),
+      "folder-rename-request": (event) =>
+        this.#openFolderRename(String(event.detail.path ?? "")),
     };
     for (const [type, handler] of Object.entries(on)) {
       this.addEventListener(type, /** @type {EventListener} */ (handler));
@@ -172,14 +188,34 @@ export class AppShell extends HTMLElement {
     const topbar = el(
       "header",
       { class: "app-topbar" },
+      el(
+        "button",
+        {
+          class: "icon-btn nav-toggle",
+          title: "Open navigation",
+          ariaLabel: "Open navigation",
+          ariaExpanded: "false",
+          onclick: () => this.#setSidebarOpen(!this.#sidebarOpen),
+        },
+        icon("menu"),
+      ),
       this.#mastheadLead,
       this.#mastheadActions,
     );
     this.#main.replaceChildren(this.#browserPane, this.#detailPane);
+    this.#sidebarBackdrop.addEventListener(
+      "click",
+      () => this.#setSidebarOpen(false),
+    );
+    this.#shellBody.replaceChildren(
+      this.#sidebar,
+      this.#sidebarBackdrop,
+      this.#main,
+    );
     this.replaceChildren(
       topbar,
       this.#status,
-      this.#main,
+      this.#shellBody,
       this.#overlayHost,
     );
     this.#updateMasthead("home");
@@ -195,6 +231,10 @@ export class AppShell extends HTMLElement {
   };
 
   #onKeyDown = (/** @type {KeyboardEvent} */ event) => {
+    if (event.key === "Escape" && this.#sidebarOpen) {
+      this.#setSidebarOpen(false);
+      return;
+    }
     if (!(event.metaKey || event.ctrlKey)) return;
     const key = event.key.toLowerCase();
     if (key === "k") {
@@ -233,6 +273,8 @@ export class AppShell extends HTMLElement {
   }
 
   async #route() {
+    this.#setSidebarOpen(false);
+    this.#sidebar.activeHash = location.hash || "#/";
     this.#main.dataset.direction = this.#routeDirection;
     this.#routeDirection = "neutral";
     const gen = ++this.#routeGen;
@@ -269,6 +311,8 @@ export class AppShell extends HTMLElement {
 
       if (hash === "/search") {
         this.#lastBrowseHash = "#/search";
+        await this.#ensureTitles();
+        if (stale()) return;
         const view = new SearchView();
         view.query = this.#searchQuery;
         view.scope = this.#searchScope;
@@ -276,8 +320,37 @@ export class AppShell extends HTMLElement {
         this.#showBrowse(view, "#/search");
         this.#updateMasthead("browse", "Search");
         if (this.#searchQuery.trim() !== "") {
-          view.results = await api.search(this.#searchQuery, this.#searchScope);
+          view.results = this.#withoutPendingDeletes(
+            await api.search(this.#searchQuery, this.#searchScope),
+          );
           if (stale()) return;
+        }
+        return;
+      }
+
+      const folderMatch = /^\/folder\/(.+)$/.exec(hash);
+      if (hash === "/folders" || folderMatch) {
+        const path = folderMatch
+          ? decodeURIComponent(folderMatch[1] ?? "")
+          : "";
+        const fullHash = path === ""
+          ? "#/folders"
+          : `#/folder/${encodeURIComponent(path)}`;
+        this.#lastBrowseHash = fullHash;
+        this.#showBrowseLoading();
+        const { summaries, folders, offline } = await this.#loadNoteList();
+        if (stale()) return;
+        this.#setTitles(summaries);
+        this.#setFolders(folders);
+        const view = new FolderView();
+        view.folderPath = path;
+        view.notes = this.#withoutPendingDeletes(summaries);
+        view.folders = folders;
+        this.#applyViewState(view);
+        this.#showBrowse(view, fullHash);
+        this.#updateMasthead("browse", path === "" ? "Folders" : path);
+        if (offline) {
+          this.#setStatus("Offline — showing the cached copy.", false);
         }
         return;
       }
@@ -288,7 +361,10 @@ export class AppShell extends HTMLElement {
         this.#lastBrowseHash = fullHash;
         this.#showBrowseLoading();
         const tag = decodeURIComponent(tagMatch[1] ?? "");
-        const notes = await api.getNotesByTag(tag);
+        const [, notes] = await Promise.all([
+          this.#ensureTitles(),
+          api.getNotesByTag(tag),
+        ]);
         if (stale()) return;
         const view = new TagBrowser();
         view.forTag = { tag, notes: this.#withoutPendingDeletes(notes) };
@@ -301,7 +377,10 @@ export class AppShell extends HTMLElement {
       if (hash === "/tags") {
         this.#lastBrowseHash = "#/tags";
         this.#showBrowseLoading();
-        const tags = await api.getTags();
+        const [, tags] = await Promise.all([
+          this.#ensureTitles(),
+          api.getTags(),
+        ]);
         if (stale()) return;
         const view = new TagBrowser();
         view.tags = tags;
@@ -313,10 +392,11 @@ export class AppShell extends HTMLElement {
 
       this.#lastBrowseHash = "#/";
       this.#showBrowseLoading();
-      const { summaries, offline } = await this.#loadNoteList();
+      const { summaries, folders, offline } = await this.#loadNoteList();
       if (stale()) return;
       this.#setTitles(summaries);
-      this.#meta.noteCount = summaries.length;
+      this.#setFolders(folders);
+      this.#meta.noteCount = this.#withoutPendingDeletes(summaries).length;
       this.#showBrowse(this.#makeList(summaries), "#/");
       this.#updateMasthead("home");
       if (offline) this.#setStatus("Offline — showing the cached copy.", false);
@@ -331,6 +411,7 @@ export class AppShell extends HTMLElement {
   async #loadMeta() {
     try {
       this.#meta = await api.getVaultMeta();
+      this.#sidebar.vaultName = this.#meta.vaultName;
       if ((location.hash || "#/") === "#/") this.#updateMasthead("home");
     } catch {
       // Optional chrome; the notes endpoint still gives a trustworthy count.
@@ -407,7 +488,7 @@ export class AppShell extends HTMLElement {
     const browseView = this.#browserPane.firstElementChild;
     if (
       browseView instanceof NoteList || browseView instanceof SearchView ||
-      browseView instanceof TagBrowser
+      browseView instanceof TagBrowser || browseView instanceof FolderView
     ) browseView.selectedFilename = selected;
     this.#detailPane.replaceChildren(editor);
     requestAnimationFrame(() => globalThis.scrollTo({ top: 0 }));
@@ -418,8 +499,9 @@ export class AppShell extends HTMLElement {
       this.#browserPane.firstElementChild &&
       !this.#browserPane.querySelector(".skeleton-list")
     ) return;
-    const { summaries } = await this.#loadNoteList();
+    const { summaries, folders } = await this.#loadNoteList();
     this.#setTitles(summaries);
+    this.#setFolders(folders);
     this.#browserPane.replaceChildren(this.#makeList(summaries));
   }
 
@@ -431,13 +513,17 @@ export class AppShell extends HTMLElement {
     return list;
   }
 
-  /** @param {NoteList | SearchView | TagBrowser} view */
+  /** @param {NoteList | SearchView | TagBrowser | FolderView} view */
   #applyViewState(view) {
     view.syncStates = this.#syncStates;
     view.queueCount = this.#queueCount;
   }
 
-  /** @param {import("./api.js").NoteSummary[]} notes */
+  /**
+   * @template {import("./api.js").NoteSummary} T
+   * @param {T[]} notes
+   * @returns {T[]}
+   */
   #withoutPendingDeletes(notes) {
     return notes.filter((note) => !this.#pendingDeletes.has(note.filename));
   }
@@ -458,7 +544,7 @@ export class AppShell extends HTMLElement {
       for (const view of this.#browserPane.children) {
         if (
           view instanceof NoteList || view instanceof SearchView ||
-          view instanceof TagBrowser
+          view instanceof TagBrowser || view instanceof FolderView
         ) this.#applyViewState(view);
       }
       const editor = this.#detailPane.querySelector("note-editor");
@@ -472,13 +558,24 @@ export class AppShell extends HTMLElement {
 
   async #loadNoteList() {
     try {
-      const summaries = this.#withoutPendingDeletes(await api.listNotes());
-      await idbCache.putNotes(summaries);
-      return { summaries, offline: false };
+      const [summaries, folders] = await Promise.all([
+        api.listNotes(),
+        api.listFolders(),
+      ]);
+      await Promise.all([
+        idbCache.putNotes(summaries),
+        idbCache.putFolders(folders),
+      ]);
+      return { summaries, folders, offline: false };
     } catch (error) {
       if (!isOffline(error)) throw error;
+      const [summaries, folders] = await Promise.all([
+        idbCache.getNotes(),
+        idbCache.getFolders(),
+      ]);
       return {
-        summaries: this.#withoutPendingDeletes(await idbCache.getNotes()),
+        summaries,
+        folders,
         offline: true,
       };
     }
@@ -502,19 +599,160 @@ export class AppShell extends HTMLElement {
   }
 
   async #ensureTitles() {
-    if (!this.#titlesLoaded) this.#setTitles(await api.listNotes());
+    if (this.#titlesLoaded) return;
+    const { summaries, folders } = await this.#loadNoteList();
+    this.#setTitles(summaries);
+    this.#setFolders(folders);
   }
 
   async #refreshTitles() {
     const summaries = await api.listNotes();
     this.#setTitles(summaries);
-    this.#meta.noteCount = summaries.length;
+    this.#meta.noteCount = this.#withoutPendingDeletes(summaries).length;
   }
 
   /** @param {import("./api.js").NoteSummary[]} summaries */
   #setTitles(summaries) {
-    this.#noteTitles = summaries.map((summary) => summary.title);
+    this.#noteSummaries = summaries;
     this.#titlesLoaded = true;
+    this.#refreshVisibleNotes();
+  }
+
+  /** @param {string[]} folders */
+  #setFolders(folders) {
+    this.#sidebar.folders = folders;
+  }
+
+  #refreshVisibleNotes() {
+    const notes = this.#withoutPendingDeletes(this.#noteSummaries);
+    this.#noteTitles = notes.map((summary) => summary.title);
+    this.#sidebar.notes = notes;
+  }
+
+  /** @param {boolean} open */
+  #setSidebarOpen(open) {
+    this.#sidebarOpen = open;
+    this.#sidebar.open = open;
+    this.#sidebarBackdrop.classList.toggle("open", open);
+    const toggle = this.querySelector(".nav-toggle");
+    toggle?.setAttribute("aria-expanded", String(open));
+    document.body.classList.toggle("sidebar-open", open);
+  }
+
+  /** @param {string} parentPath */
+  #openFolderCreate(parentPath) {
+    this.#openFolderDialog("create", parentPath);
+  }
+
+  /** @param {string} path */
+  #openFolderRename(path) {
+    this.#openFolderDialog("rename", path);
+  }
+
+  /** @param {"create" | "rename"} mode @param {string} path */
+  #openFolderDialog(mode, path) {
+    const parentPath = mode === "create" ? path : parentFolder(path);
+    const initialName = mode === "rename" ? lastPathSegment(path) : "";
+    const input = /** @type {HTMLInputElement} */ (el("input", {
+      class: "folder-name-input",
+      value: initialName,
+      placeholder: "Folder name",
+      ariaLabel: "Folder name",
+      autocomplete: "off",
+    }));
+    const error = el("p", {
+      class: "folder-form-error",
+      role: "alert",
+      ariaLive: "polite",
+    });
+    const submit = /** @type {HTMLButtonElement} */ (el("button", {
+      class: "primary",
+      type: "submit",
+      textContent: mode === "create" ? "Create folder" : "Rename folder",
+    }));
+    const form = el(
+      "form",
+      {
+        class: "folder-form",
+        onsubmit: async (/** @type {SubmitEvent} */ event) => {
+          event.preventDefault();
+          const name = input.value.trim();
+          const validationError = validateFolderName(name);
+          if (validationError) {
+            error.textContent = validationError;
+            input.focus();
+            return;
+          }
+          const target = parentPath === "" ? name : `${parentPath}/${name}`;
+          submit.disabled = true;
+          error.textContent = "";
+          try {
+            if (mode === "create") {
+              await api.createFolder(target);
+              this.#setStatus(`Created folder “${name}”.`, false);
+              this.#closeDialog(
+                dialog,
+                () => this.#go(folderHash(target), "forward"),
+              );
+              return;
+            }
+
+            await api.renameFolder(path, target);
+            this.#titlesLoaded = false;
+            this.#setStatus(`Renamed folder to “${name}”.`, false);
+            const activePath = folderPathFromHash(location.hash);
+            const nextPath = activePath !== null &&
+                (activePath === path || activePath.startsWith(`${path}/`))
+              ? `${target}${activePath.slice(path.length)}`
+              : activePath;
+            const nextHash = nextPath === null
+              ? location.hash
+              : folderHash(nextPath);
+            this.#closeDialog(dialog, () => this.#go(nextHash));
+          } catch (cause) {
+            error.textContent = cause instanceof Error
+              ? cause.message
+              : String(cause);
+            submit.disabled = false;
+            input.focus();
+          }
+        },
+      },
+      el(
+        "label",
+        { class: "folder-name-field" },
+        el("span", { textContent: "Name" }),
+        input,
+      ),
+      error,
+      el(
+        "div",
+        { class: "sheet-actions" },
+        el("button", {
+          class: "text-action",
+          type: "button",
+          textContent: "Cancel",
+          onclick: () => dialog.close(),
+        }),
+        submit,
+      ),
+    );
+    const dialog = /** @type {HTMLDialogElement} */ (el(
+      "dialog",
+      { class: "sheet folder-sheet" },
+      this.#sheetHeader(
+        mode === "create" ? "Organize" : "Folder",
+        mode === "create" ? "Create a folder" : `Rename ${initialName}`,
+        () => dialog.close(),
+      ),
+      parentPath === "" ? null : el("p", {
+        class: "folder-parent-path",
+        textContent: `Inside ${parentPath}`,
+      }),
+      form,
+    ));
+    this.#showDialog(dialog);
+    input.select();
   }
 
   /** @param {{ forceEditor?: boolean, title?: string, body?: string }} detail */
@@ -705,7 +943,9 @@ export class AppShell extends HTMLElement {
     const view = this.#browserPane.querySelector("search-view");
     if (!(view instanceof SearchView)) return;
     try {
-      view.results = query.trim() === "" ? [] : await api.search(query, scope);
+      view.results = query.trim() === ""
+        ? []
+        : this.#withoutPendingDeletes(await api.search(query, scope));
     } catch (error) {
       this.#reportError(error);
     }
@@ -721,6 +961,7 @@ export class AppShell extends HTMLElement {
         5_000,
       );
       this.#pendingDeletes.set(filename, { id: entry.id, timer });
+      this.#refreshVisibleNotes();
       await idbCache.deleteNote(filename);
       this.#titlesLoaded = false;
       await this.#refreshQueueState();
@@ -755,6 +996,7 @@ export class AppShell extends HTMLElement {
           if (!pending || pending.id !== id) return;
           clearTimeout(pending.timer);
           this.#pendingDeletes.delete(filename);
+          this.#refreshVisibleNotes();
           await writeQueue.remove(id);
           snackbar.remove();
           await this.#refreshQueueState();
@@ -1006,7 +1248,41 @@ export class AppShell extends HTMLElement {
 
 /** @param {string} hash */
 function isBrowseHash(hash) {
-  return hash === "#/" || hash === "#/search" || hash.startsWith("#/tags");
+  return hash === "#/" || hash === "#/search" || hash.startsWith("#/tags") ||
+    hash === "#/folders" || hash.startsWith("#/folder/");
+}
+
+/** @param {string} path */
+function parentFolder(path) {
+  const at = path.lastIndexOf("/");
+  return at < 0 ? "" : path.slice(0, at);
+}
+
+/** @param {string} path */
+function lastPathSegment(path) {
+  return path.slice(path.lastIndexOf("/") + 1);
+}
+
+/** @param {string} hash */
+function folderPathFromHash(hash) {
+  if (hash === "#/folders") return "";
+  const match = /^#\/folder\/(.+)$/.exec(hash);
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1] ?? "");
+  } catch {
+    return null;
+  }
+}
+
+/** @param {string} name */
+function validateFolderName(name) {
+  if (name === "") return "Enter a folder name.";
+  if (name.startsWith(".")) return "Folder names cannot start with a dot.";
+  if (name.includes("/") || name.includes("\\") || name.includes("\0")) {
+    return "Folder names cannot contain slashes.";
+  }
+  return "";
 }
 
 /** @param {unknown} error */

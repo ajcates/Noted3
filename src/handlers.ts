@@ -14,20 +14,29 @@ import {
   type Backlink,
   type ConflictResponse,
   type Filename,
+  type FolderPath,
   type Frontmatter,
   type NoteDetail,
   type SearchScope,
 } from "./types.ts";
 import { basename } from "@std/path";
 import {
+  createFolder as createFolderOnDisk,
   deleteNoteFile,
+  listFolders as listFoldersOnDisk,
   noteMtime,
   readNoteFile,
+  renameFolder as renameFolderOnDisk,
   renameNoteFile,
   resolveNewFilename,
   writeNoteFile,
 } from "./file-store.ts";
-import { filenameToTitle, parseFilename, stripExt } from "./filename.ts";
+import {
+  filenameToTitle,
+  parseFilename,
+  parseFolderPath,
+  stripExt,
+} from "./filename.ts";
 import {
   json,
   optionalString,
@@ -61,6 +70,87 @@ export type Handler = (ctx: HandlerContext) => Response | Promise<Response>;
 
 /** `GET /api/notes` — summaries for the note browser, newest first (from the index). */
 export const listNotes: Handler = (ctx) => json(ctx.index.list());
+
+/** `GET /api/folders` — all visible vault directories, including empty ones. */
+export const listFolders: Handler = async ({ notesDir }) =>
+  json(await listFoldersOnDisk(notesDir));
+
+/** `POST /api/folders` with `{ path }` — create one directory. */
+export const createFolder: Handler = async ({ notesDir, req }) => {
+  const input = await readJsonObject(req);
+  const path = parseFolderPath(requireString(input, "path"));
+  await createFolderOnDisk(notesDir, path);
+  scheduleBackup(notesDir, `noted: create folder ${path}`);
+  return json({ path }, 201, {
+    location: `/api/folders/${encodeURIComponent(path)}`,
+  });
+};
+
+/**
+ * `PATCH /api/folders/:path` with `{ path }` — rename or move a directory,
+ * update every nested note ID, and preserve filename-form wikilinks.
+ */
+export const renameFolder: Handler = async ({
+  notesDir,
+  index,
+  params,
+  req,
+}) => {
+  const from = parseFolderPath(params.path ?? "");
+  const input = await readJsonObject(req);
+  const to = parseFolderPath(requireString(input, "path"));
+  if (to === from) {
+    throw new ApiError(400, "new folder path is the same as the old one");
+  }
+  if (to.startsWith(`${from}/`)) {
+    throw new ApiError(400, "a folder cannot be moved inside itself");
+  }
+
+  const prefix = `${from}/`;
+  const moves = index.list()
+    .filter((note) => note.filename.startsWith(prefix))
+    .map((note) => ({
+      from: note.filename,
+      to: moveFolderFilename(note.filename, from, to),
+    }));
+  /** @type {Map<Filename, { from: Filename, to: Filename }[]>} */
+  const rewrites = new Map();
+  for (const move of moves) {
+    for (const linker of index.backlinkFilenames(move.from)) {
+      const existing = rewrites.get(linker);
+      if (existing) existing.push(move);
+      else rewrites.set(linker, [move]);
+    }
+  }
+
+  await renameFolderOnDisk(notesDir, from, to);
+  index.renameFolder(from, to);
+  scheduleBackup(notesDir, `noted: rename folder ${from} -> ${to}`);
+
+  for (const [oldLinker, replacements] of rewrites) {
+    const linker = moveFolderFilename(oldLinker, from, to);
+    const parsed = parseNote(await readNoteFile(notesDir, linker));
+    let body = parsed.body;
+    let changed = 0;
+    for (const replacement of replacements) {
+      const rewritten = rewriteWikilinkTarget(
+        body,
+        stripExt(replacement.from),
+        stripExt(replacement.to),
+      );
+      body = rewritten.body;
+      changed += rewritten.changed;
+    }
+    if (changed === 0) continue;
+    const fm = normalizeFrontmatter(parsed.frontmatter, {
+      fallbackTitle: filenameToTitle(linker),
+      now: new Date().toISOString(),
+    });
+    await writeNoteAndIndex(notesDir, index, linker, fm, body);
+  }
+
+  return json({ path: to });
+};
 
 /** `GET /api/meta` — display-safe vault identity for the client masthead. */
 export const getVaultMeta: Handler = ({ notesDir, index }) =>
@@ -113,7 +203,7 @@ export const createNote: Handler = async ({ notesDir, index, req }) => {
   await writeNoteAndIndex(notesDir, index, filename, frontmatter, body);
 
   return json(buildDetail(filename, frontmatter, body, index), 201, {
-    location: `/api/notes/${filename}`,
+    location: `/api/notes/${encodeURIComponent(filename)}`,
   });
 };
 
@@ -161,6 +251,17 @@ function mergedTitle(provided: string | undefined, current: string): string {
   const trimmed = provided.trim();
   if (trimmed === "") throw new ApiError(400, '"title" must not be blank');
   return trimmed;
+}
+
+function moveFolderFilename(
+  filename: Filename,
+  from: FolderPath,
+  to: FolderPath,
+): Filename {
+  const prefix = `${from}/`;
+  return filename.startsWith(prefix)
+    ? `${to}/${filename.slice(prefix.length)}` as Filename
+    : filename;
 }
 
 /**

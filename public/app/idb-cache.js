@@ -17,9 +17,10 @@
  */
 
 const DB_NAME = "noted";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const NOTES_STORE = "notes";
 const BODIES_STORE = "bodies";
+const FOLDERS_STORE = "folders";
 
 /** @typedef {import("./api.js").NoteSummary} NoteSummary */
 /** @typedef {import("./api.js").NoteDetail} NoteDetail */
@@ -39,6 +40,9 @@ function openDb() {
       }
       if (!db.objectStoreNames.contains(BODIES_STORE)) {
         db.createObjectStore(BODIES_STORE, { keyPath: "filename" });
+      }
+      if (!db.objectStoreNames.contains(FOLDERS_STORE)) {
+        db.createObjectStore(FOLDERS_STORE);
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -85,6 +89,20 @@ export async function putNotes(summaries) {
 export async function getNotes() {
   const s = await store(NOTES_STORE, "readonly");
   return promisify(/** @type {IDBRequest<NoteSummary[]>} */ (s.getAll()));
+}
+
+/** @param {readonly string[]} paths */
+export async function putFolders(paths) {
+  const s = await store(FOLDERS_STORE, "readwrite");
+  await promisify(s.put([...paths], "all"));
+}
+
+/** @returns {Promise<string[]>} */
+export async function getFolders() {
+  const s = await store(FOLDERS_STORE, "readonly");
+  return (await promisify(
+    /** @type {IDBRequest<string[] | undefined>} */ (s.get("all")),
+  )) ?? [];
 }
 
 /** @param {NoteDetail} detail */

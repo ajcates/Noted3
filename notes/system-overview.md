@@ -28,7 +28,7 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 | **Config Loader** | Reads `NOTES_DIR`, `PORT`, `AUTH_TOKEN` from env at boot; each falls back to a deterministic per-directory default (cwd / `derivePort` / a persisted vault token) when unset (M7) | Pure function plus the two small stateful defaults it calls into — env in, typed config object out |
 | **HTTP Router** (`Deno.serve`) | Dispatches requests to handlers; the only thing the client ever talks to | Hand-rolled router function, no framework |
 | **Auth Middleware** | Checks the shared token on every request before it reaches a handler | Pure function — request in, allow/deny out |
-| **Notes API Handlers** | One handler per endpoint in spec.md §5 (list, get, create, update, delete, backlinks, search, tags) | Plain functions, one per endpoint |
+| **Notes API Handlers** | One handler per endpoint in spec.md §5 (notes, folders, backlinks, search, tags) | Plain functions, one per endpoint |
 | **Frontmatter Parser** | Reads/writes the YAML block at the top of a note file | Pure functions; small YAML lib (JSR-first, per `techstack.md`) |
 | **Markdown/Wikilink Parser** | Parses a note body into HTML for preview, and separately extracts its outgoing `[[links]]` for indexing | Pure functions; `markdown-it` (or similar) + custom wikilink rule |
 | **File Store** | The only component that touches disk — `readDir`/`readTextFile`/`writeTextFile`, slug generation, atomic writes | Thin I/O wrapper functions around `Deno.*` |
@@ -39,7 +39,7 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 
 | Component | Responsibility |
 |---|---|
-| **`NOTES_DIR`** | The actual source of truth — one `.md` file per note. Everything server-side exists to read, write, and index this directory; nothing else stores note content. |
+| **`NOTES_DIR`** | The actual source of truth — one `.md` file per note, discovered recursively in visible subfolders. Everything server-side exists to read, write, and index this directory; nothing else stores note content. |
 
 ### Server module map (as built, M1–M4)
 
@@ -53,12 +53,12 @@ A component-level breakdown of the architecture in `spec.md` §2 — what each p
 | `src/static.ts` | Static file server for the client shell (thin wrapper over `@std/http` `serveDir`) — **not auth-gated**, the browser must load the shell before it has a token |
 | `src/handlers.ts` | Notes API Handlers, one per endpoint; `writeNoteAndIndex` keeps disk + index in sync in one place |
 | `src/frontmatter.ts` | Frontmatter Parser (`parseNote`, `normalizeFrontmatter`, `serializeNote`) |
-| `src/filename.ts` | Filename & slug rules, pure: `parseFilename`, `slugify`, `filenameToTitle`, `stripExt`/`ensureExt`, `NOTE_EXT` |
+| `src/filename.ts` | Filename, folder-path, and slug rules, pure: `parseFilename`, `parseFolderPath`, `slugify`, `filenameToTitle`, `stripExt`/`ensureExt`, `NOTE_EXT` |
 | `src/markdown.ts` | Markdown/Wikilink Parser — `markdown-it` + custom `[[wikilink]]` rule; `extractWikilinkTargets`, `renderMarkdown`, `rewriteWikilinkTarget`, `firstWikilinkSnippet` |
 | `src/note-index.ts` | In-Memory Index — `NoteIndex` class; entries (incl. body) + derived title/backlink/tag maps; `resolve`, `list`, `search`, `tagCounts`, `notesForTag`, `backlinkFilenames`, `outgoingLinksFor`, `upsert`/`remove`/`rename` |
 | `src/search.ts` | Search Module — `searchNotes(snapshot, query)`, pure; naive title+body substring, title hits ranked first, body-match snippet |
-| `src/file-store.ts` | File Store — only module that touches disk: list/read/write (atomic)/delete/rename/mtime; `resolveNewFilename` |
-| `src/types.ts` | Shared types: `Filename` (branded), `Frontmatter`, note DTOs, `OutgoingLink`, `Backlink`, `SearchResult`, `TagCount`, `Config`, `ApiError` |
+| `src/file-store.ts` | File Store — only module that touches disk: note and folder listing, folder creation/rename, note read/write (atomic)/delete/rename/mtime; `resolveNewFilename` |
+| `src/types.ts` | Shared types: `Filename` and `FolderPath` (branded), `Frontmatter`, note DTOs, `OutgoingLink`, `Backlink`, `SearchResult`, `TagCount`, `Config`, `ApiError` |
 | `src/derive-port.ts` | (M7) Pure `derivePort(absPath)` — FNV-1a hash of a vault's absolute path into a stable port, so `NOTES_DIR`'s default `PORT` is deterministic per directory |
 | `src/vault-state.ts` | (M7) Per-vault `AUTH_TOKEN` persistence outside `NOTES_DIR` — `getOrCreateToken`/`resolveStateDir`, `~/.noted/vaults/<hash>.json` |
 | `src/git-backup.ts` | (M7) Backup strategy — `ensureRepo` (`git init` a fresh vault, once, at boot), `scheduleBackup`/`flushBackups` (fire-and-forget, per-directory-serialized `git add -A && git commit` after every write) |
@@ -87,6 +87,9 @@ Served straight from `public/` as ES modules — no bundler, no transpile step.
 | `public/app/backlinks-panel.js` | Backlinks Panel — `<backlinks-panel>`, pure render, emits `note-open` |
 | `public/app/search-view.js` | Search View — `<search-view>`, debounced input, emits `search-query` |
 | `public/app/tag-browser.js` | Tag Browser — `<tag-browser>`, all-tags + per-tag modes |
+| `public/app/folder-view.js` | Folder View — `<folder-view>`, breadcrumb navigation, direct folder/note contents, and create/rename intents |
+| `public/app/vault-tree.js` | Pure projection from vault-relative note paths to a sorted, recursively counted folder tree |
+| `public/app/vault-sidebar.js` | Vault Sidebar — `<vault-sidebar>`, persistent desktop tree and mobile navigation drawer |
 | `public/app/api.js` | API Client — the one `fetch` wrapper; token in `localStorage`; `search`/`getTags`/`getNotesByTag` added in M4 |
 | `public/vendor/codemirror/` | Vendored CM6 ESM bundles (`scripts/vendor-codemirror.ts`, from esm.sh with shared-package externals); import map in `index.html` points bare specifiers here |
 | `public/app/styles.css` | Placeholder styling; replaced by the M5 design-token set |

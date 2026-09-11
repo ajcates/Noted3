@@ -162,15 +162,15 @@ export function skeletonList(count = 4) {
 
 /**
  * The docked bottom bar + FAB shared by every browsing view (Note List,
- * Search, Tag Browser): a Tags shortcut on the left, the one committing
- * action ("New note") on the right. `target` is whatever should carry the
- * emitted `note-new` event (usually `this`).
+ * Folder View, Search, Tag Browser): primary view shortcuts on the left and
+ * the one committing action ("New note") on the right. `target` is whatever
+ * should carry the emitted `note-new` event (usually `this`).
  * @param {EventTarget} target
- * @param {{ active?: "home" | "search" | "tags", queueCount?: number }} [options]
+ * @param {{ active?: "home" | "folders" | "search" | "tags", queueCount?: number }} [options]
  */
 export function renderToolbar(target, options = {}) {
   /**
-   * @param {"home" | "search" | "tags"} name
+   * @param {"home" | "folders" | "search" | "tags"} name
    * @param {string} label
    * @param {string} href
    */
@@ -182,7 +182,7 @@ export function renderToolbar(target, options = {}) {
         href,
         ariaLabel: label,
       },
-      icon(name === "tags" ? "tag" : name),
+      icon(name === "tags" ? "tag" : name === "folders" ? "folder" : name),
       el("span", { textContent: label }),
     );
   return el(
@@ -192,6 +192,7 @@ export function renderToolbar(target, options = {}) {
       "nav",
       { ariaLabel: "Primary" },
       navItem("home", "Notes", "#/"),
+      navItem("folders", "Folders", "#/folders"),
       navItem("search", "Search", "#/search"),
       navItem("tags", "Tags", "#/tags"),
     ),

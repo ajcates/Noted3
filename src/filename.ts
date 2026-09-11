@@ -7,35 +7,52 @@
  * index, the markdown parser, and the handlers.
  */
 
-import { normalize } from "@std/path";
-import { ApiError, type Filename } from "./types.ts";
+import { basename, normalize } from "@std/path/posix";
+import { ApiError, type Filename, type FolderPath } from "./types.ts";
 
 export const NOTE_EXT = ".md";
+
+/** Whether a value is a normalized, visible, vault-relative POSIX path. */
+function isSafeRelativePath(name: string): boolean {
+  const segments = name.split("/");
+  return name !== "" &&
+    !name.includes("\\") &&
+    !name.includes("\0") &&
+    !name.startsWith("/") &&
+    normalize(name) === name &&
+    !segments.some((segment) =>
+      segment === "" || segment === "." || segment === ".." ||
+      segment.startsWith(".")
+    );
+}
 
 /**
  * Validate an untrusted string as a note filename and brand it.
  *
- * Accepts a single path segment ending in `.md` with no separators, no `..`,
- * and no leading dot. Throws {@link ApiError} 400 otherwise — this runs on the
- * request path, so path traversal (`../../etc/passwd`, `sub/dir.md`) is
- * rejected before the value is ever joined to a directory.
+ * Accepts a safe, vault-relative POSIX path ending in `.md`. Nested path
+ * segments are how folders are represented; empty, hidden, current/parent,
+ * backslash, and absolute segments are rejected before the value is ever
+ * joined to the vault directory.
  */
 export function parseFilename(value: string): Filename {
   const name = value.trim();
   if (
-    name === "" ||
+    !isSafeRelativePath(name) ||
     !name.endsWith(NOTE_EXT) ||
-    name.length === NOTE_EXT.length ||
-    name.includes("/") ||
-    name.includes("\\") ||
-    name.includes("\0") ||
-    name.startsWith(".") ||
-    name.includes("..") ||
-    normalize(name) !== name
+    basename(name).length === NOTE_EXT.length
   ) {
     throw new ApiError(400, `invalid filename: ${value}`);
   }
   return name as Filename;
+}
+
+/** Validate and brand a non-empty vault-relative folder path. */
+export function parseFolderPath(value: string): FolderPath {
+  const path = value.trim();
+  if (!isSafeRelativePath(path)) {
+    throw new ApiError(400, `invalid folder path: ${value}`);
+  }
+  return path as FolderPath;
 }
 
 /**
@@ -58,7 +75,7 @@ export function slugify(title: string): string {
 
 /** Best-effort inverse of {@link slugify}, for backfilling a missing title. */
 export function filenameToTitle(filename: string): string {
-  const base = stripExt(filename).replace(/-+/g, " ").trim();
+  const base = stripExt(basename(filename)).replace(/-+/g, " ").trim();
   return base.length > 0 ? base[0]!.toUpperCase() + base.slice(1) : "Untitled";
 }
 

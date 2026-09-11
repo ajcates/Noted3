@@ -1,9 +1,9 @@
 # noted
 
-A local-first, self-hosted markdown notes app — wikilinks, backlinks, tags,
-search, offline sync, and a real git-backed history of your vault. Design and
-architecture live in `notes/` (`spec.md`, `system-overview.md`, `techstack.md`,
-`roadmap.md`).
+A local-first, self-hosted markdown notes app — folders, a vault sidebar,
+wikilinks, backlinks, tags, search, offline sync, and a real git-backed history
+of your vault. Design and architecture live in `notes/` (`spec.md`,
+`system-overview.md`, `techstack.md`, `roadmap.md`).
 
 ## Install
 
@@ -24,6 +24,10 @@ noted
 That's it. `noted`:
 
 - treats the directory you ran it from as your vault (`NOTES_DIR`)
+- discovers Markdown notes recursively and mirrors their folder tree in the
+  sidebar; hidden directories such as `.git` are ignored
+- lets you create and rename folders from the folder browser; empty folders
+  remain visible, and renaming a folder updates nested note paths
 - always listens on the same port for that same directory, and a different port
   for a different directory, so several vaults can run side by side
 - opens your browser to the running app for you

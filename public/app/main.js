@@ -13,6 +13,8 @@ import { NoteEditor } from "./note-editor.js";
 import { BacklinksPanel } from "./backlinks-panel.js";
 import { SearchView } from "./search-view.js";
 import { TagBrowser } from "./tag-browser.js";
+import { FolderView } from "./folder-view.js";
+import { VaultSidebar } from "./vault-sidebar.js";
 
 // M7 (notes/roadmap.md): `noted` opens the browser itself with the vault's
 // auth token in the URL (`main.ts`'s onListen), so the app logs itself in
@@ -33,12 +35,15 @@ if (tokenFromUrl) {
 
 initialiseTheme();
 
-customElements.define("app-shell", AppShell);
 customElements.define("note-list", NoteList);
 customElements.define("note-editor", NoteEditor);
 customElements.define("backlinks-panel", BacklinksPanel);
 customElements.define("search-view", SearchView);
 customElements.define("tag-browser", TagBrowser);
+customElements.define("folder-view", FolderView);
+customElements.define("vault-sidebar", VaultSidebar);
+// AppShell constructs the registered view elements above in class fields.
+customElements.define("app-shell", AppShell);
 
 if (!document.querySelector("app-shell")) {
   document.body.append(new AppShell());

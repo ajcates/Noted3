@@ -159,6 +159,175 @@ Deno.test("filename validation blocks path traversal", async () => {
   });
 });
 
+Deno.test("nested folders: index, read, update, move, and delete vault-relative note paths", async () => {
+  const notesDir = await Deno.makeTempDir({ prefix: "noted-folders-" });
+  await Deno.mkdir(join(notesDir, "projects", "noted"), { recursive: true });
+  await Deno.mkdir(join(notesDir, ".hidden"), { recursive: true });
+  await Deno.writeTextFile(
+    join(notesDir, "projects", "noted", "roadmap.md"),
+    "# Roadmap\n\nShip folders.",
+  );
+  await Deno.writeTextFile(
+    join(notesDir, ".hidden", "ignored.md"),
+    "This must not be indexed.",
+  );
+  const index = await NoteIndex.build(notesDir);
+  const server = Deno.serve(
+    { port: 0, onListen: () => {} },
+    createApp({ notesDir, port: 0, authToken: TOKEN }, { index }),
+  );
+  const { port } = server.addr as Deno.NetAddr;
+  const api = (path: string, init: RequestInit = {}) =>
+    fetch(`http://localhost:${port}${path}`, {
+      ...init,
+      headers: { authorization: `Bearer ${TOKEN}`, ...(init.headers ?? {}) },
+    });
+
+  try {
+    const list = await (await api("/api/notes")).json() as NoteSummary[];
+    assertEquals(list.map((note) => note.filename), [
+      "projects/noted/roadmap.md",
+    ]);
+
+    const encoded = encodeURIComponent("projects/noted/roadmap.md");
+    const note = await (await api(`/api/notes/${encoded}`))
+      .json() as NoteDetail;
+    assertEquals(note.title, "Roadmap");
+
+    const updated = await api(`/api/notes/${encoded}`, {
+      method: "PUT",
+      body: JSON.stringify({ body: "Nested update" }),
+    });
+    assertEquals(updated.status, 200);
+    assertStringIncludes(
+      await Deno.readTextFile(
+        join(notesDir, "projects", "noted", "roadmap.md"),
+      ),
+      "Nested update",
+    );
+
+    const movedFilename = "archive/roadmap.md";
+    const movedEncoded = encodeURIComponent(movedFilename);
+    const moved = await api(`/api/notes/${encoded}`, {
+      method: "PATCH",
+      body: JSON.stringify({ filename: movedFilename }),
+    });
+    assertEquals(moved.status, 200);
+    assertEquals((await moved.json() as NoteDetail).filename, movedFilename);
+    assertEquals((await api(`/api/notes/${encoded}`)).status, 404);
+    assertStringIncludes(
+      await Deno.readTextFile(join(notesDir, "archive", "roadmap.md")),
+      "Nested update",
+    );
+
+    assertEquals(
+      (await api(`/api/notes/${movedEncoded}`, { method: "DELETE" })).status,
+      204,
+    );
+    assertEquals((await api(`/api/notes/${movedEncoded}`)).status, 404);
+
+    const traversal = encodeURIComponent("projects/../secret.md");
+    assertEquals((await api(`/api/notes/${traversal}`)).status, 400);
+  } finally {
+    await server.shutdown();
+    await Deno.remove(notesDir, { recursive: true });
+  }
+});
+
+Deno.test("folders: create, list, and rename while preserving nested note links", async () => {
+  await withServer(async ({ api, notesDir }) => {
+    for (const path of ["empty", "work", "work/planning"]) {
+      const created = await api("/api/folders", {
+        method: "POST",
+        body: JSON.stringify({ path }),
+      });
+      assertEquals(created.status, 201);
+      assertEquals((await created.json() as { path: string }).path, path);
+    }
+    assertEquals(await (await api("/api/folders")).json(), [
+      "empty",
+      "work",
+      "work/planning",
+    ]);
+
+    const target = await (await api("/api/notes", {
+      method: "POST",
+      body: JSON.stringify({ title: "Roadmap" }),
+    })).json() as NoteDetail;
+    await api(`/api/notes/${encodeURIComponent(target.filename)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ filename: "work/planning/roadmap.md" }),
+    });
+    const linker = await (await api("/api/notes", {
+      method: "POST",
+      body: JSON.stringify({
+        title: "Linker",
+        body: "See [[work/planning/roadmap]].",
+      }),
+    })).json() as NoteDetail;
+
+    const renamed = await api(
+      `/api/folders/${encodeURIComponent("work/planning")}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ path: "work/strategy" }),
+      },
+    );
+    assertEquals(renamed.status, 200);
+    assertEquals(
+      (await renamed.json() as { path: string }).path,
+      "work/strategy",
+    );
+    assertEquals(await (await api("/api/folders")).json(), [
+      "empty",
+      "work",
+      "work/strategy",
+    ]);
+
+    assertEquals(
+      (await api(
+        `/api/notes/${encodeURIComponent("work/planning/roadmap.md")}`,
+      ))
+        .status,
+      404,
+    );
+    assertEquals(
+      (await api(
+        `/api/notes/${encodeURIComponent("work/strategy/roadmap.md")}`,
+      ))
+        .status,
+      200,
+    );
+    const updatedLinker = await (
+      await api(`/api/notes/${encodeURIComponent(linker.filename)}`)
+    ).json() as NoteDetail;
+    assertStringIncludes(updatedLinker.body, "[[work/strategy/roadmap]]");
+    assert(await Deno.stat(join(notesDir, "work", "strategy")));
+
+    assertEquals(
+      (await api("/api/folders", {
+        method: "POST",
+        body: JSON.stringify({ path: "work/strategy" }),
+      })).status,
+      409,
+    );
+    assertEquals(
+      (await api("/api/folders", {
+        method: "POST",
+        body: JSON.stringify({ path: "work/../hidden" }),
+      })).status,
+      400,
+    );
+    assertEquals(
+      (await api(`/api/folders/${encodeURIComponent("work")}`, {
+        method: "PATCH",
+        body: JSON.stringify({ path: "work/archive" }),
+      })).status,
+      400,
+    );
+  });
+});
+
 Deno.test("bad input: non-JSON body and missing title are 400", async () => {
   await withServer(async ({ api }) => {
     assertEquals(
