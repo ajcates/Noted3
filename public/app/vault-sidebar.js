@@ -107,6 +107,20 @@ export class VaultSidebar extends HTMLElement {
           })
           : null,
       ),
+      el(
+        "div",
+        { class: "sidebar-footer" },
+        el(
+          "button",
+          {
+            class: "sidebar-nav-link",
+            ariaLabel: "Appearance and settings",
+            onclick: () => emit(this, "sidebar-appearance"),
+          },
+          icon("palette"),
+          el("span", { textContent: "Appearance" }),
+        ),
+      ),
     );
     this.classList.toggle("open", this.#open);
   }

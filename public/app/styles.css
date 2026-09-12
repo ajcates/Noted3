@@ -428,6 +428,19 @@ body.sidebar-open {
   font-size: 0.78rem;
 }
 
+.sidebar-footer {
+  flex: none;
+  padding: var(--space-3);
+  border-top: 1px solid var(--outline-variant);
+}
+
+.sidebar-footer .sidebar-nav-link {
+  width: 100%;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
 /* ============ folder browser ============ */
 
 .folder-view {
@@ -1011,22 +1024,13 @@ button.text-action.delete {
   border-color: var(--primary);
 }
 
-/* The editor's own docked bar — same sticky/surfaced treatment as .toolbar,
-   carrying Back/Save/Delete instead of a nav cluster + FAB (there's nothing
-   to "create" while already editing one note). */
+/* In-page row for the Delete button — Save lives in the title bar now, so
+   this no longer needs to be a docked/fixed footer. */
 .note-editor .actions {
-  position: sticky;
-  bottom: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 -1.1rem -1.1rem;
-  padding: 0.75rem 1.1rem;
-  background: var(--surface-container-high);
-}
-
-.note-editor .actions .spacer {
-  flex: 1;
+  margin-top: 1rem;
 }
 
 /* ============ format toolbar + pop-menu ============ */
@@ -1829,13 +1833,6 @@ button.commit {
   height: 1rem;
 }
 
-.note-editor .actions {
-  bottom: var(--keyboard-offset);
-  flex-wrap: wrap;
-  border-top: 1px solid var(--outline-variant);
-  transition: bottom var(--motion-spatial-fast);
-}
-
 .format-menu {
   transform-origin: top left;
   animation: format-menu-in var(--motion-spatial-default) both;
@@ -2495,12 +2492,6 @@ dialog.sheet::backdrop {
 
   .note-editor {
     padding: var(--space-6) clamp(1.5rem, 4vw, 3.5rem);
-  }
-
-  .note-editor .actions {
-    margin-right: clamp(-3.5rem, -4vw, -1.5rem);
-    margin-left: clamp(-3.5rem, -4vw, -1.5rem);
-    padding-inline: clamp(1.5rem, 4vw, 3.5rem);
   }
 
   dialog.sheet {

@@ -134,6 +134,10 @@ export class AppShell extends HTMLElement {
       "tags-all": () => this.#go("#/tags"),
       "queue-open": () => this.#openQueue(),
       "sidebar-dismiss": () => this.#setSidebarOpen(false),
+      "sidebar-appearance": () => {
+        this.#setSidebarOpen(false);
+        this.#openThemePicker();
+      },
       "folder-create-request": (event) =>
         this.#openFolderCreate(String(event.detail.parentPath ?? "")),
       "folder-rename-request": (event) =>
@@ -173,18 +177,6 @@ export class AppShell extends HTMLElement {
 
   #renderChrome() {
     this.#tokenInput.value = api.getToken();
-    this.#mastheadActions.replaceChildren(
-      el(
-        "button",
-        {
-          class: "icon-btn",
-          title: "Appearance and settings",
-          ariaLabel: "Appearance and settings",
-          onclick: () => this.#openThemePicker(),
-        },
-        icon("palette"),
-      ),
-    );
     const topbar = el(
       "header",
       { class: "app-topbar" },
@@ -244,7 +236,7 @@ export class AppShell extends HTMLElement {
       event.preventDefault();
       this.#newNote({ forceEditor: true });
     } else if (key === "s") {
-      const save = this.#detailPane.querySelector("button.save");
+      const save = this.#mastheadActions.querySelector("button.save");
       if (save instanceof HTMLButtonElement) {
         event.preventDefault();
         save.click();
@@ -421,6 +413,7 @@ export class AppShell extends HTMLElement {
   /** @param {"home" | "browse" | "detail"} kind @param {string} [title] */
   #updateMasthead(kind, title = "") {
     if (kind === "home") {
+      this.#mastheadActions.replaceChildren();
       this.#mastheadLead.replaceChildren(
         el("a", { class: "wordmark", textContent: "noted", href: "#/" }),
         el(
@@ -441,6 +434,19 @@ export class AppShell extends HTMLElement {
       );
       return;
     }
+    this.#mastheadActions.replaceChildren(
+      ...(kind === "detail"
+        ? [el(
+          "button",
+          {
+            class: "primary save",
+            onclick: () => this.#saveActiveNote(),
+          },
+          icon("check"),
+          el("span", { textContent: "Save" }),
+        )]
+        : []),
+    );
     this.#mastheadLead.replaceChildren(
       el(
         "button",
@@ -457,6 +463,11 @@ export class AppShell extends HTMLElement {
       ),
       el("h1", { class: "context-title", textContent: title }),
     );
+  }
+
+  #saveActiveNote() {
+    const editor = this.#detailPane.querySelector("note-editor");
+    if (editor instanceof NoteEditor) editor.save();
   }
 
   #showBrowseLoading() {

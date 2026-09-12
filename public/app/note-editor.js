@@ -162,8 +162,8 @@ export class NoteEditor extends HTMLElement {
       this.#renderFormatToolbar(),
       this.#formatMenuHost,
       host,
-      this.#renderActions(note),
     );
+    if (note) kids.push(this.#renderActions(note));
     if (this.#panel) kids.push(this.#panel);
     this.replaceChildren(...kids);
 
@@ -334,7 +334,7 @@ export class NoteEditor extends HTMLElement {
     );
   }
 
-  /** @param {NoteDetail | null} note */
+  /** @param {NoteDetail} note */
   #renderActions(note) {
     return el(
       "div",
@@ -342,29 +342,20 @@ export class NoteEditor extends HTMLElement {
       el(
         "button",
         {
-          class: "primary save",
-          onclick: () => this.#save(),
+          class: "delete",
+          onclick: () =>
+            emit(this, "editor-delete", { filename: note.filename }),
         },
-        icon("check"),
-        el("span", { textContent: "Save" }),
+        icon("trash"),
+        el("span", { textContent: "Delete" }),
       ),
-      note ? el("span", { class: "spacer" }) : null,
-      note
-        ? el(
-          "button",
-          {
-            class: "delete",
-            onclick: () =>
-              emit(this, "editor-delete", { filename: note.filename }),
-          },
-          icon("trash"),
-          el("span", { textContent: "Delete" }),
-        )
-        : null,
     );
   }
 
-  #save() {
+  /** Gathers the title/body, validates, and emits `editor-save`. Called by
+   * the App Shell's title-bar Save button (there's no in-page save control
+   * once it moved up there). */
+  save() {
     const title = this.#titleInput?.value.trim() ?? "";
     const body = this.#editor?.getValue() ?? "";
     if (title === "") {
